@@ -72,14 +72,14 @@ function ProcessRunStuff(ped)
         if wasOnMorphine then
             SetPedToRagdoll(PlayerPedId(), 1500, 2000, 3, true, true, false)
             wasOnMorphine = false
-            lib.notify( {title = "Health", description = locale('qc_notGood'), type = 'success' })
+            lib.notify( {title = locale('qc_health'), description = locale('qc_notGood'), type = 'success' })
         end
     else
         SetPedMoveRateOverride(ped, 1.0)
 
         if not wasOnMorphine and (onMorphine > 0) then 
             wasOnMorphine = true 
-            lib.notify( {title = "Health", description = "Your pain begins to fade", type = 'success' })
+            lib.notify( {title = locale('qc_health'), description = locale('qc_painfade'), type = 'success' })
         end
 
         if onMorphine > 0 then
@@ -109,13 +109,13 @@ function ProcessDamage(ped)
                         local chance = math.random(100)
                         if (IsPedRunning(ped) or IsPedSprinting(ped)) then
                             if chance <= 50 then
-                                lib.notify( {title = "Health", description = locale('qc_difficultyToRun'), type = 'error' })
+                                lib.notify( {title = locale('qc_health'), description = locale('qc_difficultyToRun'), type = 'error' })
                                 ShakeGameplayCam('SMALL_EXPLOSION_SHAKE', 0.08) 
                                 SetPedToRagdollWithFall(PlayerPedId(), 1500, 2000, 1, GetEntityForwardVector(ped), 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
                             end
                         else
                             if chance <= 15 then
-                                lib.notify( {title = "Health", description = locale('qc_difficultyToWalk'), type = 'error' })
+                                lib.notify( {title = locale('qc_health'), description = locale('qc_difficultyToWalk'), type = 'error' })
                                 ShakeGameplayCam('SMALL_EXPLOSION_SHAKE', 0.08) 
                                 SetPedToRagdollWithFall(PlayerPedId(), 1500, 2000, 1, GetEntityForwardVector(ped), 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
                             end
@@ -138,7 +138,7 @@ function ProcessDamage(ped)
                     local chance = math.random(100)
 
                     if chance <= 15 then
-                        lib.notify( {title = "Health", description = locale('qc_suddenlyFainted'), type = 'success' })
+                        lib.notify( {title = locale('qc_health'), description = locale('qc_suddenlyFainted'), type = 'success' })
                         DoScreenFadeOut(100)
                         while not IsScreenFadedOut() do
                             Citizen.Wait(0)
@@ -162,7 +162,7 @@ function ProcessDamage(ped)
         if wasOnDrugs then
             SetPedToRagdoll(PlayerPedId(), 1500, 2000, 3, true, true, false)
             wasOnDrugs = false
-            lib.notify( {title = "Health", description = locale('qc_notGood'), type = 'success' })
+            lib.notify( {title = locale('qc_health'), description = locale('qc_notGood'), type = 'success' })
         end
     else
         onDrugs = onDrugs - 1
@@ -180,7 +180,7 @@ function CheckDamage(ped, bone, weapon)
         if not Config.BodyParts[Config.parts[bone]].isDamaged then
             Config.BodyParts[Config.parts[bone]].isDamaged = true
             Config.BodyParts[Config.parts[bone]].severity = 1
-            lib.notify( {title = "Health", description = locale('qc_youAreWith').." "..Config.WoundStates[Config.BodyParts[Config.parts[bone]].severity].." "..Config.BodyParts[Config.parts[bone]].label, type = 'success' })
+            lib.notify( {title = locale('qc_health'), description = locale('qc_youAreWith').." "..Config.WoundStates[Config.BodyParts[Config.parts[bone]].severity].." "..Config.BodyParts[Config.parts[bone]].label, type = 'success' })
             if weapon == Config.WeaponClasses['SMALL_CALIBER'] or weapon == Config.WeaponClasses['MEDIUM_CALIBER'] or weapon == Config.WeaponClasses['CUTTING'] or weapon == Config.WeaponClasses['WILDLIFE'] or weapon == Config.WeaponClasses['OTHER'] or weapon == Config.WeaponClasses['LIGHT_IMPACT'] then
                 if isBleeding < 4 then
                     isBleeding = tonumber(isBleeding) + 1
@@ -253,13 +253,13 @@ AddEventHandler('qc-AdvancedMedic:FieldTreatLimbs', function()
     end
 
     if #untreatedParts > 0 then
-        local message = "The following parts need treatment:"
+        local message = locale('qc_needTreatment')
         for _, part in ipairs(untreatedParts) do
-            message = message .. "\n- Part: " .. part.part .. ", Severity: " .. part.severity
+            message = message .. locale('qc_part') .. part.part .. locale('qc_severity') .. part.severity
         end
-        lib.notify( {title = "Health", description = message, type = 'error' })
+        lib.notify( {title = locale('qc_health'), description = message, type = 'error' })
     else
-        lib.notify( {title = "Health", description = "There is no parts that need treatment", type = 'success'})
+        lib.notify( {title = locale('qc_health'), description = locale('qc_neednoTreatment'), type = 'success'})
     end
 end)
 
@@ -274,13 +274,13 @@ AddEventHandler('qc-AdvancedMedic:ResetLimbs', function()
     end
 
     if #resetParts > 0 then
-        local message = "The following body parts have been reset:"
+        local message = locale('qc_partsreset')
         for _, part in ipairs(resetParts) do
-            message = message .. "\n- Part: " .. part
+            message = message .. locale('qc_part') .. part
         end
-        lib.notify( {title = "Health", description = message, type = 'error' })
+        lib.notify( {title = locale('qc_health'), description = message, type = 'error' })
     else
-        lib.notify( {title = "Health", description = "No body parts have been reset.", type = 'success' })
+        lib.notify( {title = locale('qc_health'), description = locale('qc_nopartbeenreset'), type = 'success' })
     end
 
     injured = {}  -- Reset the table of injured parts
@@ -291,14 +291,14 @@ RegisterNetEvent('qc-AdvancedMedic:ReduceBleed')
 AddEventHandler('qc-AdvancedMedic:ReduceBleed', function()
     if isBleeding > 0 then -- use on bandage item to reduce bleeding state
         isBleeding = tonumber(isBleeding) - 1
-        lib.notify( {title = "Health", description = "Bleeding has been reduced. Current bleeding state: " .. isBleeding, type = 'success'})
+        lib.notify( {title = locale('qc_health'), description = locale('qc_leeding_reduced_state') .. isBleeding, type = 'success'})
     end
 end)
 
 RegisterNetEvent('qc-AdvancedMedic:RemoveBleed')
 AddEventHandler('qc-AdvancedMedic:RemoveBleed', function()
     isBleeding = 0
-    lib.notify( {title = "Health", description = "Bleeding has been stopped. Current bleeding state: " .. isBleeding, type = 'success'})
+    lib.notify( {title = locale('qc_health'), description = locale('qc_leeding_stopped_state') .. isBleeding, type = 'success'})
 end)
 
 
@@ -308,7 +308,7 @@ AddEventHandler('qc-AdvancedMedic:UseMorphine', function(tier)
     if tier < 4 then
         onMorphine = 90 * tier
     end
-    lib.notify( {title = "Health", description = locale('qc_temporaryWound'), type = 'success'})
+    lib.notify( {title = locale('qc_health'), description = locale('qc_temporaryWound'), type = 'success'})
 end)
 
 
@@ -331,7 +331,7 @@ AddEventHandler('qc-AdvancedMedic:UseDrugs', function(tier)
     if tier < 4 then -- more tier, more timeout.
         onDrugs = 180 * tier
     end
-    lib.notify( {title = "Health", description = locale('qc_bodyFailIgnore'), type = 'success'})
+    lib.notify( {title = locale('qc_health'), description = locale('qc_bodyFailIgnore'), type = 'success'})
 end)  
     
 Citizen.CreateThread(function()
@@ -355,12 +355,12 @@ Citizen.CreateThread(function()
 				else
 					str = locale('qc_youAreWith').." "..Config.WoundStates[injured[1].severity].." "..injured[1].label
 				end
-                lib.notify( {title = "Health", description = str, type = 'success'})
+                lib.notify( {title = locale('qc_health'), description = str, type = 'success'})
 			end
 
 			if isBleeding > 0 then
 				if blackoutTimer >= 10 then
-                    lib.notify( {title = "Health", description = locale('qc_suddenlyFainted'), type = 'success'})
+                    lib.notify( {title = locale('qc_health'), description = locale('qc_suddenlyFainted'), type = 'success'})
 					DoScreenFadeOut(500)
 					while not IsScreenFadedOut() do
 						Citizen.Wait(0)
@@ -375,7 +375,7 @@ Citizen.CreateThread(function()
 					DoScreenFadeIn(500)
 					blackoutTimer = 0
 				end
-                lib.notify( {title = "Health", description = locale('qc_youAreWith').." ".. Config.BleedingStates[isBleeding], type = 'success'})
+                lib.notify( {title = locale('qc_health'), description = locale('qc_youAreWith').." ".. Config.BleedingStates[isBleeding], type = 'success'})
 
                 local bleedDamage = tonumber(isBleeding) * 4
                 ApplyDamageToPed(player, bleedDamage, false)

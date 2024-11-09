@@ -54,5 +54,15 @@
     "qc_difficultyToRun" : "You have difficulty running",
     "qc_suddenlyFainted" : "Suddenly, you fainted",
     "qc_fainted" : "You fainted",
-    "qc_youAreWith" : "You are with"
+    "qc_youAreWith" : "You are with",
+    "qc_health" : "HEALTH",
+    "qc_painfade" : "Your pain begins to fade",
+    "qc_needTreatment" : "The following parts need treatment:",
+    "qc_neednoTreatment" : "There is no parts that need treatment:",
+    "qc_part" : "\n- Part: ",
+    "qc_severity" : ", Severity: ",
+    "qc_partsreset" : "The following body parts have been reset:",
+    "qc_nopartbeenreset" : "No body parts have been reset.",
+    "qc_leeding_reduced_state" : "Bleeding has been reduced. Current bleeding state: ",
+    "qc_leeding_stopped_state" : "Bleeding has been stopped. Current bleeding state: "
 }
