@@ -513,6 +513,7 @@ RegisterNetEvent('qc-AdvancedMedic:client:adminRevive', function()
     TriggerServerEvent("RSGCore:Server:SetMetaData", "hunger", 100)
     TriggerServerEvent("RSGCore:Server:SetMetaData", "thirst", 100)
     TriggerServerEvent("RSGCore:Server:SetMetaData", "cleanliness", 100)
+    TriggerEvent('qc-AdvancedMedic:ResetLimbs')
 
     -- Reset Outlaw Status on respawn
     if Config.ResetOutlawStatus then
@@ -552,7 +553,7 @@ RegisterNetEvent('qc-AdvancedMedic:client:playerRevive', function()
     TriggerServerEvent("RSGCore:Server:SetMetaData", "thirst", 100)
     TriggerServerEvent("RSGCore:Server:SetMetaData", "cleanliness", 100)
     TriggerServerEvent('qc-AdvancedMedic:server:SetHealth', Config.MaxHealth)
-
+    TriggerEvent('qc-AdvancedMedic:ResetLimbs')
     -- Reset Outlaw Status on respawn
     if Config.ResetOutlawStatus then
         TriggerServerEvent('rsg-prison:server:resetoutlawstatus')
