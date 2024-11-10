@@ -49,6 +49,7 @@ end)
 -- Medic Revive Player
 AddEventHandler('qc-AdvancedMedic:client:RevivePlayer', function()
     local hasItem = RSGCore.Functions.HasItem('firstaid', 1)
+    local ped = PlayerPedId()
     if not hasItem then
         lib.notify({ title = locale('cl_need_kit'), type = 'error', icon = 'fa-solid fa-kit-medical', iconAnimation = 'shake',  duration = 7000  })
         return
@@ -84,12 +85,17 @@ AddEventHandler('qc-AdvancedMedic:client:RevivePlayer', function()
             move = true,
             mouse = false,
         },
+        anim = {
+            dict = 'mini_games@story@mob4@heal_jules@bandage@arthur',
+            clip = 'bandage_fast'
+        },
         label = locale('cl_reviving'),
     })
-
     ClearPedTasks(cache.ped)
     FreezeEntityPosition(cache.ped, false)
     TriggerServerEvent('qc-AdvancedMedic:server:RevivePlayer', playerId)
+    TriggerEvent('qc-AdvancedMedic:ResetLimbs', playerId)
+    TriggerEvent('qc-AdvancedMedic:ResetLimbs', playerId)
     transG = 0
 
 end)
@@ -139,6 +145,7 @@ AddEventHandler('qc-AdvancedMedic:client:TreatWounds', function()
     ClearPedTasks(cache.ped)
     FreezeEntityPosition(cache.ped, false)
     TriggerServerEvent('qc-AdvancedMedic:server:TreatWounds', playerId)
+    TriggerEvent('qc-AdvancedMedic:ResetLimbs', playerId)
     transG = 0
 
 end)
