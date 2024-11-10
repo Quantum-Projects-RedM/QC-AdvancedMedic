@@ -32,10 +32,13 @@
     "cl_m" : " mètres",
     "cl_blip" : "Coordonnées du marqueur : ",
     "cl_blip_remove" : "Marqueur retiré : ",
+    "cl_beenhealed" : "Vous avez été Soigné",
 
     "sv_medical_storage" : "Stock Médical",
     "sv_revive" : "Réanimer un joueur ou soi-même (Admin seulement)",
     "sv_revive_2" : "ID du joueur (peut être vide)",
+    "sv_heal" : "Soigner un joueur ou soi-même (Admin seulement)",
+    "sv_heal_2" : "ID du joueur (peut être vide)",
     "sv_no_online" : "Joueur non connecté",
     "sv_kill" : "Tuer un joueur (Admin seulement)",
     "sv_kill_id" : "ID du joueur (peut être vide)",
