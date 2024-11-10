@@ -63,6 +63,20 @@ RSGCore.Commands.Add('kill', locale('sv_kill'), {{name = 'id', help = locale('sv
     TriggerClientEvent('qc-AdvancedMedic:client:KillPlayer', Player.PlayerData.source)
 end, 'admin')
 
+RSGCore.Commands.Add('heal', locale('sv_heal'), {{name = 'id', help = locale('sv_heal_2')}}, false, function(source, args)
+    local src = source
+    if not args[1] then
+        TriggerClientEvent('qc-AdvancedMedic:client:playerHeal', src)
+        return
+    end
+    local Player = RSGCore.Functions.GetPlayer(tonumber(args[1]))
+    if not Player then
+        TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_no_online'), type = 'error', duration = 7000 })
+        return
+    end
+    TriggerClientEvent('qc-AdvancedMedic:client:adminHeal', Player.PlayerData.source)
+end, 'admin')
+
 ----------------------
 -- EVENTS 
 -----------------------
