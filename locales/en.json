@@ -32,10 +32,13 @@
     "cl_m" : " metres",
     "cl_blip" : "Blip Coords: ",
     "cl_blip_remove" : "Blip Removed: ",
+    "cl_beenhealed" : "You have been healed!",
     
     "sv_medical_storage" : "Medic Storage",
     "sv_revive" : "Revive A Player or Yourself (Admin Only)",
     "sv_revive_2" : "Player ID (may be empty)",
+    "sv_heal" : "Heal A Player or Yourself (Admin Only)",
+    "sv_heal_2" : "Player ID (may be empty)",
     "sv_no_online" : "Player Not Online",
     "sv_kill" : "Kill a Player (Admin Only)",
     "sv_kill_id" : "Player ID (may be empty)",
