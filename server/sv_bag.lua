@@ -66,6 +66,6 @@ RegisterNetEvent('qc-AdvancedMedic:server:openbaginv', function(location)
     local Player = RSGCore.Functions.GetPlayer(src)
     if not Player then return end
     local data = { label = 'Medical Bag', maxweight = Config.BagMaxWeight, slots = Config.BagMaxSlots }
-    local stashName = 'medic_bag'
+    local stashName = 'medic_bag' .. RSGCore.Functions.GetPlayer(src)
     exports['rsg-inventory']:OpenInventory(src, stashName, data)
 end)
