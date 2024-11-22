@@ -50,7 +50,7 @@ RegisterNetEvent('qc-AdvancedMedic:client:pickup', function()
         Wait(500)
         ClearPedTasks(ped)
     else
-        lib.notify( {title = "No Law Tool Box equipment to pick up.", type = 'error' })
+        lib.notify( {title = "No Medic Bag to pick up.", type = 'error' })
     end
 end)
 
@@ -188,24 +188,9 @@ RegisterNetEvent('qc-AdvancedMedic:client:checkingredients', function(data)
     end, Config.medicbagRecipes[data.item].ingredients)
 end)
 
-RegisterNetEvent('qc-AdvancedMedic:crafting', function(name, item, crafttime, receive)
-    local ingredients = Config.medicbagRecipes[item].ingredients
-    local ped = PlayerPedId()
-    TaskStartScenarioInPlace(ped, GetHashKey('WORLD_HUMAN_CROUCH_INSPECT'), crafttime, true, false, false, false)
-        lib.progressBar({
-            duration = 2000,
-            label = 'Crafting'..name,
-            useWhileDead = false,
-            canCancel = true,
-        })-- Done
-        TriggerServerEvent('qc-AdvancedMedic:server:finishcrafting', ingredients, receive)
-        ClearPedTasks(ped)
-end)
-
 RegisterNetEvent('qc-AdvancedMedic:client:mediccraft', function(data)
     RSGCore.Functions.TriggerCallback('qc-AdvancedMedic:server:checkingredients', function(hasRequired)
         if hasRequired == true then
-            LocalPlayer.state:set("inv_busy", true, true) -- lock inventory
             lib.progressBar({
                 duration = tonumber(data.crafttime),
                 position = 'bottom',
@@ -216,12 +201,12 @@ RegisterNetEvent('qc-AdvancedMedic:client:mediccraft', function(data)
                     move = true,
                     mouse = true,
                 },
-                label = 'Crafting '.. RSGCore.Shared.Items[data.receive].label,
+                label = "Crafting ".. RSGCore.Shared.Items[data.receive].label,
             })
-            TriggerServerEvent('qc-AdvancedMedic:server:checkingredients', data)
-            LocalPlayer.state:set("inv_busy", false, true) -- unlock inventory
+            TriggerServerEvent('qc-AdvancedMedic:server:finishcrafting', data)
         else
-            lib.notify({ title = 'Crafting items missing!', type = 'inform', duration = 7000 })
+            lib.notify({ title = "Crafting items missing!", type = 'inform', duration = 7000 })
         end
     end, data.ingredients)
 end)
+
