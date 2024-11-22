@@ -3,7 +3,7 @@ Config = {}
 -- Settings
 Config.Debug                    = false
 Config.JobRequired              = 'medic'
-Config.Image = "rsg-inventory/html/images/"
+Config.Image                    = "rsg-inventory/html/images/"
 
 Config.DeathTimer               = 300 -- 300 = 5 mins / testing 60 = 1 min
 Config.WipeInventoryOnRespawn   = false
