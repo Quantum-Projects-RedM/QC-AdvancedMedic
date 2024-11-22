@@ -2,8 +2,8 @@ fx_version 'cerulean'
 rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aware my resources *will* become incompatible once RedM ships.'
 game 'rdr3'
 
-description 'rsg-medic'
-version '2.0.3'
+description 'A Advanced Medic System based off rsg-medic with multitude of additions'
+version '2.0.4'
 
 shared_scripts {
     '@ox_lib/init.lua',
@@ -11,9 +11,7 @@ shared_scripts {
 }
 
 client_scripts {
-    'client/client.lua',
-    'client/job.lua',
-    'client/wounds.lua'
+    'client/*.lua'
 }
 
 server_scripts {
