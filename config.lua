@@ -3,8 +3,8 @@ Config = {}
 -- Settings
 Config.Debug                    = false
 Config.JobRequired              = 'medic'
-Config.StorageMaxWeight         = 4000000
-Config.StorageMaxSlots          = 48
+Config.Image = "rsg-inventory/html/images/"
+
 Config.DeathTimer               = 300 -- 300 = 5 mins / testing 60 = 1 min
 Config.WipeInventoryOnRespawn   = false
 Config.WipeCashOnRespawn        = false
@@ -25,6 +25,32 @@ Config.Blip =
     blipName   = 'Medic', -- Config.Blip.blipName
     blipSprite = 'blip_shop_doctor', -- Config.Blip.blipSprite
     blipScale  = 0.2 -- Config.Blip.blipScale
+}
+-------------------------------------------------
+---   Location STORAGE INFO
+-------------------------------------------------
+Config.StorageMaxWeight         = 4000000
+Config.StorageMaxSlots          = 48
+-------------------------------------------------
+---   BAG STORAGE INFO
+-------------------------------------------------
+Config.BagMaxWeight         = 1000000
+Config.BagMaxSlots          = 10
+
+---------------------------------
+-- Bag Crafting Items
+---------------------------------
+Config.MedicBagCrafting = {
+    {
+        category = 'First Aid',
+        crafttime = 30000,
+        craftingrep = 0,
+        ingredients = { 
+            [1] = { item = 'cotton', amount = 1 },
+        },
+        receive = 'bandage',
+        giveamount = 1
+    },
 }
 
 -- Prompt Locations
