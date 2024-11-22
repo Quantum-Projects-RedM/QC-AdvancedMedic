@@ -191,6 +191,8 @@ end)
 RegisterNetEvent('qc-AdvancedMedic:client:mediccraft', function(data)
     RSGCore.Functions.TriggerCallback('qc-AdvancedMedic:server:checkingredients', function(hasRequired)
         if hasRequired == true then
+            local ped = PlayerPedId()
+            TaskStartScenarioInPlace(ped, GetHashKey('WORLD_HUMAN_CROUCH_INSPECT'), data.crafttime, true, false, false, false)
             lib.progressBar({
                 duration = tonumber(data.crafttime),
                 position = 'bottom',
@@ -204,6 +206,7 @@ RegisterNetEvent('qc-AdvancedMedic:client:mediccraft', function(data)
                 label = "Crafting ".. RSGCore.Shared.Items[data.receive].label,
             })
             TriggerServerEvent('qc-AdvancedMedic:server:finishcrafting', data)
+            ClearPedTasks(ped)
         else
             lib.notify({ title = "Crafting items missing!", type = 'inform', duration = 7000 })
         end
