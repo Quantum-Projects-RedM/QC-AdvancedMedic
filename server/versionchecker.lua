@@ -1,36 +1,26 @@
---[[ local RSGCore = exports['rsg-core']:GetCoreObject()
-
------------------------------------------------------------------------
--- version checker
------------------------------------------------------------------------
-local function versionCheckPrint(_type, log)
-    local color = _type == 'success' and '^2' or '^1'
-
-    print(('^5['..GetCurrentResourceName()..']%s %s^7'):format(color, log))
-end
-
 local function CheckVersion()
-    PerformHttpRequest('https://raw.githubusercontent.com/RexShack/rsg-versioncheckers/main/'..GetCurrentResourceName()..'/version.txt', function(err, text, headers)
+    PerformHttpRequest('https://raw.githubusercontent.com/Quantum-Projects-RedM/QC-VersionCheckers/master/QC-AdvancedMedic.txt', function(err, newestVersion, headers)
         local currentVersion = GetResourceMetadata(GetCurrentResourceName(), 'version')
+        local resourceName = GetCurrentResourceName()
+        local contactInfo = "Please Check Github For An Update"
 
-        if not text then
-            versionCheckPrint('error', 'Currently unable to run a version check.')
+        if not newestVersion then
+            print("\n^1[Quantum Projects]^7 Unable to perform version check.\n")
             return
         end
 
-        versionCheckPrint('success', ('Current Version: %s'):format(currentVersion))
-        versionCheckPrint('success', ('Latest Version: %s'):format(text))
-
-        if text == currentVersion then
-            versionCheckPrint('success', 'You are running the latest version.')
+        local isLatestVersion = newestVersion:gsub("%s+", "") == currentVersion:gsub("%s+", "")
+        if isLatestVersion then
+            print(("^3[Quantum Projects]^7: You are running the latest version of ^2%s^7 (^2%s^7)."):format(resourceName, currentVersion))
         else
-            versionCheckPrint('error', ('You are currently running an outdated version, please update to version %s'):format(text))
+            print("\n^6========================================^7")
+            print("^3[Quantum Projects]^7 Version Checker")
+            print("")
+            print(("^3Version Check^7:\n ^2Current^7: %s\n ^2Latest^7: %s\n"):format(currentVersion, newestVersion))
+            print(("^1You are running an outdated version of %s.\n%s^7"):format(resourceName, contactInfo))
+            print("^6========================================^7\n")
         end
     end)
 end
 
---------------------------------------------------------------------------------------------------
--- start version check
---------------------------------------------------------------------------------------------------
 CheckVersion()
- ]]--
