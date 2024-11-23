@@ -3,7 +3,7 @@ rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aw
 game 'rdr3'
 
 description 'A Advanced Medic System based off rsg-medic with multitude of additions'
-version '2.0.4'
+version '2.0.5'
 
 shared_scripts {
     '@ox_lib/init.lua',
