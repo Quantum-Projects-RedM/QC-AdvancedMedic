@@ -9,7 +9,7 @@ exports['rsg-target']:AddTargetModel(1259819729, {
             type = "client",
             event = 'qc-AdvancedMedic:client:pickup',
             icon = "fas fa-undo",
-            label = "Pickup Medical Bag",
+            label = locale('cl_bag_pickup'),
             distance = 3.0
         }
     }
@@ -19,7 +19,7 @@ exports['rsg-target']:AddTargetModel(1259819729, {
     options = {
         {
             icon = 'far fa-gear',
-            label = 'Open Medical Bag',
+            label = locale('cl_bag_open'),
             type = "client",
             event = 'qc-AdvancedMedic:client:medicbagMenu',
         },
@@ -50,7 +50,7 @@ RegisterNetEvent('qc-AdvancedMedic:client:pickup', function()
         Wait(500)
         ClearPedTasks(ped)
     else
-        lib.notify( {title = "No Medic Bag to pick up.", type = 'error' })
+        lib.notify( {title = locale('cl_bag_no_medicbag'), type = 'error' })
     end
 end)
 
@@ -133,7 +133,7 @@ end)
 RegisterNetEvent('qc-AdvancedMedic:client:craftingmenu', function()
     local Menu = {
         id = 'med_craft',
-        title = 'Medical Crafting',
+        title = locale('cl_bag_medic_craft'),
         options = {}
     }
 
@@ -151,18 +151,18 @@ end)
 RegisterNetEvent('qc-AdvancedMedic:client:medicbagMenu', function()
     lib.registerContext({
         id = 'medicbag_menu',
-        title = 'Medic Bag',
+        title = locale('cl_bag_medicbag_menu'),
         options = {
             {
-                title = 'Crafting Menu',
-                description = 'Useful Crafting medical equipment',
+                title = locale('cl_bag_medicbag_craftmenu_title'),
+                description = locale('cl_bag_medicbag_craftmenu_desc'),
                 icon = 'fa-solid fa-user-secret',
                 event = 'qc-AdvancedMedic:client:craftingmenu',
                 arrow = true
             },
             {
-                title = 'Open Stash',
-                description = 'Medical storage for equipment',
+                title = locale('cl_bag_medicbag_openstash_title'),
+                description = locale('cl_bag_medicbag_openstash_desc'),
                 icon = 'fa-solid fa-user',
                 event = 'qc-AdvancedMedic:client:bagstorage',
                 arrow = true
@@ -203,12 +203,12 @@ RegisterNetEvent('qc-AdvancedMedic:client:mediccraft', function(data)
                     move = true,
                     mouse = true,
                 },
-                label = "Crafting ".. RSGCore.Shared.Items[data.receive].label,
+                label = locale('cl_bag_medicbag_craft_label').. RSGCore.Shared.Items[data.receive].label,
             })
             TriggerServerEvent('qc-AdvancedMedic:server:finishcrafting', data)
             ClearPedTasks(ped)
         else
-            lib.notify({ title = "Crafting items missing!", type = 'inform', duration = 7000 })
+            lib.notify({ title = locale('cl_bag_medicbag_craft_notify'), type = 'inform', duration = 7000 })
         end
     end, data.ingredients)
 end)
