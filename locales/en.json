@@ -22,6 +22,18 @@
     "cl_error_b" : "you don't have any bandages!",
     "cl_error_c" : "not able to do that right now!",
 
+    "cl_bag_pickup" : "Pickup Medical Bag",
+    "cl_bag_open" : "Open Medical Bag",
+    "cl_bag_no_medicbag" : "No Medic Bag to pick up.",
+    "cl_bag_medic_craft" : "Medical Crafting",
+    "cl_bag_medicbag_menu" : "Medic Bag",
+    "cl_bag_medicbag_craftmenu_title" : "Crafting Menu",
+    "cl_bag_medicbag_craftmenu_desc" : "Useful Crafting medical equipment",
+    "cl_bag_medicbag_openstash_title" : "Open Stash",
+    "cl_bag_medicbag_openstash_desc" : "Medical storage for equipment",
+    "cl_bag_medicbag_craft_label" : "Crafting ",
+    "cl_bag_medicbag_craft_notify" : "Crafting items missing!",
+
     "cl_need_kit" : "You need a First Aid Kit",
     "cl_player_nearby" : "No Player Nearby",
     "cl_reviving" : "Reviving...",
