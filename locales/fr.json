@@ -22,6 +22,18 @@
     "cl_error_b" : "vous n'avez pas de bandages !",
     "cl_error_c" : "impossible de faire cela pour le moment !",
 
+    "cl_bag_pickup": "Ramasser le sac médical",
+    "cl_bag_open": "Ouvrir le sac médical",
+    "cl_bag_no_medicbag": "Aucun sac médical à ramasser.",
+    "cl_bag_medic_craft": "Fabrication médicale",
+    "cl_bag_medicbag_menu": "Sac médical",
+    "cl_bag_medicbag_craftmenu_title": "Menu de fabrication",
+    "cl_bag_medicbag_craftmenu_desc": "Fabrication utile d'équipements médicaux",
+    "cl_bag_medicbag_openstash_title": "Ouvrir le stockage",
+    "cl_bag_medicbag_openstash_desc": "Stockage médical pour équipements",
+    "cl_bag_medicbag_craft_label": "Fabrication",
+    "cl_bag_medicbag_craft_notify": "Éléments de fabrication manquants !"
+    
     "cl_need_kit" : "Vous avez besoin d'une trousse de premiers secours",
     "cl_player_nearby" : "Aucun joueur à proximité",
     "cl_reviving" : "Réanimation...",
