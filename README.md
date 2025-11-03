@@ -2,11 +2,13 @@
 
 Advanced medical roleplay system for RedM with realistic wound mechanics, treatment systems, and infection progression.
 
-![Version](https://img.shields.io/badge/version-0.2.8--beta-blue.svg)
-![Framework](https://img.shields.io/badge/framework-RSG--Core-green.svg)
+![Version](https://img.shields.io/badge/version-0.2.9--beta-blue.svg)
+![License](https://img.shields.io/badge/license-Custom%20(Free%20for%20CFX)-red.svg)
+![Framework](https://img.shields.io/badge/framework-RSG--Core-red.svg)
+![Platform](https://img.shields.io/badge/platform-CFX.re%20(RedM%2FFiveM)-purple.svg)
 ![Status](https://img.shields.io/badge/status-WIP%20Alpha-orange.svg)
 
-> **Alpha Status**: This is a work-in-progress release. We're seeking feedback and collaboration! Please report issues and suggestions via GitHub Issues.
+> **⚠️ Alpha Status - NOT Production Ready**: This is a work-in-progress release with known issues (see Known Issues below). We're seeking feedback and collaboration! Please report issues and suggestions via GitHub Issues.
 
 ## Features
 
@@ -19,7 +21,7 @@ Advanced medical roleplay system for RedM with realistic wound mechanics, treatm
 - **Medical Inspection**: `/inspect` command for medics to examine patients with vital signs and treatment application
 - **Training Missions**: 5 pre-configured medic training scenarios with difficulty scaling and realistic NPC patients
 - **Multi-Job Support**: Flexible job system supporting multiple medic organizations (valmedic, sdmedic, etc.)
-- **Database Persistence**: Optimized 4-table schema with stored procedures for complete medical history
+- **Database Persistence**: Optimized 5-table schema with stored procedures for complete medical history
 - **Multi-Language**: Full localization support (English, Spanish, French)
 
 ## Dependencies
@@ -33,7 +35,7 @@ Advanced medical roleplay system for RedM with realistic wound mechanics, treatm
 ## Installation
 
 1. Extract `QC-AdvancedMedic` to your resources folder
-2. Execute `INSTALL_FIRST/schema.sql` in your database (creates 4 tables + stored procedures)
+2. Execute `INSTALL_FIRST/schema.sql` in your database (creates 5 tables + stored procedures)
 3. Add items from `INSTALL_FIRST/shared_items.lua` to `rsg-core/shared/items.lua`
 4. Copy images from `INSTALL_FIRST/IMAGES/` to `rsg-inventory/html/images/`
 5. Configure `config.lua` and `ConfigMissions.lua` to match your server setup
@@ -156,11 +158,12 @@ Simply add to `Config.MedicJobLocations` - no code changes needed:
 
 ## Database Schema
 
-Optimized 4-table design with stored procedures:
+Optimized 5-table design with stored procedures:
 
-- **`player_wounds`** - Active wounds and scars (unique per body part)
+- **`player_wounds`** - Active wounds and scars with health tracking (unique per body part)
 - **`medical_treatments`** - All treatment types consolidated (bandages, tourniquets, medicines, injections)
 - **`player_infections`** - Infection tracking with cure progress and immunity
+- **`player_fractures`** - Fracture system with healing progress and severity tracking
 - **`medical_history`** - Complete audit trail with 30-day auto-cleanup
 
 **Stored Procedures:**
@@ -169,12 +172,12 @@ Optimized 4-table design with stored procedures:
 
 ## Development Roadmap
 
-### Alpha Phase (Current - v0.2.8)
+### Alpha Phase (Current - v0.2.9)
 - [x] Core wound/treatment systems
 - [x] Infection progression
-- [x] Wound healing to scars
+- [ ] Wound healing to scars (⚠️ Currently bugged and working on fixing this)
 - [x] Multi-job support refactor
-- [x] Database optimization (8 tables → 4 tables)
+- [x] Database optimization (8 tables → 5 tables with fractures)
 - [x] Modern NUI interface
 - [ ] Comprehensive testing across scenarios
 - [ ] Performance optimization
@@ -215,14 +218,19 @@ We welcome contributions! This is an alpha release and we need:
 - Update relevant documentation with changes
 - Keep performance in mind (avoid heavy loops/timers)
 
+### Contributor Recognition
+All contributors will be recognized in [CONTRIBUTORS.md](CONTRIBUTORS.md)! We appreciate every contribution, whether it's code, bug reports, documentation, or community support. Check out our contributor recognition levels and see how you can help improve QC-AdvancedMedic.
+
 ## Known Issues
 
+**Critical:**
+- **⚠️ Wound Healing System Bug**: Wounds cannot heal into scars because bandages expire (3-12 min) before wounds can heal (10-40 min) but could also be internal issue as well looking into this. The healing system requires an active bandage for the entire duration, but bandages expire too quickly. *Workaround: Manually remove bandages when bleeding reaches level 1 and wound is stable.*
+
+**Minor:**
 - Shotgun pellet hit detection may occasionally miss at extreme angles
 - Rare desync of wound data between client/server in high latency (>200ms)
 - NUI body part selection can be finicky on ultrawide monitors
 - Fall damage detection sometimes triggers on steep slopes instead of actual falls
-
-See [CHANGELOG.md](CHANGELOG.md) for detailed development history and fixes.
 
 ## Performance Notes
 
@@ -235,24 +243,40 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed development history and fixes.
 ## Credits
 
 **Developer**: Artmines
+**Organization**: Quantum Projects
 **Framework**: RSG-Core
-**Special Thanks**: RedM community, Quantum Projects contributors, testers
+**Contributors**: See [CONTRIBUTORS.md](CONTRIBUTORS.md) for full list
+**Special Thanks**: RedM community, all our testers, and everyone who supports the project
 
 ## Support
 
 **Issues**: [GitHub Issues](https://github.com/Quantum-Projects-RedM/QC-AdvancedMedic/issues)
+
 **Discussions**: [GitHub Discussions](https://github.com/Quantum-Projects-RedM/QC-AdvancedMedic/discussions)
-**Discord**: [qUANTUM PROJECTS](https://discord.gg/kJ8ZrGM8TS)
+
+**Discord**: [Quantum Projects](https://discord.gg/kJ8ZrGM8TS)
 
 ## License
 
-This resource is provided as-is for RedM servers. Please respect the effort put into development.
+**QC-AdvancedMedic Server License**
 
-**Commercial Use**: Allowed with attribution
-**Modification**: Allowed (contributions appreciated)
-**Redistribution**: Allowed with original credits intact
+This resource is provided for use on **CFX.re platform servers** (RedM, FiveM, etc.) under the following terms:
+
+✅ **Allowed:**
+- Use on any CFX server (RedM, FiveM, including monetized/donation-based servers)
+- Modifications for your own server use (including porting between platforms)
+- Sharing modifications via pull requests with credit
+- Free redistribution with original credits intact
+
+❌ **Not Allowed:**
+- Selling this script or modified versions
+- Claiming this work as your own
+- Removing or modifying author credits
+- Commercial redistribution (selling access to the script itself)
+
+**Summary**: Free to use on any **CFX.re server** (RedM, FiveM - even if your server makes money), but you **cannot sell the script itself**. You CAN port it to FiveM or other CFX platforms. Respect the open-source community and give credit where it's due.
 
 ---
 
-**Version**: 0.2.8-beta | **Framework**: RSG-Core | **Status**: WIP Alpha
+**Version**: 0.2.9-beta | **Framework**: RSG-Core | **Status**: WIP Alpha (Not Production Ready)
 **Last Updated**: November 2025

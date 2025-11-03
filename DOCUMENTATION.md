@@ -1,16 +1,25 @@
 # Technical Documentation - QC-AdvancedMedic
 
-Complete technical reference for developers working with QC-AdvancedMedic.
+Complete technical reference for developers and server owners. This guide explains how everything works under the hood, from damage detection to database persistence.
+
+**Version**: 0.2.9-beta
+**Platform**: CFX.re (RedM/FiveM)
+**Framework**: RSG-Core
+
+---
 
 ## Table of Contents
 
 1. [Architecture Overview](#architecture-overview)
-2. [Core Systems](#core-systems)
-3. [Data Structures](#data-structures)
-4. [Events & Exports](#events--exports)
-5. [Configuration Reference](#configuration-reference)
-6. [Database Schema](#database-schema)
-7. [Extending the System](#extending-the-system)
+2. [Client-Side Systems](#client-side-systems)
+3. [Server-Side Systems](#server-side-systems)
+4. [NUI Interface](#nui-interface)
+5. [Data Structures](#data-structures)
+6. [Events & Exports](#events--exports)
+7. [Configuration Reference](#configuration-reference)
+8. [Database Schema](#database-schema)
+9. [Extending the System](#extending-the-system)
+10. [Performance & Optimization](#performance--optimization)
 
 ## Architecture Overview
 
@@ -759,6 +768,8 @@ Config.Medicines = {
 
 ### Tables
 
+**Note**: The system uses **5 optimized tables** (v0.2.9+) including the new fractures table.
+
 **1. player_wounds**
 ```sql
 CREATE TABLE player_wounds (
@@ -810,7 +821,25 @@ CREATE TABLE player_infections (
 );
 ```
 
-**4. medical_history**
+**4. player_fractures**
+```sql
+CREATE TABLE player_fractures (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    citizenid VARCHAR(50) NOT NULL,
+    body_part VARCHAR(20) NOT NULL,
+    fracture_type ENUM('fracture', 'bone_break') NOT NULL,
+    severity INT(2) NOT NULL DEFAULT 5,
+    pain_level DECIMAL(3,1) NOT NULL DEFAULT 0.0,
+    mobility_impact DECIMAL(3,2) NOT NULL DEFAULT 0.0,
+    healing_progress DECIMAL(5,2) NOT NULL DEFAULT 0.0,
+    requires_surgery BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    healed_at TIMESTAMP NULL,
+    UNIQUE KEY unique_fracture (citizenid, body_part)
+);
+```
+
+**5. medical_history**
 ```sql
 CREATE TABLE medical_history (
     id INT PRIMARY KEY AUTO_INCREMENT,

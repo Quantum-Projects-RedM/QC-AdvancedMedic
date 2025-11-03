@@ -18,8 +18,22 @@ All notable changes to QC-AdvancedMedic.
 - Disease mechanics (cholera, tuberculosis, dysentery)
 - Field surgery with success/failure
 - Medical journal item
+- QBCore and VORP framework support
 
-## [0.2.8] - 2025-10-07
+## [0.2.9] - 2025-11-03
+
+### Added
+- Fractures system with dedicated table (severity 1-10, healing progress, mobility impact)
+- Health tracking in wounds (current/max/percentage)
+- Infection immunity system with expiration tracking
+- `active_medical_status` view for NUI integration
+
+### Changed
+- Database structure: 4 tables → 5 tables (added `player_fractures`)
+- Enhanced treatment metadata tracking (pain/bleeding reduction, original levels)
+- Improved stored procedures with fracture support
+
+## [0.2.8] - 2024-10-07
 
 ### Fixed
 - Multi-job support - removed hardcoded `Config.JobRequired`
@@ -33,14 +47,14 @@ All notable changes to QC-AdvancedMedic.
 ### Removed
 - `Config.JobRequired` global setting
 
-## [0.2.7] - 2025-09-15
+## [0.2.7] - 2024-09-15
 
 ### Changed
 - Database optimization: 8 tables → 4 tables (42% smaller, 5-10x faster queries)
 - Added `GetCompleteMedicalProfile()` and `CleanupExpiredMedicalData()` stored procedures
 - Medical profile fetch: 45-80ms → 8-15ms
 
-## [0.2.6] - 2025-08-20
+## [0.2.6] - 2024-08-20
 
 ### Added
 - Wound healing to scars system
@@ -48,7 +62,7 @@ All notable changes to QC-AdvancedMedic.
 - Max 5 scars per player with full history
 - Scar display in NUI
 
-## [0.2.5] - 2025-07-10
+## [0.2.5] - 2024-07-10
 
 ### Added
 - 4-stage infection system (25% → 50% → 75% → 90%)
@@ -57,7 +71,7 @@ All notable changes to QC-AdvancedMedic.
 - Temporary immunity after cure
 - Visual effects per infection stage
 
-## [0.2.0] - 2025-06-01
+## [0.2.0] - 2024-06-01
 
 ### Added
 - Modern React NUI with interactive body map
@@ -66,7 +80,7 @@ All notable changes to QC-AdvancedMedic.
 - Wild West themed UI
 - Click-to-examine body parts
 
-## [0.1.0] - 2025-05-01
+## [0.1.0] - 2024-05-01
 
 ### Added - Initial Beta
 - Advanced wound detection (100+ weapons, 15 body parts)
@@ -80,6 +94,12 @@ All notable changes to QC-AdvancedMedic.
 - Multi-language support (EN/ES/FR)
 
 ## Upgrading
+
+### v0.2.8 → v0.2.9
+1. **Backup database first**
+2. Run `INSTALL_FIRST/schema.sql` (creates new `player_fractures` table)
+3. Update files
+4. Restart resource
 
 ### v0.2.7 → v0.2.8
 1. Update files
@@ -118,7 +138,7 @@ All notable changes to QC-AdvancedMedic.
 - **MINOR**: New features (backward-compatible)
 - **PATCH**: Bug fixes
 
-**Current**: `0.2.8-beta` (approaching v0.3.0)
+**Current**: `0.2.9-beta` (approaching v0.3.0)
 
 **Issues**: [GitHub Issues](https://github.com/YOUR_ORG/QC-AdvancedMedic/issues)
-**Last Updated**: November 2, 2025
+**Last Updated**: November 3, 2025

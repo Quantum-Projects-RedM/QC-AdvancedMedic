@@ -56,6 +56,7 @@ YourServer/
 ```
 
 **Verify folder structure:**
+
 ```
 QC-AdvancedMedic/
 ├── fxmanifest.lua          ✓ Present
@@ -92,10 +93,12 @@ mysql -u [username] -p [database_name] -e "SHOW TABLES LIKE 'player_%';"
 ```
 
 **Expected Output:**
+
 ```--+
 | Tables_in_[db] (player_%)      |--+
 | player_wounds                  |
 | player_infections              |
+| player_fractures               |
 | medical_treatments             |
 | medical_history                |--+
 ```
@@ -121,6 +124,7 @@ mysql -u [username] -p [database_name] -e "SHOW TABLES LIKE 'player_%';"
 6. **Important**: Ensure proper comma separation
 
 **Example:**
+
 ```lua
 -- In rsg-core/shared/items.lua
 RSGShared.Items = {
@@ -151,6 +155,7 @@ RSGShared.Items = {
 ```
 
 **Items Added (24 total)**:
+
 - Medical supplies: bandage, cotton_bandage, linen_bandage, sterile_bandage
 - Emergency: rope_tourniquet, leather_tourniquet, cloth_tourniquet, medical_tourniquet
 - Medicines: laudanum, morphine, whiskey, quinine
@@ -173,6 +178,7 @@ RSGShared.Items = {
 **Note**: The provided images are core items. Additional items will use placeholder images until you add custom ones.
 
 **Missing Images Checklist** (you'll need to source these):
+
 - [ ] cotton_bandage.png
 - [ ] linen_bandage.png
 - [ ] sterile_bandage.png
@@ -198,6 +204,7 @@ RSGShared.Items = {
 - [ ] medical_supplies.png
 
 **Recommended Image Specs**:
+
 - Format: PNG with transparency
 - Size: 256x256 pixels (or 512x512 for high-res)
 - Style: Match your server's inventory theme
@@ -234,6 +241,7 @@ Config.MedicJobLocations = {
 ```
 
 **Finding Your Coordinates**:
+
 ```lua
 -- In-game, stand at desired location and run:
 /coords
@@ -289,6 +297,7 @@ ensure QC-AdvancedMedic
 ```
 
 **Load Order Matters** - Ensure these start BEFORE QC-AdvancedMedic:
+
 ```cfg
 ensure oxmysql
 ensure ox_lib
@@ -303,12 +312,14 @@ ensure QC-AdvancedMedic
 ### Step 8: Restart Server
 
 **For Test/Development Servers**:
+
 ```bash
 # In server console:
 restart QC-AdvancedMedic
 ```
 
 **For Production Servers**:
+
 ```bash
 # Full server restart recommended for first installation:
 stop
@@ -317,6 +328,7 @@ start
 ```
 
 **Watch for errors** in console during startup:
+
 - ✓ `[QC-AdvancedMedic] Resource started successfully`
 - ✓ `[oxmysql] Query executed successfully`
 - ✗ `[script:QC-AdvancedMedic] SCRIPT ERROR` - See troubleshooting below
@@ -339,18 +351,21 @@ SHOW PROCEDURE STATUS WHERE Db = '[your_database_name]';
 ### 2. In-Game Verification
 
 **As Admin**:
+
 ```
 /heal         → Should restore health
 /revive       → Should revive if downed
 ```
 
 **As Player**:
+
 1. Check inventory for medical items (give yourself a bandage via admin)
 2. Take damage (fall, shoot yourself)
 3. Use bandage - should see NUI interface
 4. Check F8 console for errors
 
 **As Medic**:
+
 1. Get hired at medic job: `/setjob [yourID] valmedic 4`
 2. Go to medic location (blip should appear on map)
 3. Access storage (should see 48 slots)
@@ -371,6 +386,7 @@ SHOW PROCEDURE STATUS WHERE Db = '[your_database_name]';
 ### Database Issues
 
 **Error**: `Table 'player_wounds' doesn't exist`
+
 ```sql
 -- Verify database name in oxmysql configuration:
 -- Check server.cfg or database.cfg for:
@@ -382,6 +398,7 @@ mysql -u root -p CORRECT_DATABASE_NAME < INSTALL_FIRST/schema.sql
 ```
 
 **Error**: `Stored procedure not found`
+
 ```sql
 -- Check procedures exist:
 SHOW PROCEDURE STATUS WHERE Db = '[your_database]';
@@ -395,13 +412,17 @@ SHOW PROCEDURE STATUS WHERE Db = '[your_database]';
 **Error**: `Item 'bandage' not found in shared items`
 
 **Solution**:
+
 1. Verify you added items to `rsg-core/shared/items.lua`
 2. Check for syntax errors (missing commas, brackets)
 3. Restart `rsg-core` resource:
+
 ```
 restart rsg-core
 ```
+
 4. Then restart QC-AdvancedMedic:
+
 ```
 restart QC-AdvancedMedic
 ```
@@ -409,6 +430,7 @@ restart QC-AdvancedMedic
 **Error**: Item images show as placeholder
 
 **Solution**:
+
 1. Check image file names match EXACTLY (case-sensitive):
    - `bandage.png` ✓
    - `Bandage.png` ✗
@@ -421,15 +443,21 @@ restart QC-AdvancedMedic
 **Error**: "You are not a medic" when you ARE a medic
 
 **Solution**:
+
 1. Check your job name in database:
+
 ```sql
 SELECT job FROM players WHERE citizenid = '[your_citizenid]';
 ```
+
 2. Make sure it matches EXACTLY in `Config.MedicJobLocations`:
+
 ```lua
 job = 'valmedic'  -- Must match database exactly (case-sensitive)
 ```
+
 3. Check helper function is loaded:
+
 ```lua
 -- In F8 console in-game:
 IsMedicJob('valmedic')  -- Should return true if working
@@ -440,8 +468,10 @@ IsMedicJob('valmedic')  -- Should return true if working
 **Error**: NUI doesn't open when using `/inspect`
 
 **Solution**:
+
 1. Check browser console (F8 → Console tab) for errors
 2. Verify NUI files exist:
+
 ```
 ui/
 └── build/
@@ -451,6 +481,7 @@ ui/
     │   └── js/
     └── asset-manifest.json
 ```
+
 3. Try clearing FiveM cache:
    - Close RedM
    - Navigate to `%localappdata%/RedM/FiveM Application Data`
@@ -460,6 +491,7 @@ ui/
 **Error**: Body parts not clickable
 
 **Solution**:
+
 1. Check screen resolution - UI optimized for 1920x1080
 2. Try windowed mode instead of fullscreen
 3. Check browser console for click handler errors
@@ -470,17 +502,23 @@ ui/
 **Symptom**: Server lag when multiple players have wounds
 
 **Solution**:
+
 1. Increase tick intervals in `config.lua`:
+
 ```lua
 Config.BleedingProgression = 2      -- Increase from 1 to 2 minutes
 Config.PainProgression = 2          -- Increase from 1 to 2 minutes
 Config.InfectionTickInterval = 5    -- Increase from 2 to 5 minutes
 ```
+
 2. Reduce wound history retention:
+
 ```lua
 Config.MaxScarsPerPlayer = 3        -- Reduce from 5 to 3
 ```
+
 3. Run database cleanup procedure manually:
+
 ```sql
 CALL CleanupExpiredMedicalData();
 ```
@@ -545,16 +583,20 @@ Config.BagCraftingRecipe = {
 ### 5. Set Up Cron Job for Cleanup
 
 **Linux Server**:
+
 ```bash
 # Add to crontab:
 0 3 * * * mysql -u [user] -p[pass] [database] -e "CALL CleanupExpiredMedicalData();"
 ```
 
 **Windows Server** (Task Scheduler):
+
 1. Create batch file `cleanup_medical.bat`:
+
 ```batch
 mysql -u [user] -p[pass] [database] -e "CALL CleanupExpiredMedicalData();"
 ```
+
 2. Schedule to run daily at 3:00 AM
 
 ## Uninstallation
@@ -562,12 +604,14 @@ mysql -u [user] -p[pass] [database] -e "CALL CleanupExpiredMedicalData();"
 If you need to remove QC-AdvancedMedic:
 
 ### 1. Stop the Resource
+
 ```cfg
 # In server.cfg, remove or comment out:
 # ensure QC-AdvancedMedic
 ```
 
 ### 2. Remove Database Tables (OPTIONAL - Data will be lost!)
+
 ```sql
 DROP TABLE IF EXISTS player_wounds;
 DROP TABLE IF EXISTS medical_treatments;
@@ -578,11 +622,13 @@ DROP PROCEDURE IF EXISTS CleanupExpiredMedicalData;
 ```
 
 ### 3. Remove Items from Framework
+
 1. Open `rsg-core/shared/items.lua`
 2. Remove all QC-AdvancedMedic items
 3. Restart `rsg-core`
 
 ### 4. Delete Resource Folder
+
 ```bash
 rm -rf resources/[quantum]/QC-AdvancedMedic
 ```
@@ -601,6 +647,7 @@ If you encounter issues not covered in this guide:
    - Steps to reproduce
 
 **When Reporting Issues, Include**:
+
 ```
 - RedM Build: [e.g., 1436]
 - RSG-Core Version: [e.g., 1.2.5]
@@ -613,7 +660,7 @@ If you encounter issues not covered in this guide:
 
 Before going live, verify:
 
-- [ ] Database tables created successfully (4 tables)
+- [ ] Database tables created successfully (5 tables: player_wounds, medical_treatments, player_infections, player_fractures, medical_history)
 - [ ] Stored procedures created (2 procedures)
 - [ ] Items added to rsg-core shared items
 - [ ] Item images added to inventory folder
