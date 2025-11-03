@@ -1,9 +1,9 @@
 -- =========================================================
--- QC-ADVANCED MEDIC - OPTIMIZED DATABASE SCHEMA (4 Tables)
+-- QC-ADVANCED MEDIC - OPTIMIZED DATABASE SCHEMA (5 Tables)
 -- =========================================================
--- Simplified from 8 tables to 4 core tables for better performance
+-- Simplified from 8 tables to 5 core tables for better performance
 -- Maintains all functionality while reducing complexity
--- Tables: player_wounds, medical_treatments, player_infections, medical_history
+-- Tables: player_wounds, medical_treatments, player_infections, player_fractures, medical_history
 -- =========================================================
 
 -- =========================================================
@@ -13,8 +13,11 @@ CREATE TABLE IF NOT EXISTS `player_wounds` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `citizenid` varchar(50) NOT NULL,
     `body_part` varchar(20) NOT NULL,
-    `pain_level` int(2) NOT NULL DEFAULT 0,
-    `bleeding_level` int(2) NOT NULL DEFAULT 0,
+    `pain_level` decimal(3,1) NOT NULL DEFAULT 0.0,
+    `bleeding_level` decimal(3,1) NOT NULL DEFAULT 0.0,
+    `current_health` decimal(5,2) NOT NULL DEFAULT 100.00 COMMENT 'Current body part health points',
+    `max_health` decimal(5,2) NOT NULL DEFAULT 100.00 COMMENT 'Max health from Config.BodyParts', 
+    `health_percentage` decimal(5,2) NOT NULL DEFAULT 100.00 COMMENT 'Health percentage for NUI',
     `weapon_data` varchar(50) DEFAULT NULL,
     `weapon_hash` bigint(20) DEFAULT NULL,
     `weapon_name` varchar(100) DEFAULT NULL,
@@ -29,7 +32,9 @@ CREATE TABLE IF NOT EXISTS `player_wounds` (
     KEY `idx_citizenid` (`citizenid`),
     KEY `idx_created_at` (`created_at`),
     KEY `idx_is_scar` (`is_scar`),
-    KEY `idx_scar_time` (`scar_time`)
+    KEY `idx_scar_time` (`scar_time`),
+    KEY `idx_health_percentage` (`health_percentage`),
+    KEY `idx_current_health` (`current_health`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =========================================================
@@ -88,12 +93,38 @@ CREATE TABLE IF NOT EXISTS `player_infections` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =========================================================
--- OPTIONAL: MEDICAL HISTORY (Audit trail - can be added later)
+-- TABLE 4: PLAYER FRACTURES (Separate from wounds - prevents collision)
+-- =========================================================
+CREATE TABLE IF NOT EXISTS `player_fractures` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `citizenid` varchar(50) NOT NULL,
+    `body_part` varchar(20) NOT NULL,
+    `fracture_type` enum('fracture', 'bone_break') NOT NULL COMMENT 'fracture=1-6 severity, bone_break=7-10 severity',
+    `severity` int(2) NOT NULL DEFAULT 5 COMMENT 'Severity 1-10 (1-3=minor, 4-6=moderate, 7-8=severe, 9-10=critical)',
+    `pain_level` decimal(3,1) NOT NULL DEFAULT 0.0 COMMENT 'Current pain level from fracture',
+    `mobility_impact` decimal(3,2) NOT NULL DEFAULT 0.0 COMMENT 'Movement impairment 0.0-1.0 (0.8=80% reduced mobility)',
+    `healing_progress` decimal(5,2) NOT NULL DEFAULT 0.0 COMMENT 'Healing progress 0-100%',
+    `requires_surgery` tinyint(1) DEFAULT FALSE COMMENT 'Whether fracture needs surgical intervention',
+    `fracture_description` text COMMENT 'Detailed description of the fracture',
+    `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `healed_at` timestamp NULL DEFAULT NULL COMMENT 'When fracture was fully healed',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `unique_fracture` (`citizenid`, `body_part`),
+    KEY `idx_citizenid` (`citizenid`),
+    KEY `idx_body_part` (`body_part`),
+    KEY `idx_healing_progress` (`healing_progress`),
+    KEY `idx_fracture_type` (`fracture_type`),
+    KEY `idx_severity` (`severity`),
+    KEY `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =========================================================
+-- TABLE 5: MEDICAL HISTORY (Audit trail - can be added later)
 -- =========================================================
 CREATE TABLE IF NOT EXISTS `medical_history` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `citizenid` varchar(50) NOT NULL,
-    `event_type` enum('wound_created', 'wound_change', 'treatment_applied', 'treatment_change', 'treatment_removed', 'infection_started', 'infection_cured', 'wound_healed', 'wound_scarred', 'admin_clear_wounds', 'medical_inspection') NOT NULL,
+    `event_type` enum('wound_created', 'wound_change', 'treatment_applied', 'treatment_change', 'treatment_removed', 'infection_started', 'infection_cured', 'wound_healed', 'wound_scarred', 'fracture_created', 'fracture_healed', 'admin_clear_wounds', 'medical_inspection') NOT NULL,
     `body_part` varchar(20) DEFAULT NULL,
     `details` json NOT NULL,
     `performed_by` varchar(50) DEFAULT NULL,
@@ -128,6 +159,12 @@ BEGIN
     SELECT 'infections' as data_type, i.* 
     FROM `player_infections` i 
     WHERE i.`citizenid` = player_citizenid AND i.`is_active` = 1;
+    
+    -- Get active fractures (healing progress < 100%)
+    SELECT 'fractures' as data_type, f.* 
+    FROM `player_fractures` f 
+    WHERE f.`citizenid` = player_citizenid AND f.`healing_progress` < 100.0
+    ORDER BY f.`created_at` DESC;
 END$$
 DELIMITER ;
 
@@ -162,19 +199,19 @@ DELIMITER ;
 -- EXAMPLE DATA FOR TESTING
 -- =========================================================
 
--- Example: Cotton bandage applied by self
+-- Example: Cotton bandage applied by self (expires in 5 minutes)
 -- INSERT INTO medical_treatments 
--- (citizenid, body_part, treatment_type, item_type, applied_by, effectiveness, decay_rate, metadata)
+-- (citizenid, body_part, treatment_type, item_type, applied_by, expiration_time, pain_reduction, bleeding_reduction, metadata)
 -- VALUES 
--- ('ABC123', 'RLEG', 'bandage', 'cotton_bandage', 'ABC123', 75.0, 2.5, 
---  '{"bandage_quality": "basic", "dirty_factor": 0.0, "self_applied": true}');
+-- ('ABC123', 'RLEG', 'bandage', 'cotton_bandage', 'ABC123', DATE_ADD(NOW(), INTERVAL 5 MINUTE), 4, 4, 
+--  '{"bandage_quality": "basic", "self_applied": true, "oneTimeHeal": 12}');
 
--- Example: Silk bandage applied by medic
+-- Example: Sterile bandage applied by medic (expires in 12 minutes)
 -- INSERT INTO medical_treatments 
--- (citizenid, body_part, treatment_type, item_type, applied_by, effectiveness, decay_rate, metadata)
+-- (citizenid, body_part, treatment_type, item_type, applied_by, expiration_time, pain_reduction, bleeding_reduction, metadata)
 -- VALUES 
--- ('ABC123', 'RLEG', 'bandage', 'silk_bandage', 'DEF456', 95.0, 1.0,
---  '{"bandage_quality": "premium", "medic_skill": "expert", "sterile": true}');
+-- ('ABC123', 'RLEG', 'bandage', 'sterile_bandage', 'DEF456', DATE_ADD(NOW(), INTERVAL 12 MINUTE), 8, 8,
+--  '{"bandage_quality": "sterile", "medic_skill": "expert", "oneTimeHeal": 25}');
 
 -- =========================================================
 -- VIEWS FOR EASY NUI ACCESS
@@ -194,7 +231,11 @@ SELECT
                        WHEN t.applied_by = w.citizenid THEN 'self' 
                        ELSE 'medic' 
                    END,
-                   ' (', ROUND(t.effectiveness, 1), '% effective)')
+                   CASE 
+                       WHEN t.expiration_time IS NOT NULL AND t.expiration_time > NOW() THEN ' (active)'
+                       WHEN t.expiration_time IS NOT NULL AND t.expiration_time <= NOW() THEN ' (expired)'
+                       ELSE ' (permanent)'
+                   END)
      FROM medical_treatments t 
      WHERE t.citizenid = w.citizenid 
      AND t.body_part = w.body_part 
@@ -207,11 +248,26 @@ SELECT
     i.citizenid,
     i.body_part,
     'infection' as condition_type,
-    CONCAT(i.infection_type, ' - Stage ', i.stage) as description,
+    CONCAT(COALESCE(i.wound_type, 'Unknown'), ' Infection - Stage ', i.stage, ' (', i.infection_percentage, '%)') as description,
     i.start_time as condition_start,
     CASE 
         WHEN i.immunity_end_time > NOW() THEN CONCAT('Immune until ', i.immunity_end_time)
-        ELSE NULL 
+        ELSE CONCAT('Cure progress: ', i.cure_progress, '%')
     END as latest_treatment
 FROM player_infections i
-WHERE i.is_active = 1;
+WHERE i.is_active = 1
+UNION ALL
+SELECT 
+    f.citizenid,
+    f.body_part,
+    'fracture' as condition_type,
+    CONCAT(f.fracture_type, ' - Severity ', f.severity, ' (', f.healing_progress, '% healed)') as description,
+    f.created_at as condition_start,
+    CASE 
+        WHEN f.requires_surgery = 1 AND f.healing_progress < 10 THEN 'Requires surgical intervention'
+        WHEN f.healing_progress < 25 THEN 'Early healing stage'
+        WHEN f.healing_progress < 75 THEN 'Moderate healing progress'
+        ELSE 'Advanced healing stage'
+    END as latest_treatment
+FROM player_fractures f
+WHERE f.healing_progress < 100.0;
