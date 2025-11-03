@@ -8,7 +8,7 @@ Advanced medical roleplay system for RedM with realistic wound mechanics, treatm
 ![Platform](https://img.shields.io/badge/platform-CFX.re%20(RedM%2FFiveM)-purple.svg)
 ![Status](https://img.shields.io/badge/status-WIP%20Alpha-orange.svg)
 
-> **⚠️ Alpha Status - NOT Production Ready**: This is a work-in-progress release with known issues (see Known Issues below). We're seeking feedback and collaboration! Please report issues and suggestions via GitHub Issues.
+> **⚠️ Beta Status**: Core systems are functional. The bandage maintenance mechanic requires ongoing wound care, making it ideal for roleplay servers. We're seeking feedback and collaboration! Please report issues and suggestions via GitHub Issues.
 
 ## Features
 
@@ -223,8 +223,8 @@ All contributors will be recognized in [CONTRIBUTORS.md](CONTRIBUTORS.md)! We ap
 
 ## Known Issues
 
-**Critical:**
-- **⚠️ Wound Healing System Bug**: Wounds cannot heal into scars because bandages expire (3-12 min) before wounds can heal (10-40 min) but could also be internal issue as well looking into this. The healing system requires an active bandage for the entire duration, but bandages expire too quickly. *Workaround: Manually remove bandages when bleeding reaches level 1 and wound is stable.*
+**Important Game Mechanics:**
+- **💡 Bandage Maintenance System**: Wounds require active bandage maintenance to heal into scars (intentional design). Players must replace bandages every 3-12 minutes during the healing period (10-40 min total). This encourages realistic medical roleplay and ongoing patient care rather than "set and forget" healing. *See [Wiki - Known Issues](https://github.com/Quantum-Projects-RedM/QC-AdvancedMedic/wiki/Known-Issues) for detailed workflow.*
 
 **Minor:**
 - Shotgun pellet hit detection may occasionally miss at extreme angles
@@ -242,18 +242,16 @@ All contributors will be recognized in [CONTRIBUTORS.md](CONTRIBUTORS.md)! We ap
 
 ## Credits
 
-**Developer**: Artmines
-**Organization**: Quantum Projects
-**Framework**: RSG-Core
-**Contributors**: See [CONTRIBUTORS.md](CONTRIBUTORS.md) for full list
+**Developer**: Artmines  
+**Organization**: Quantum Projects  
+**Framework**: RSG-Core  
+**Contributors**: See [CONTRIBUTORS.md](CONTRIBUTORS.md) for full list  
 **Special Thanks**: RedM community, all our testers, and everyone who supports the project
 
 ## Support
 
-**Issues**: [GitHub Issues](https://github.com/Quantum-Projects-RedM/QC-AdvancedMedic/issues)
-
-**Discussions**: [GitHub Discussions](https://github.com/Quantum-Projects-RedM/QC-AdvancedMedic/discussions)
-
+**Issues**: [GitHub Issues](https://github.com/Quantum-Projects-RedM/QC-AdvancedMedic/issues)  
+**Discussions**: [GitHub Discussions](https://github.com/Quantum-Projects-RedM/QC-AdvancedMedic/discussions)  
 **Discord**: [Quantum Projects](https://discord.gg/kJ8ZrGM8TS)
 
 ## License
