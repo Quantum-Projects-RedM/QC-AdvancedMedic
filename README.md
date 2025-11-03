@@ -222,7 +222,7 @@ We welcome contributions! This is an alpha release and we need:
 - NUI body part selection can be finicky on ultrawide monitors
 - Fall damage detection sometimes triggers on steep slopes instead of actual falls
 
-See [DEVLOG.md](DEVLOG.md) for detailed development history and fixes.
+See [CHANGELOG.md](CHANGELOG.md) for detailed development history and fixes.
 
 ## Performance Notes
 
