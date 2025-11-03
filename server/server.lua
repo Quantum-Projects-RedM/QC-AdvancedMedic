@@ -3,24 +3,69 @@ local playerInjury = {}
 lib.locale()
 
 -----------------------
--- Functions
+-- Helper Functions
 -----------------------
+-- Check if player has any medic job
+local function IsMedicJob(jobName)
+    if not jobName then return false end
+
+    -- Check against all jobs in MedicJobLocations
+    for _, location in pairs(Config.MedicJobLocations) do
+        if location.job == jobName then
+            return true
+        end
+    end
+
+    return false
+end
+
 function GetCharsInjuries(source)
     return playerInjury[source]
 end
 
 -----------------------
--- use bandage
+-- use bandage (dynamically created from config)
 -----------------------
-RSGCore.Functions.CreateUseableItem('bandage', function(source, item)
-    local src = source
-    TriggerClientEvent('qc-AdvancedMedic:client:usebandage', src, item.name)
-end)
+-- Create useable items for all bandage types defined in config
+for bandageType, bandageConfig in pairs(Config.BandageTypes) do
+    local itemName = bandageConfig.itemName or bandageType
+    
+    RSGCore.Functions.CreateUseableItem(itemName, function(source, item)
+        local src = source
+        TriggerClientEvent('QC-AdvancedMedic:client:usebandage', src, bandageType)
+    end)
+    
+    if Config.WoundSystem.debugging.enabled then
+        print(string.format("[BANDAGE SYSTEM] Registered useable item: %s -> %s", itemName, bandageType))
+    end
+end
+
+-- Create useable items for all cure items defined in infection config
+for cureType, cureConfig in pairs(Config.InfectionSystem.cureItems) do
+    local itemName = cureConfig.itemName or cureType
+    
+    RSGCore.Functions.CreateUseableItem(itemName, function(source, item)
+        local src = source
+        local Player = RSGCore.Functions.GetPlayer(src)
+        if not Player then return end
+        
+        -- Trigger client-side infection treatment
+        TriggerClientEvent('QC-AdvancedMedic:client:UseCureItem', src, cureType)
+        
+        -- Remove item from inventory
+        Player.Functions.RemoveItem(itemName, 1)
+        TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[itemName], "remove", 1)
+    end)
+    
+    if Config.InfectionSystem.debugging.enabled then
+        print(string.format("[INFECTION SYSTEM] Registered cure item: %s -> %s", itemName, cureType))
+    end
+end
 
 ---------------------------------
 -- medic storage
 ---------------------------------
-RegisterNetEvent('qc-AdvancedMedic:server:openstash', function(location)
+RegisterNetEvent('QC-AdvancedMedic:server:openstash', function(location)
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
     if not Player then return end
@@ -36,7 +81,7 @@ RSGCore.Commands.Add('revive', locale('sv_revive'), {{name = 'id', help = locale
     local src = source
 
     if not args[1] then
-        TriggerClientEvent('qc-AdvancedMedic:client:playerRevive', src)
+        TriggerClientEvent('QC-AdvancedMedic:client:playerRevive', src)
         return
     end
 
@@ -46,7 +91,74 @@ RSGCore.Commands.Add('revive', locale('sv_revive'), {{name = 'id', help = locale
         return
     end
 
-    TriggerClientEvent('qc-AdvancedMedic:client:adminRevive', Player.PlayerData.source)
+    TriggerClientEvent('QC-AdvancedMedic:client:adminRevive', Player.PlayerData.source)
+end, 'admin')
+
+-- Admin Clear Wounds
+RSGCore.Commands.Add('clearwounds', 'Clear all wounds and fractures from a player (Admin Only)', {{name = 'id', help = 'Player ID (may be empty)'}}, false, function(source, args)
+    local src = source
+    
+    if not args[1] then
+        -- Clear wounds from self
+        local Player = RSGCore.Functions.GetPlayer(src)
+        if Player then
+            TriggerClientEvent('QC-AdvancedMedic:client:ClearAllWounds', src)
+            
+            -- Clear from database for self (optimized 3-table schema)
+            local citizenid = Player.PlayerData.citizenid
+            if citizenid then
+                -- Clear all wound-related data from optimized database
+                MySQL.Async.execute('DELETE FROM player_wounds WHERE citizenid = ?', {citizenid})
+                MySQL.Async.execute('DELETE FROM player_fractures WHERE citizenid = ?', {citizenid})
+                MySQL.Async.execute('UPDATE medical_treatments SET is_active = 0 WHERE citizenid = ?', {citizenid})
+                MySQL.Async.execute('UPDATE player_infections SET is_active = 0, cured_at = NOW(), cured_by = ? WHERE citizenid = ?', {'admin_' .. src, citizenid})
+                
+                -- Log the medical event
+                MySQL.Async.execute([[
+                    INSERT INTO medical_history 
+                    (citizenid, event_type, details, performed_by)
+                    VALUES (?, 'admin_clear_wounds', '{"reason": "Admin cleared all wounds and fractures"}', ?)
+                ]], {citizenid, 'admin_' .. src})
+            end
+            
+            TriggerClientEvent('ox_lib:notify', src, {title = 'Medical System', description = 'Your wounds and fractures have been cleared', type = 'success'})
+        else
+            TriggerClientEvent('ox_lib:notify', src, {title = 'Error', description = 'Could not find player data', type = 'error'})
+        end
+        return
+    end
+    
+    local targetId = tonumber(args[1])
+    local Player = RSGCore.Functions.GetPlayer(targetId)
+    
+    if not Player then
+        TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_no_online'), type = 'error'})
+        return
+    end
+    
+    -- Clear wounds from target player
+    TriggerClientEvent('QC-AdvancedMedic:client:ClearAllWounds', Player.PlayerData.source)
+    
+    -- Also clear from database (optimized 3-table schema)
+    local citizenid = Player.PlayerData.citizenid
+    if citizenid then
+        -- Clear all wound-related data from optimized database
+        MySQL.Async.execute('DELETE FROM player_wounds WHERE citizenid = ?', {citizenid})
+        MySQL.Async.execute('DELETE FROM player_fractures WHERE citizenid = ?', {citizenid})
+        MySQL.Async.execute('UPDATE medical_treatments SET is_active = 0 WHERE citizenid = ?', {citizenid})
+        MySQL.Async.execute('UPDATE player_infections SET is_active = 0, cured_at = NOW(), cured_by = ? WHERE citizenid = ?', {'admin_' .. src, citizenid})
+        
+        -- Log the medical event
+        MySQL.Async.execute([[
+            INSERT INTO medical_history 
+            (citizenid, event_type, details, performed_by)
+            VALUES (?, 'admin_clear_wounds', '{"reason": "Admin cleared all wounds and fractures", "target_id": ?}', ?)
+        ]], {citizenid, targetId, 'admin_' .. src})
+    end
+    
+    TriggerClientEvent('ox_lib:notify', src, {title = 'Medical System', description = 'Wounds and fractures cleared for player ' .. targetId, type = 'success'})
+    TriggerClientEvent('ox_lib:notify', Player.PlayerData.source, {title = 'Medical System', description = 'Your wounds and fractures have been cleared by an admin', type = 'inform'})
+    
 end, 'admin')
 
 -- Admin Kill Player
@@ -60,13 +172,13 @@ RSGCore.Commands.Add('kill', locale('sv_kill'), {{name = 'id', help = locale('sv
         return
     end
 
-    TriggerClientEvent('qc-AdvancedMedic:client:KillPlayer', Player.PlayerData.source)
+    TriggerClientEvent('QC-AdvancedMedic:client:KillPlayer', Player.PlayerData.source)
 end, 'admin')
 
 RSGCore.Commands.Add('heal', locale('sv_heal'), {{name = 'id', help = locale('sv_heal_2')}}, false, function(source, args)
     local src = source
     if not args[1] then
-        TriggerClientEvent('qc-AdvancedMedic:client:playerHeal', src)
+        TriggerClientEvent('QC-AdvancedMedic:client:playerHeal', src)
         return
     end
     local Player = RSGCore.Functions.GetPlayer(tonumber(args[1]))
@@ -74,14 +186,14 @@ RSGCore.Commands.Add('heal', locale('sv_heal'), {{name = 'id', help = locale('sv
         TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_no_online'), type = 'error', duration = 7000 })
         return
     end
-    TriggerClientEvent('qc-AdvancedMedic:client:adminHeal', Player.PlayerData.source)
+    TriggerClientEvent('QC-AdvancedMedic:client:adminHeal', Player.PlayerData.source)
 end, 'admin')
 
 ----------------------
 -- EVENTS 
 -----------------------
 -- Death Actions: Remove Inventory / Cash
-RegisterNetEvent('qc-AdvancedMedic:server:deathactions', function()
+RegisterNetEvent('QC-AdvancedMedic:server:deathactions', function()
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
 
@@ -102,7 +214,7 @@ RegisterNetEvent('qc-AdvancedMedic:server:deathactions', function()
 end)
 
 -- Get Players Health
-RSGCore.Functions.CreateCallback('qc-AdvancedMedic:server:getplayerhealth', function(source, cb)
+RSGCore.Functions.CreateCallback('QC-AdvancedMedic:server:getplayerhealth', function(source, cb)
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
     local health = Player.PlayerData.metadata['health']
@@ -110,7 +222,7 @@ RSGCore.Functions.CreateCallback('qc-AdvancedMedic:server:getplayerhealth', func
 end)
 
 -- Set Player Health
-RegisterNetEvent('qc-AdvancedMedic:server:SetHealth', function(amount)
+RegisterNetEvent('QC-AdvancedMedic:server:SetHealth', function(amount)
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
 
@@ -126,45 +238,45 @@ RegisterNetEvent('qc-AdvancedMedic:server:SetHealth', function(amount)
 end)
 
 -- Medic Revive Player
-RegisterNetEvent('qc-AdvancedMedic:server:RevivePlayer', function(playerId)
+RegisterNetEvent('QC-AdvancedMedic:server:RevivePlayer', function(playerId)
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
     local Patient = RSGCore.Functions.GetPlayer(playerId)
 
     if not Patient then return end
 
-    if Player.PlayerData.job.name ~= Config.JobRequired then
+    if not IsMedicJob(Player.PlayerData.job.name) then
         TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_not_medic'), type = 'error', duration = 7000 })
         return
     end
 
     if Player.Functions.RemoveItem('firstaid', 1) then
         TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items['firstaid'], 'remove')
-        TriggerClientEvent('qc-AdvancedMedic:client:playerRevive', Patient.PlayerData.source)
+        TriggerClientEvent('QC-AdvancedMedic:client:playerRevive', Patient.PlayerData.source)
     end
 end)
 
 -- Medic Treat Wounds
-RegisterNetEvent('qc-AdvancedMedic:server:TreatWounds', function(playerId)
+RegisterNetEvent('QC-AdvancedMedic:server:TreatWounds', function(playerId)
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
     local Patient = RSGCore.Functions.GetPlayer(playerId)
 
     if not Patient then return end
 
-    if Player.PlayerData.job.name ~= Config.JobRequired then
+    if not IsMedicJob(Player.PlayerData.job.name) then
         TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_not_medic'), type = 'error', duration = 7000 })
         return
     end
 
     if Player.Functions.RemoveItem('bandage', 1) then
         TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items['bandage'], 'remove')
-        TriggerClientEvent('qc-AdvancedMedic:client:HealInjuries', Patient.PlayerData.source, 'full')
+        TriggerClientEvent('QC-AdvancedMedic:client:HealInjuries', Patient.PlayerData.source, 'full')
     end
 end)
 
 -- Medic Alert
-RegisterNetEvent('qc-AdvancedMedic:server:medicAlert', function(text)
+RegisterNetEvent('QC-AdvancedMedic:server:medicAlert', function(text)
     local src = source
     local ped = GetPlayerPed(src)
     local coords = GetEntityCoords(ped)
@@ -172,7 +284,7 @@ RegisterNetEvent('qc-AdvancedMedic:server:medicAlert', function(text)
 
     for _, v in pairs(players) do
         if v.PlayerData.job.name == 'medic' and v.PlayerData.job.onduty then
-            TriggerClientEvent('qc-AdvancedMedic:client:medicAlert', v.PlayerData.source, coords, text)
+            TriggerClientEvent('QC-AdvancedMedic:client:medicAlert', v.PlayerData.source, coords, text)
         end
     end
 end)
@@ -180,11 +292,11 @@ end)
 --------------------------
 -- Medics On-Duty Callback
 -------------------------
-RSGCore.Functions.CreateCallback('qc-AdvancedMedic:server:getmedics', function(source, cb)
+RSGCore.Functions.CreateCallback('QC-AdvancedMedic:server:getmedics', function(source, cb)
     local amount = 0
     local players = RSGCore.Functions.GetRSGPlayers()
     for k, v in pairs(players) do
-        if v.PlayerData.job.name == Config.JobRequired and v.PlayerData.job.onduty then
+        if IsMedicJob(v.PlayerData.job.name) and v.PlayerData.job.onduty then
             amount = amount + 1
         end
     end
@@ -194,7 +306,7 @@ end)
 ---------------------------------
 -- remove item
 ---------------------------------
-RegisterServerEvent('qc-AdvancedMedic:server:removeitem', function(item, amount)
+RegisterServerEvent('QC-AdvancedMedic:server:removeitem', function(item, amount)
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
     if not Player then return end
@@ -202,9 +314,230 @@ RegisterServerEvent('qc-AdvancedMedic:server:removeitem', function(item, amount)
     TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[item], 'remove', amount)
 end)
 
-RegisterServerEvent('qc-AdvancedMedic:SyncWounds')
-AddEventHandler('qc-AdvancedMedic:SyncWounds', function(data)
+RegisterServerEvent('QC-AdvancedMedic:SyncWounds')
+AddEventHandler('QC-AdvancedMedic:SyncWounds', function(data)
     playerInjury[source] = data
+end)
+
+--=========================================================
+-- ENHANCED DUTY & PAYMENT SYSTEM (10-MINUTE INTERVALS)
+--=========================================================
+
+local dutyTimers = {} -- Track duty timers by player source
+
+-- Pay rates per hour (1890s appropriate)
+local payRates = {
+    [0] = 1,   -- Recruit: $1/hour
+    [1] = 2,   -- Trainee: $2/hour  
+    [2] = 3,   -- Pharmacist: $3/hour
+    [3] = 4,   -- Doctor: $4/hour
+    [4] = 6,   -- Surgeon: $6/hour
+    [5] = 8,   -- Manager: $8/hour
+}
+
+-- Calculate 10-minute pay (16.67% of hourly rate)
+local function Calculate10MinutePay(hourlyRate)
+    return math.floor((hourlyRate * 10) / 60) -- 10 minutes / 60 minutes = 16.67%
+end
+
+-- Helper function to check if job is a medic job
+local function IsMedicJob(jobName)
+    for _, location in pairs(Config.MedicJobLocations) do
+        if location.job == jobName then
+            return true
+        end
+    end
+    return false
+end
+
+-- Start duty pay timer (every 10 minutes)
+RegisterNetEvent('QC-AdvancedMedic:server:StartDutyPayTimer')
+AddEventHandler('QC-AdvancedMedic:server:StartDutyPayTimer', function()
+    local src = source
+    local Player = RSGCore.Functions.GetPlayer(src)
+    
+    if not Player then return end
+    
+    local job = Player.PlayerData.job
+    if not IsMedicJob(job.name) then return end
+    
+    -- Clear existing timer if any
+    if dutyTimers[src] then
+        ClearTimeout(dutyTimers[src])
+    end
+    
+    -- Start 10-minute payment loop
+    local function PaymentLoop()
+        local CurrentPlayer = RSGCore.Functions.GetPlayer(src)
+        if not CurrentPlayer then 
+            dutyTimers[src] = nil
+            return 
+        end
+        
+        local currentJob = CurrentPlayer.PlayerData.job
+        if not IsMedicJob(currentJob.name) or not currentJob.onduty then
+            dutyTimers[src] = nil
+            return
+        end
+        
+        -- Calculate and give pay
+        local hourlyRate = payRates[currentJob.grade.level] or 2
+        local payAmount = Calculate10MinutePay(hourlyRate)
+        
+        if payAmount > 0 then
+            CurrentPlayer.Functions.AddMoney('cash', payAmount, 'medic-duty-pay-interval')
+            
+            TriggerClientEvent('ox_lib:notify', src, {
+                title = 'Duty Pay',
+                description = string.format('Earned $%d (10 min service)', payAmount),
+                type = 'success',
+                duration = 5000
+            })
+            
+            if Config.Debug then
+                print(string.format('[MEDIC PAY] %s earned $%d for 10 minutes at $%d/hour rate', 
+                    CurrentPlayer.PlayerData.name, payAmount, hourlyRate))
+            end
+        end
+        
+        -- Schedule next payment in 10 minutes (600,000 ms)
+        dutyTimers[src] = SetTimeout(600000, PaymentLoop)
+    end
+    
+    -- Start first payment in 10 minutes
+    dutyTimers[src] = SetTimeout(600000, PaymentLoop)
+    
+    if Config.Debug then
+        print(string.format('[MEDIC PAY] Started 10-minute pay timer for %s', Player.PlayerData.name))
+    end
+end)
+
+-- Process final duty pay when going off duty
+RegisterNetEvent('QC-AdvancedMedic:server:ProcessDutyPay')
+AddEventHandler('QC-AdvancedMedic:server:ProcessDutyPay', function(sessionTimeSeconds)
+    local src = source
+    local Player = RSGCore.Functions.GetPlayer(src)
+    
+    if not Player then return end
+    
+    -- Stop the timer
+    if dutyTimers[src] then
+        ClearTimeout(dutyTimers[src])
+        dutyTimers[src] = nil
+    end
+    
+    local job = Player.PlayerData.job
+    if not IsMedicJob(job.name) then return end
+    
+    -- Calculate any remaining partial pay (for time less than 10 minutes since last payment)
+    local hourlyRate = payRates[job.grade.level] or 2
+    local minutesWorked = sessionTimeSeconds / 60 -- Convert to minutes
+    local remainingMinutes = minutesWorked % 10 -- Get remainder after 10-minute intervals
+    
+    if remainingMinutes >= 5 then -- Pay if worked at least 5 minutes of partial time
+        local partialPay = math.floor((hourlyRate * remainingMinutes) / 60)
+        if partialPay > 0 then
+            Player.Functions.AddMoney('cash', partialPay, 'medic-duty-pay-final')
+            
+            TriggerClientEvent('ox_lib:notify', src, {
+                title = 'Final Duty Pay',
+                description = string.format('Earned $%d for %.1f minutes', partialPay, remainingMinutes),
+                type = 'success',
+                duration = 5000
+            })
+            
+            if Config.Debug then
+                print(string.format('[MEDIC PAY] %s earned final $%d for %.1f remaining minutes', 
+                    Player.PlayerData.name, partialPay, remainingMinutes))
+            end
+        end
+    end
+end)
+
+-- Clean up timer when player disconnects
+AddEventHandler('playerDropped', function()
+    local src = source
+    if dutyTimers[src] then
+        ClearTimeout(dutyTimers[src])
+        dutyTimers[src] = nil
+    end
+end)
+
+--=========================================================
+-- PHARMACEUTICAL SHOP SYSTEM
+--=========================================================
+
+-- Purchase pharmaceutical items
+RegisterNetEvent('QC-AdvancedMedic:server:PurchasePharmaceutical')
+AddEventHandler('QC-AdvancedMedic:server:PurchasePharmaceutical', function(data)
+    local src = source
+    local Player = RSGCore.Functions.GetPlayer(src)
+    
+    if not Player then return end
+    
+    local job = Player.PlayerData.job
+    if not IsMedicJob(job.name) then
+        TriggerClientEvent('ox_lib:notify', src, {
+            title = 'Access Denied',
+            description = 'You must be a medic to purchase pharmaceutical items',
+            type = 'error',
+            duration = 5000
+        })
+        return
+    end
+    
+    -- Check if player is pharmacist or boss
+    if job.grade.level < 2 and not job.grade.isboss then
+        TriggerClientEvent('ox_lib:notify', src, {
+            title = 'Access Denied', 
+            description = 'Only Pharmacists and above can purchase pharmaceutical supplies',
+            type = 'error',
+            duration = 5000
+        })
+        return
+    end
+    
+    -- Check if player has enough money
+    local playerMoney = Player.PlayerData.money['cash'] or 0
+    if playerMoney < data.totalCost then
+        TriggerClientEvent('ox_lib:notify', src, {
+            title = 'Insufficient Funds',
+            description = string.format('You need $%d but only have $%d', data.totalCost, playerMoney),
+            type = 'error',
+            duration = 5000
+        })
+        return
+    end
+    
+    -- Check if player has inventory space
+    local hasSpace = Player.Functions.AddItem(data.item, data.quantity, false, nil, true) -- dry run
+    if not hasSpace then
+        TriggerClientEvent('ox_lib:notify', src, {
+            title = 'Inventory Full',
+            description = 'You do not have enough inventory space',
+            type = 'error',
+            duration = 5000
+        })
+        return
+    end
+    
+    -- Process purchase
+    Player.Functions.RemoveMoney('cash', data.totalCost, 'pharmaceutical-purchase')
+    Player.Functions.AddItem(data.item, data.quantity)
+    
+    TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[data.item], "add", data.quantity)
+    
+    TriggerClientEvent('ox_lib:notify', src, {
+        title = 'Purchase Successful',
+        description = string.format('Purchased %dx %s for $%d', data.quantity, data.label, data.totalCost),
+        type = 'success',
+        duration = 5000
+    })
+    
+    if Config.Debug then
+        print(string.format('[PHARMACEUTICAL] %s purchased %dx %s for $%d', 
+            Player.PlayerData.name, data.quantity, data.label, data.totalCost))
+    end
 end)
 
 AddEventHandler('onResourceStart', function(resourceName)

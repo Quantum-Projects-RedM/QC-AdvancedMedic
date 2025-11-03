@@ -1,0 +1,30 @@
+{
+  "files": {
+    "main.css": "./static/css/main.fc6345c7.css",
+    "main.js": "./static/js/main.4b923692.js",
+    "static/media/upper.png": "./static/media/upper.c6f7a409f445aad3d79a.png",
+    "static/media/lower.png": "./static/media/lower.5e93be34bb27748dfbfb.png",
+    "static/media/head.png": "./static/media/head.a5cadb4bcb95aa518249.png",
+    "static/media/large_weathered_paper.png": "./static/media/large_weathered_paper.8b250800ec34a52f385e.png",
+    "static/media/blood.png": "./static/media/blood.89059f054edb18d84dc5.png",
+    "static/media/spine.png": "./static/media/spine.7b63cab38ecc85123856.png",
+    "static/media/lhand.png": "./static/media/lhand.ba227f0b84eaee71a2f0.png",
+    "static/media/rhand.png": "./static/media/rhand.31746fe8e6538c930962.png",
+    "static/media/weathered_paper.png": "./static/media/weathered_paper.c9db93c7dce51ddf09b9.png",
+    "static/media/lfoot.png": "./static/media/lfoot.543ede3acdf9357777ed.png",
+    "static/media/rfoot.png": "./static/media/rfoot.73153bac204ab9f6c761.png",
+    "static/media/rleg.png": "./static/media/rleg.19b9827aeac5210b5bc6.png",
+    "static/media/lleg.png": "./static/media/lleg.f192d9e220788d85de8a.png",
+    "static/media/larm.png": "./static/media/larm.f29aec2e6eead169d8ef.png",
+    "static/media/rarm.png": "./static/media/rarm.c8e3cadd037a06bb1cad.png",
+    "static/media/selsected.png": "./static/media/selsected.c1820557616ff9906373.png",
+    "static/media/selection_box_bg_1d.png": "./static/media/selection_box_bg_1d.db795b7cbe6db75cb337.png",
+    "index.html": "./index.html",
+    "main.fc6345c7.css.map": "./static/css/main.fc6345c7.css.map",
+    "main.4b923692.js.map": "./static/js/main.4b923692.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.fc6345c7.css",
+    "static/js/main.4b923692.js"
+  ]
+}
