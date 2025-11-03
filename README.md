@@ -242,7 +242,7 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed development history and fixes.
 
 **Issues**: [GitHub Issues](https://github.com/Quantum-Projects-RedM/QC-AdvancedMedic/issues)
 **Discussions**: [GitHub Discussions](https://github.com/Quantum-Projects-RedM/QC-AdvancedMedic/discussions)
-**Discord**: [Your Discord Server](https://discord.gg/kJ8ZrGM8TS)
+**Discord**: [qUANTUM PROJECTS](https://discord.gg/kJ8ZrGM8TS)
 
 ## License
 
