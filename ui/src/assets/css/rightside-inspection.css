@@ -1,0 +1,2576 @@
+/* Right-Side Medical Inspection Panel CSS */
+/* Designed for RedM - Medical Inspection Panel appearing from right side */
+
+.medical-inspection-rightsidepanel {
+    position: fixed;
+    top: 5vh;
+    right: 2vw;
+    width: 22vw;
+    height: 88vh;
+    background-image: url(../imgs/large_weathered_paper.png);
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 9999;
+    font-family: "RDR Lino Regular", serif;
+    overflow: visible;
+    animation: slideInFromRight 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform-origin: right center;
+    display: none;
+}
+
+@keyframes slideInFromRight {
+    0% {
+        transform: translateX(100%) scale(0.95);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+    }
+}
+
+/* Slide in from bottom animation for submenus */
+@keyframes slideInFromBottom {
+    0% {
+        transform: translateX(-50%) translateY(100%);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutToBottom {
+    0% {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(-50%) translateY(100%);
+        opacity: 0;
+    }
+}
+
+.rightsidepanel-container {
+    height: 94%;
+    display: flex;
+    flex-direction: column;
+    padding: 2vw 1.5vw;
+    position: relative;
+}
+
+/* Header Section */
+.rightsidepanel-header {
+    background-image: url(../imgs/menu_header_1a.png);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center top;
+    padding: 2.5vw 2vw 1.5vw 1vw;
+    position: relative;
+    height: 6vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: -1.5vw -1vw 0 -1vw;
+    width: calc(100% + 2vw);
+}
+
+.medic-inspection-content {
+    flex: 1;
+    overflow-y: auto;
+    margin-top: 1vw;
+    /* Add any additional styles for the content area if needed */
+}
+
+.panel-close-btn {
+    display: none;
+}
+
+.panel-close-btn:hover {
+    transform: scale(1.1);
+    color: #fff;
+    text-shadow: none;
+}
+
+.panel-title {
+    color: white;
+    font-size: 1.8vw;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 0.3vw;
+    text-shadow: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5vw;
+    letter-spacing: 0.05vw;
+    font-family: "RDR Lino Regular", serif;
+}
+
+/* Pulsating Warning Background Animation */
+@keyframes warningPulsate {
+    0% {
+        background: rgba(255, 204, 102, 0.15);
+        box-shadow: 0 0 0.5vw rgba(255, 204, 102, 0.3);
+    }
+    50% {
+        background: rgba(220, 53, 69, 0.25);
+        box-shadow: 0 0 1vw rgba(220, 53, 69, 0.4);
+    }
+    100% {
+        background: rgba(255, 204, 102, 0.15);
+        box-shadow: 0 0 0.5vw rgba(255, 204, 102, 0.3);
+    }
+}
+
+.warning-notes-section {
+    background: rgba(220, 53, 69, 0.25) !important;
+    border: 0.05vw solid rgba(220, 53, 69, 0.4);
+    border-radius: 0.3vw;
+    padding: 0.8vw;
+    box-shadow: 0 0 0.8vw rgba(220, 53, 69, 0.3);
+}
+
+/* Submenu animation classes */
+.submenu-slide-in {
+    animation: slideInFromBottom 0.4s ease-out forwards;
+}
+
+.submenu-slide-out {
+    animation: slideOutToBottom 0.3s ease-in forwards;
+}
+
+/* Red border hover effect for treatment buttons */
+.medicine-type:hover,
+.injection-type:hover,
+.tourniquet-type:hover {
+    border: 1px solid #e74c3c !important;
+}
+
+.panel-subtitle {
+    color: white;
+    font-size: 0.9vw;
+    text-align: center;
+    font-style: normal;
+    margin-top: 0.2vw;
+    font-weight: 400;
+    text-shadow: none;
+    font-family: "RDR Lino Regular", serif;
+}
+
+/* Quick Patient Info */
+.quick-patient-info {
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+    padding: 0.6vw;
+    margin: 0.4vw;
+    border-radius: 0.2vw;
+    text-align: center;
+}
+
+.patient-name-large {
+    color: white;
+    font-size: 1.4vw;
+    font-weight: bold;
+    margin-bottom: 0.3vw;
+    text-shadow: none;
+    letter-spacing: 0.05vw;
+    font-family: "RDR Lino Regular", serif;
+}
+
+.patient-id-small {
+    color: white;
+    font-size: 0.8vw;
+    font-style: italic;
+    font-family: "RDR Lino Regular", serif;
+}
+
+/* Patient Info Card */
+.patient-info-card {
+    background: rgba(0, 0, 0, 0.4);
+    margin: 15px;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid rgba(139, 115, 85, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.patient-avatar-container {
+    position: relative;
+}
+
+.patient-avatar {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #8B7355, #A0896B);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2c2c2c;
+    font-size: 24px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.patient-status-indicator {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #1a252f;
+    background: #27ae60;
+    animation: statusPulse 2s infinite;
+}
+
+.patient-status-indicator.critical {
+    background: #e74c3c;
+}
+
+.patient-status-indicator.warning {
+    background: #f39c12;
+}
+
+@keyframes statusPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.patient-basic-info {
+    flex: 1;
+}
+
+.patient-name-display {
+    color: #8B7355;
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 3px;
+}
+
+.patient-id-display {
+    color: #999;
+    font-size: 12px;
+}
+
+.vital-indicators {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.vital-indicator {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(139, 115, 85, 0.2);
+    padding: 5px 8px;
+    border-radius: 15px;
+    font-size: 12px;
+}
+
+.vital-icon-small {
+    color: #e74c3c;
+    font-size: 14px;
+    animation: heartbeatSmall 1.5s ease-in-out infinite;
+}
+
+@keyframes heartbeatSmall {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.vital-unit-small {
+    color: #999;
+    font-size: 10px;
+}
+
+/* Medical Overview Cards */
+.medical-overview-section {
+    padding: 0 15px;
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.overview-card {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    border: 1px solid rgba(139, 115, 85, 0.2);
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.overview-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--card-color, #8B7355);
+    transition: all 0.3s ease;
+}
+
+.critical-card {
+    --card-color: #e74c3c;
+}
+
+.bleeding-card {
+    --card-color: #f39c12;
+}
+
+.treated-card {
+    --card-color: #27ae60;
+}
+
+.overview-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.card-icon {
+    color: var(--card-color, #8B7355);
+    font-size: 20px;
+    margin-bottom: 8px;
+}
+
+.card-number {
+    color: #8B7355;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 3px;
+}
+
+.card-label {
+    color: #999;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Blood Level Section */
+.blood-level-section {
+    margin: 0 15px 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 15px;
+    border: 1px solid rgba(139, 115, 85, 0.2);
+}
+
+.section-header-small {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #8B7355;
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.blood-progress-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.blood-progress-bar {
+    flex: 1;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.blood-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #e74c3c 0%, #f39c12 50%, #27ae60 100%);
+    border-radius: 4px;
+    transition: width 0.8s ease;
+    position: relative;
+}
+
+.blood-progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.blood-percentage {
+    color: #8B7355;
+    font-size: 14px;
+    font-weight: bold;
+    min-width: 40px;
+}
+
+.blood-status-text {
+    color: #999;
+    font-size: 12px;
+    text-align: center;
+    font-style: italic;
+}
+
+/* Medical Tabs Section */
+.medical-tabs-section {
+    flex: 1;
+    margin: 0 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(139, 115, 85, 0.2);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.tabs-header {
+    display: flex;
+    background: rgba(0, 0, 0, 0.4);
+    border-bottom: 1px solid rgba(139, 115, 85, 0.2);
+}
+
+.tab-button {
+    flex: 1;
+    padding: 12px;
+    background: transparent;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 12px;
+    position: relative;
+}
+
+.tab-button:hover {
+    background: rgba(139, 115, 85, 0.1);
+    color: #8B7355;
+}
+
+.tab-button.active {
+    color: #8B7355;
+    background: rgba(139, 115, 85, 0.2);
+}
+
+.tab-button.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 2px;
+    background: #8B7355;
+}
+
+.tabs-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.tabs-content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.tabs-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.tabs-content::-webkit-scrollbar-thumb {
+    background: #8B7355;
+    border-radius: 2px;
+}
+
+.tab-content-panel {
+    display: none;
+}
+
+.tab-content-panel.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Injury/Treatment Items */
+.medical-detail-item {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-left: 3px solid var(--severity-color, #8B7355);
+    transition: all 0.3s ease;
+}
+
+.medical-detail-item:hover {
+    background: rgba(0, 0, 0, 0.5);
+    transform: translateX(3px);
+}
+
+.item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.item-title {
+    color: #8B7355;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.severity-badge {
+    background: var(--severity-color, #8B7355);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+    text-transform: uppercase;
+}
+
+.item-description {
+    color: #ccc;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+/* Action Buttons */
+.inspection-actions {
+    padding: 15px;
+    display: flex;
+    gap: 10px;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-family: "RDR Lino Regular", serif;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.primary-btn {
+    background: linear-gradient(135deg, #8B7355, #A0896B);
+    color: #2c2c2c;
+    box-shadow: 0 4px 8px rgba(139, 115, 85, 0.3);
+}
+
+.primary-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(139, 115, 85, 0.4);
+}
+
+.secondary-btn {
+    background: rgba(139, 115, 85, 0.2);
+    color: #8B7355;
+    border: 1px solid rgba(139, 115, 85, 0.3);
+}
+
+.secondary-btn:hover {
+    background: rgba(139, 115, 85, 0.3);
+    transform: translateY(-1px);
+}
+
+/* Responsive Design */
+@media (max-height: 800px) {
+    .medical-inspection-rightsidepanel {
+        width: 380px;
+        font-size: 12px;
+    }
+    
+    .patient-info-card {
+        padding: 12px;
+    }
+    
+    .patient-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+}
+
+/* Severity Color Variables */
+.severity-critical {
+    --severity-color: #e74c3c;
+}
+
+.severity-high {
+    --severity-color: #f39c12;
+}
+
+.severity-medium {
+    --severity-color: #f1c40f;
+}
+
+.severity-low {
+    --severity-color: #27ae60;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    font-style: italic;
+}
+
+.empty-state i {
+    font-size: 24px;
+    margin-bottom: 8px;
+    opacity: 0.5;
+}
+
+/* Body Part Detail Popup */
+.body-part-detail-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    width: 20vw;
+    background-image: url(../imgs/large_weathered_paper.png);
+    background-size: 100% 100%;
+    z-index: 10003;
+    font-family: "RDR Lino Regular", serif;
+    animation: popupSlideIn 0.4s ease-out forwards;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.body-part-detail-popup.show {
+    opacity: 1;
+    pointer-events: all;
+}
+
+@keyframes popupSlideIn {
+    0% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+.body-part-close-btn {
+    position: absolute;
+    top: 1vw;
+    right: 1vw;
+    width: 2vw;
+    height: 2vw;
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2vw;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.body-part-close-btn:hover {
+    transform: scale(1.1);
+    color: #fff;
+    background-image: url(../imgs/selected-item-box.png), url(../imgs/selection_box_bg_1d.png);
+    background-size: cover, cover;
+}
+
+.body-part-detail-header {
+    padding: 3vw 2vw 1vw 2vw;
+    text-align: center;
+}
+
+.body-part-detail-title {
+    color: white;
+    font-size: 1.2vw;
+    font-weight: bold;
+    margin-bottom: 0.5vw;
+    text-shadow: none;
+}
+
+.body-part-detail-subtitle {
+    color: white;
+    font-size: 0.8vw;
+}
+
+.body-part-detail-content {
+    padding: 1vw 2vw 2vw 2vw;
+    color: white;
+    font-size: 0.8vw;
+}
+
+/* Medical Inspection Inventory */
+.medical-inspection-inventory {
+    position: fixed;
+    bottom: 2vh;
+    right: 2vw;
+    width: 18vw;
+    background-image: url(../imgs/weathered_paper.png);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 10002;
+    font-family: "RDR Lino Regular", serif;
+    animation: slideUpFromBottom 0.5s ease-out;
+    padding: 2vw;
+}
+
+.inspection-inventory-header {
+    text-align: center;
+    margin-bottom: 1vw;
+}
+
+.inventory-title {
+    color: white;
+    font-size: 1vw;
+    font-weight: bold;
+    text-shadow: none;
+}
+
+.inventory-subtitle {
+    color: white;
+    font-size: 0.7vw;
+    margin-top: 0.3vw;
+}
+
+.inspection-treatments {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5vw;
+}
+
+.draggable-treatment {
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+    padding: 0.8vw;
+    border-radius: 0.3vw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3vw;
+    cursor: grab;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.draggable-treatment:hover {
+    background-image: url(../imgs/selected-item-box.png), url(../imgs/selection_box_bg_1d.png);
+    background-size: cover, cover;
+    transform: scale(1.05);
+}
+
+.draggable-treatment:active {
+    cursor: grabbing;
+    transform: scale(0.95);
+}
+
+.item-icon {
+    color: white;
+    font-size: 1.2vw;
+}
+
+.item-label {
+    color: white;
+    font-size: 0.6vw;
+    font-weight: bold;
+    text-align: center;
+}
+
+.item-count {
+    position: absolute;
+    top: 0.2vw;
+    right: 0.2vw;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    font-size: 0.6vw;
+    padding: 0.1vw 0.3vw;
+    border-radius: 0.5vw;
+    font-weight: bold;
+    min-width: 1vw;
+    text-align: center;
+}
+
+/* NEW MODERN STYLES */
+
+/* Blood Level Display */
+.blood-level-display {
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+    margin: 0.4vw;
+    padding: 0.6vw;
+    border-radius: 0.2vw;
+}
+
+.blood-header {
+    color: white;
+    font-size: 1.1vw;
+    font-weight: bold;
+    margin-bottom: 0.8vw;
+    display: flex;
+    align-items: center;
+    gap: 0.5vw;
+    text-shadow: none;
+    font-family: "RDR Lino Regular", serif;
+}
+
+.blood-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 0.8vw;
+}
+
+.blood-bar {
+    flex: 1;
+    height: 0.8vw;
+    background: rgba(255, 255, 255, 0.09);
+    border-radius: 0.1vw;
+    overflow: hidden;
+}
+
+.blood-fill {
+    height: 100%;
+    background: #e2c792;
+    transition: width 0.5s ease;
+    border-radius: 0.1vw;
+}
+
+.blood-percentage {
+    color: white;
+    font-size: 1vw;
+    font-weight: bold;
+    text-shadow: none;
+    font-family: "RDR Lino Regular", serif;
+}
+
+.condition-status {
+    text-align: center;
+    padding: 1vw;
+}
+
+.condition-text {
+    font-size: 0.9vw;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 0.3vw;
+}
+
+.condition-note {
+    font-size: 0.7vw;
+    color: white;
+    font-style: italic;
+}
+
+/* Divider Line */
+.inspection-divider {
+    width: 90%;
+    margin: 0.3vw auto;
+    height: 0.08vw;
+    background: linear-gradient(90deg, transparent, #d9ab50, transparent);
+    opacity: 0.6;
+}
+
+/* Medical Status Grid */
+.medical-status-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.3vw;
+    margin-top: -0.5vw;
+    margin-bottom: 0.5vw;
+}
+
+.status-card {
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+    padding: 0.6vw;
+    border-radius: 0.2vw;
+    display: flex;
+    align-items: center;
+    gap: 0.6vw;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.status-card:hover {
+    background-image: url(../imgs/selsected.png), url(../imgs/selection_box_bg_1d.png);
+    background-size: cover, cover;
+    background-blend-mode: overlay;
+    transform: scale(1.02);
+}
+
+.status-card i {
+    font-size: 1.5vw;
+    color: white;
+    text-shadow: none;
+}
+
+.status-number {
+    font-size: 1.8vw;
+    font-weight: bold;
+    color: white;
+    text-shadow: none;
+    font-family: "RDR Lino Regular", serif;
+}
+
+.status-label {
+    color: white;
+    font-size: 0.9vw;
+    font-weight: 600;
+    font-family: "RDR Lino Regular", serif;
+}
+
+/* Medical Details Section */
+.medical-details-section {
+    margin: 0.4vw;
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+    border-radius: 0.2vw;
+    overflow: hidden;
+    flex: 1;
+}
+
+.section-title {
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+    padding: 0.7vw 0.8vw;
+    color: white;
+    font-size: 0.9vw;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 0.4vw;
+    text-shadow: none;
+    font-family: "RDR Lino Regular", serif;
+}
+
+.details-content {
+    padding: 1.2vw;
+    max-height: 22vw;
+    overflow-y: auto;
+    overflow-x: hidden;
+    color: white;
+    font-family: "RDR Lino Regular", serif;
+    font-size: 0.8vw;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+}
+
+.details-content::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+.details-content:empty {
+    overflow: hidden;
+    max-height: 2vw;
+}
+
+.details-content h4 {
+    color: white;
+    font-size: 1vw;
+    margin-bottom: 0.5vw;
+    text-shadow: none;
+}
+
+.details-content ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.details-content li {
+    padding: 0.2vw 0;
+    border-bottom: 0.02vw solid rgba(226, 199, 146, 0.2);
+}
+
+/* Left Side Action Buttons */
+.medic-action-sidebar {
+    position: absolute;
+    left: -4vw;
+    top: 6vw;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5vw;
+    z-index: 10001;
+}
+
+.medic-action-btn {
+    width: 3.5vw;
+    height: 3.5vw;
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+    border-radius: 0.3vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border: 0.05vw solid rgba(226, 199, 146, 0.3);
+    animation: slideInFromLeft 0.8s ease-in-out;
+}
+
+.medic-action-btn:hover {
+    background-image: url(../imgs/selected-item-box.png), url(../imgs/selection_box_bg_1d.png);
+    background-size: cover, cover;
+    background-blend-mode: overlay;
+    transform: scale(1.1) translateX(0.2vw);
+    box-shadow: none;
+}
+
+.medic-action-btn i {
+    font-size: 1.5vw;
+    color: white;
+    text-shadow: none;
+}
+
+.medic-action-btn:hover i {
+    color: #fff;
+    text-shadow: none;
+}
+
+@keyframes slideInFromLeft {
+    0% {
+        transform: translateX(-100%) scale(0.8);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+    }
+}
+
+/* Action Button Tooltips */
+.action-tooltip {
+    position: absolute;
+    left: 4vw;
+    top: 50%;
+    transform: translateY(-50%);
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+    padding: 0.5vw 0.8vw;
+    border-radius: 0.2vw;
+    color: white;
+    font-size: 0.7vw;
+    font-family: "RDR Lino Regular", serif;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 10002;
+}
+
+.medic-action-btn:hover .action-tooltip {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0.3vw);
+}
+
+/* Home Button Styling - Match other buttons */
+.medic-action-btn.home-btn {
+    margin-bottom: 0.5vw;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 0.5vw;
+    margin: 0.5vw 0.4vw;
+    margin-top: -3.2vw;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 0.6vw 0.8vw;
+    border-radius: 0.2vw;
+    font-size: 0.7vw;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3vw;
+    transition: all 0.3s ease;
+    font-family: "RDR Lino Regular", serif;
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+    color: white;
+    text-shadow: none;
+    position: relative;
+    top: 4vw;
+    overflow: hidden;
+}
+
+.action-btn:hover {
+    background-image: url(../imgs/selsected.png), url(../imgs/selection_box_bg_1d.png);
+    background-size: cover, cover;
+    transform: scale(1.05);
+    color: #fff;
+    text-shadow: none;
+}
+
+.action-btn i {
+    font-size: 1.0vw;
+}
+
+/* Medical Supplies Section */
+.medical-supplies {
+    margin: 0.4vw;
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+    border-radius: 0.2vw;
+    overflow: hidden;
+}
+
+.supplies-header {
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+    padding: 0.7vw 0.8vw;
+    color: white;
+    font-size: 0.9vw;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 0.4vw;
+    text-shadow: none;
+    font-family: "RDR Lino Regular", serif;
+}
+
+.supplies-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin-top: 0vw;
+}
+.supply-btn {
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+    padding: 0.8vw;
+    border-radius: 0.2vw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3vw;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    color: white;
+    font-family: "RDR Lino Regular", serif;
+}
+
+.supply-btn:hover {
+    background-image: url(../imgs/selected-item-box.png), url(../imgs/selection_box_bg_1d.png);
+    background-size: cover, cover;
+    background-blend-mode: overlay;
+    transform: scale(1.05);
+    color: #fff;
+}
+
+.supply-btn i {
+    font-size: 1.2vw;
+    text-shadow: none;
+}
+
+.supply-btn span {
+    font-size: 0.6vw;
+    font-weight: bold;
+    text-shadow: none;
+}
+
+.supply-count {
+    position: absolute;
+    top: 0.2vw;
+    right: 0.2vw;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 0.6vw;
+    padding: 0.1vw 0.3vw;
+    border-radius: 0.8vw;
+    font-weight: bold;
+    min-width: 1vw;
+    text-align: center;
+}
+
+/* Body Inspection Content */
+.body-inspection-content {
+    padding: 0.2vw;
+    animation: fadeInContent 0.5s ease;
+}
+
+@keyframes fadeInContent {
+    0% { opacity: 0; transform: translateY(1vw); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.body-parts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4vw;
+    max-height: 14vw;
+    overflow-y: auto;
+}
+
+.body-part-item {
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+    padding: 0.6vw;
+    border-radius: 0.2vw;
+    display: flex;
+    align-items: center;
+    gap: 0.6vw;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.body-part-item:hover {
+    background-image: url(../imgs/selected-item-box.png), url(../imgs/selection_box_bg_1d.png);
+    background-size: cover, cover;
+    background-blend-mode: overlay;
+    transform: translateX(0.2vw);
+}
+
+.body-part-item.selected {
+    background-image: url(../imgs/selected-item-box.png), url(../imgs/selection_box_bg_1d.png);
+    background-size: cover, cover;
+    background-blend-mode: overlay;
+    border-left: 0.2vw solid #e2c792;
+}
+
+.body-part-item i {
+    font-size: 1.2vw;
+    color: white;
+    width: 1.5vw;
+    text-align: center;
+    text-shadow: none;
+}
+
+.body-part-item span {
+    flex: 1;
+    color: white;
+    font-size: 0.8vw;
+    font-weight: bold;
+    font-family: "RDR Lino Regular", serif;
+}
+
+.bone-status {
+    font-size: 0.6vw;
+    padding: 0.2vw 0.5vw;
+    border-radius: 0.8vw;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05vw;
+}
+
+.bone-status.unknown {
+    background: rgba(149, 165, 166, 0.3);
+    color: #95a5a6;
+    font-style: italic;
+}
+
+.bone-status.normal {
+    background: rgba(39, 174, 96, 0.3);
+    color: #27ae60;
+}
+
+.bone-status.injured {
+    background: rgba(231, 76, 60, 0.3);
+    color: #e74c3c;
+}
+
+.bone-status.treated {
+    background: rgba(243, 156, 18, 0.3);
+    color: #f39c12;
+}
+
+/* Bone Context Display */
+.bone-context-display {
+    margin: 0.4vw;
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+    border-radius: 0.2vw;
+    overflow: hidden;
+    animation: slideInContext 0.4s ease;
+}
+
+@keyframes slideInContext {
+    0% { transform: translateX(100%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+.context-header {
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+    padding: 0.7vw 0.8vw;
+    color: white;
+    font-size: 0.9vw;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 0.4vw;
+    text-shadow: none;
+    font-family: "RDR Lino Regular", serif;
+}
+
+.context-content {
+    padding: 1vw;
+}
+
+.bone-info {
+    color: white;
+    font-size: 0.8vw;
+    margin-bottom: 1vw;
+    font-family: "RDR Lino Regular", serif;
+}
+
+.bone-actions {
+    display: flex;
+    gap: 0.4vw;
+}
+
+.context-action-btn {
+    flex: 1;
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+    padding: 0.5vw;
+    border-radius: 0.2vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3vw;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+    color: white;
+    font-size: 0.7vw;
+    font-family: "RDR Lino Regular", serif;
+    position: relative;
+    overflow: hidden;
+}
+
+.context-action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.context-action-btn:hover::before {
+    left: 100%;
+}
+
+.context-action-btn:hover {
+    background-image: url(../imgs/selected-item-box.png), url(../imgs/selection_box_bg_1d.png);
+    background-size: cover, cover;
+    background-blend-mode: overlay;
+    transform: scale(1.05) translateY(-1px);
+    color: #fff;
+    box-shadow: none;
+    text-shadow: none;
+}
+
+/* Supply Context Menu */
+.supply-context-menu {
+    position: absolute;
+    bottom: 10vw;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 95%;
+    background-image: url(../imgs/weathered_paper.png);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 10000;
+    animation: slideUpFromBottom 0.3s ease-out;
+    padding: 1vw;
+}
+
+@keyframes slideUpFromBottom {
+    0% {
+        transform: translateX(-50%) translateY(100%);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+}
+
+.context-content {
+    padding: 1vw;
+}
+
+.context-header {
+    color: white;
+    font-size: 1vw;
+    font-weight: bold;
+    text-shadow: none;
+    font-family: "RDR Lino Regular", serif;
+    margin-bottom: 0.8vw;
+    text-align: center;
+}
+
+.context-options {
+    display: grid;
+    gap: 0.4vw;
+}
+
+.context-option {
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+    padding: 0.7vw;
+    border-radius: 0.2vw;
+    display: flex;
+    align-items: center;
+    gap: 0.5vw;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: white;
+    font-family: "RDR Lino Regular", serif;
+}
+
+.context-option:hover {
+    background-image: url(../imgs/selected-item-box.png), url(../imgs/selection_box_bg_1d.png);
+    background-size: cover, cover;
+    background-blend-mode: overlay;
+    transform: scale(1.02);
+    color: #fff;
+}
+
+.context-option i {
+    font-size: 1vw;
+    width: 1.5vw;
+    text-align: center;
+}
+
+.context-option-text {
+    flex: 1;
+}
+
+.context-option-title {
+    font-size: 0.8vw;
+    font-weight: bold;
+    margin-bottom: 0.1vw;
+}
+
+.context-option-desc {
+    font-size: 0.75vw;
+    color: white;
+    line-height: 1.2;
+}
+
+/* Treatment Options Menu (inside bone context) */
+.treatment-options-menu {
+    position: absolute;
+    bottom: -0.5vw;
+    left: 50%;
+    transform: translateX(-50%);
+    background-image: url(../imgs/weathered_paper.png);
+    background-size: cover;
+    border: 2px solid rgba(226, 199, 146, 0.3);
+    border-radius: 0.5vw;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    z-index: 10000;
+    width: 20vw;
+    max-height: 20vh;
+    overflow-y: auto;
+    animation: fadeInUp 0.4s ease-out;
+}
+
+@keyframes fadeInUp {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.treatment-context-content {
+    padding: 1vw;
+}
+
+.treatment-options-menu .context-header {
+    background: linear-gradient(135deg, rgba(226, 199, 146, 0.15) 0%, rgba(194, 174, 135, 0.15) 100%);
+    padding: 0.8vw;
+    margin: -1vw -1vw 0.8vw -1vw;
+    border-radius: 0.5vw 0.5vw 0 0;
+    text-align: center;
+    font-size: 0.9vw;
+    font-weight: bold;
+    color: white;
+    border-bottom: 1px solid rgba(226, 199, 146, 0.2);
+}
+
+.treatment-options-menu .context-header i {
+    margin-right: 0.5vw;
+    font-size: 1.1vw;
+}
+
+.context-close-btn {
+    position: absolute;
+    top: 0.5vw;
+    right: 0.8vw;
+    font-size: 1.2vw;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    line-height: 1;
+}
+
+.context-close-btn:hover {
+    color: #fff;
+    transform: scale(1.2);
+    text-shadow: none;
+}
+
+.treatment-options-menu .context-options {
+    max-height: 15vh;
+    overflow-y: auto;
+}
+
+.treatment-options-menu .context-option {
+    margin-bottom: 0.3vw;
+    padding: 0.6vw;
+    font-size: 0.75vw;
+}
+
+.treatment-options-menu .context-option:last-child {
+    margin-bottom: 0;
+}
+
+.treatment-options-menu .context-option-title {
+    font-size: 0.75vw;
+}
+
+.treatment-options-menu .context-option-desc {
+    font-size: 0.7vw;
+    line-height: 1.3;
+}
+
+/* Wild West Medical Tools Panels */
+
+/* Vitals Checking Panel (slides up from bottom) - Smaller without drop shadow */
+.vitals-checking-panel {
+    position: fixed;
+    bottom: -100vh;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 28vw;
+    height: 35vh;
+    z-index: 10000;
+    transition: bottom 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.vitals-checking-panel.show {
+    bottom: 5vh;
+}
+
+.vitals-panel-bg {
+    width: 100%;
+    height: 100%;
+    background-image: url(../imgs/large_weathered_paper.png);
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    padding: 1.5vw;
+    border-radius: 1vw;
+    font-family: "RDR Lino Regular", serif;
+}
+
+.vitals-header {
+    text-align: center;
+    margin-bottom: 2vw;
+}
+
+.vitals-title {
+    font-size: 1.4vw;
+    font-weight: bold;
+    color: white;
+    text-shadow: none;
+    margin-bottom: 0.5vw;
+}
+
+.vitals-title i {
+    margin-right: 0.5vw;
+    font-size: 1.6vw;
+}
+
+.vitals-subtitle {
+    font-size: 0.9vw;
+    color: white;
+    font-style: italic;
+}
+
+.vitals-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 60%;
+}
+
+.heartbeat-monitor {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+}
+
+.heartbeat-visual {
+    margin-bottom: 2vw;
+}
+
+.heart-icon {
+    font-size: 4vw;
+    color: #e74c3c;
+    text-shadow: none;
+    animation: heartbeat 1.2s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+    0% { transform: scale(1); }
+    15% { transform: scale(1.2); }
+    30% { transform: scale(1); }
+    45% { transform: scale(1.15); }
+    60% { transform: scale(1); }
+    100% { transform: scale(1); }
+}
+
+.heart-icon.checking {
+    animation: heartbeat-fast 0.8s ease-in-out infinite;
+}
+
+@keyframes heartbeat-fast {
+    0% { transform: scale(1); }
+    25% { transform: scale(1.3); }
+    50% { transform: scale(1); }
+    75% { transform: scale(1.25); }
+    100% { transform: scale(1); }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+    20%, 40%, 60%, 80% { transform: translateX(3px); }
+}
+
+.vitals-readings {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 1vw;
+    border-radius: 0.5vw;
+    width: 80%;
+    border: 1px solid rgba(226, 199, 146, 0.3);
+}
+
+.vital-reading {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5vw;
+    font-size: 0.9vw;
+}
+
+.vital-label {
+    color: white;
+    font-weight: bold;
+}
+
+.vital-value {
+    color: #fff;
+}
+
+.vitals-instruction {
+    font-size: 0.8vw;
+    color: white;
+    text-align: center;
+    margin-top: 1vw;
+    font-style: italic;
+}
+
+.vitals-actions {
+    display: flex;
+    justify-content: center;
+    gap: 2vw;
+    margin-top: 1vw;
+}
+
+.vitals-check-btn, .vitals-close-btn {
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+    padding: 0.8vw 1.5vw;
+    border-radius: 0.3vw;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: white;
+    font-size: 0.8vw;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 0.5vw;
+    user-select: none;
+}
+
+.vitals-check-btn:hover, .vitals-close-btn:hover {
+    background-image: url(../imgs/selected-item-box.png), url(../imgs/selection_box_bg_1d.png);
+    background-size: cover, cover;
+    background-blend-mode: overlay;
+    transform: scale(1.05);
+    color: #fff;
+    box-shadow: none;
+}
+
+.vitals-check-btn:active {
+    transform: scale(0.95);
+    box-shadow: 0 0 25px rgba(231, 76, 60, 0.6);
+}
+
+/* Doctor's Bag Panel - Bottom Panel Design */
+.doctors-bag-panel {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(100%);
+    width: 45vw;
+    height: 30vh;
+    z-index: 10000;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    opacity: 0;
+}
+
+.doctors-bag-panel.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.bag-panel-bg {
+    width: 100%;
+    height: 100%;
+    background-image: url(../imgs/large_weathered_paper.png);
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    padding: 1.5vw;
+    border-radius: 1vw 1vw 0 0;
+    font-family: "RDR Lino Regular", serif;
+    position: relative;
+}
+
+.bag-header {
+    text-align: center;
+    margin-bottom: 1vw;
+    position: relative;
+}
+
+.bag-title {
+    font-size: 1.2vw;
+    font-weight: bold;
+    color: white;
+    text-shadow: none;
+    margin-bottom: 0.3vw;
+}
+
+.bag-title i {
+    margin-right: 0.5vw;
+    font-size: 1.4vw;
+}
+
+.bag-subtitle {
+    font-size: 0.8vw;
+    color: white;
+    font-style: italic;
+}
+
+.bag-close-btn {
+    position: absolute;
+    top: -1vw;
+    right: -1vw;
+    font-size: 1.5vw;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 50%;
+    width: 2.5vw;
+    height: 2.5vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bag-close-btn:hover {
+    color: #fff;
+    background: rgba(231, 76, 60, 0.7);
+    transform: scale(1.1);
+}
+
+.bag-content {
+    height: calc(100% - 4vw);
+    overflow-y: auto;
+}
+
+.medical-tools-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 0.8vw;
+    padding: 0.5vw;
+    height: 100%;
+}
+
+.medical-tool {
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+    padding: 1vw;
+    border-radius: 0.5vw;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 8vh;
+}
+
+.medical-tool::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.medical-tool:hover::before {
+    left: 100%;
+}
+
+.medical-tool:hover {
+    background-image: url(../imgs/selected-item-box.png), url(../imgs/selection_box_bg_1d.png);
+    background-size: cover, cover;
+    background-blend-mode: overlay;
+    transform: scale(1.05) translateY(-2px);
+    box-shadow: none;
+}
+
+.tool-icon {
+    font-size: 1.6vw;
+    color: white;
+    margin-bottom: 0.4vw;
+    text-shadow: none;
+}
+
+.tool-name {
+    font-size: 0.75vw;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 0.3vw;
+    text-transform: uppercase;
+    letter-spacing: 0.03vw;
+}
+
+.tool-desc {
+    font-size: 0.75vw;
+    color: white;
+    font-style: italic;
+    line-height: 1.3;
+    text-align: center;
+}
+
+/* Vital Signs Styling */
+.vital-label {
+    font-size: 0.7vw;
+    color: #ffffff !important;
+    font-weight: 500;
+}
+
+.vital-value {
+    color: white;
+    font-weight: bold;
+}
+
+/* Color coding for vital values */
+.vital-value.normal {
+    color: #27ae60;
+}
+
+.vital-value.warning {
+    color: #f39c12;
+}
+
+.vital-value.critical {
+    color: #e74c3c;
+}
+
+.vital-value.unknown {
+    color: white;
+}
+
+/* Medical Examination Log Styling */
+.examination-log-container {
+    padding: 0.5vw;
+    max-height: 15vw;
+    overflow-y: auto;
+}
+
+.log-header {
+    font-size: 0.8vw;
+    font-weight: bold;
+    color: white;
+    text-align: center;
+    margin-bottom: 0.8vw;
+    text-transform: uppercase;
+    letter-spacing: 0.1vw;
+    border-bottom: 1px solid rgba(226, 199, 146, 0.3);
+    padding-bottom: 0.5vw;
+}
+
+.log-header i {
+    margin-right: 0.3vw;
+    color: white;
+}
+
+.log-entry {
+    background: rgba(226, 199, 146, 0.1);
+    border: 1px solid rgba(226, 199, 146, 0.2);
+    border-radius: 0.3vw;
+    padding: 0.5vw;
+    margin-bottom: 0.4vw;
+    font-family: "RDR Lino Regular", serif;
+    transition: all 0.3s ease;
+}
+
+.log-entry:hover {
+    background: rgba(226, 199, 146, 0.15);
+    border-color: rgba(226, 199, 146, 0.3);
+}
+
+.log-timestamp {
+    font-size: 0.55vw;
+    color: white;
+    float: right;
+    font-style: italic;
+}
+
+.log-type {
+    font-size: 0.65vw;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 0.2vw;
+    text-transform: uppercase;
+    letter-spacing: 0.05vw;
+}
+
+.log-type i {
+    margin-right: 0.3vw;
+    width: 1vw;
+    text-align: center;
+}
+
+.log-details {
+    font-size: 0.6vw;
+    color: white;
+    line-height: 1.3;
+    clear: both;
+    padding-top: 0.2vw;
+    font-style: italic;
+}
+
+.log-entry.treatment {
+    border-left: 3px solid #27ae60;
+}
+
+.log-entry.heart-rate-check,
+.log-entry.pulse-check {
+    border-left: 3px solid #e74c3c;
+}
+
+.log-entry.temperature-check {
+    border-left: 3px solid #f39c12;
+}
+
+.log-entry.examination {
+    border-left: 3px solid #3498db;
+}
+
+.log-entry.body-inspection {
+    border-left: 3px solid #9b59b6;
+}
+
+/* Treatment Panels (Quick Bandage, Tourniquet, Medicine, Injection) */
+.treatment-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 55vw;
+    height: 70vh;
+    z-index: 10000;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    opacity: 0;
+}
+
+.treatment-panel.show {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+.treatment-panel-bg {
+    width: 100%;
+    height: 100%;
+    background-image: url(../imgs/large_weathered_paper.png);
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    padding: 2vw;
+    border-radius: 1vw;
+    font-family: "RDR Lino Regular", serif;
+    position: relative;
+}
+
+.treatment-header {
+    text-align: center;
+    margin-bottom: 1.5vw;
+    position: relative;
+}
+
+.treatment-title {
+    font-size: 1.4vw;
+    font-weight: bold;
+    color: white;
+    text-shadow: none;
+    margin-bottom: 0.3vw;
+}
+
+.treatment-title i {
+    margin-right: 0.5vw;
+    font-size: 1.6vw;
+}
+
+.treatment-subtitle {
+    font-size: 0.9vw;
+    color: white;
+    font-style: italic;
+}
+
+.treatment-close-btn {
+    position: absolute;
+    top: -1vw;
+    right: -1vw;
+    font-size: 1.5vw;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 50%;
+    width: 2.5vw;
+    height: 2.5vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.treatment-close-btn:hover {
+    color: #fff;
+    background: rgba(231, 76, 60, 0.7);
+    transform: scale(1.1);
+}
+
+.treatment-content {
+    height: calc(100% - 5vw);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5vw;
+}
+
+.treatment-section {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 0.5vw;
+    padding: 1vw;
+    border: 0.05vw solid rgba(226, 199, 146, 0.2);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5vw;
+    margin-bottom: 1vw;
+    font-size: 1.1vw;
+    font-weight: bold;
+    color: white;
+    text-shadow: none;
+}
+
+.section-header i {
+    font-size: 1.3vw;
+}
+
+/* Bandage Types Grid */
+.bandage-types-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1vw;
+}
+
+.bandage-type {
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+    border-radius: 0.5vw;
+    padding: 1vw;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    border: 0.1vw solid transparent;
+}
+
+.bandage-type:hover {
+    border: 1px solid #e74c3c !important;
+}
+
+.bandage-type.selected {
+    /* Removed selected effects - handled in React */
+}
+
+.bandage-icon {
+    font-size: 2vw;
+    color: white;
+    margin-bottom: 0.5vw;
+}
+
+.bandage-name {
+    font-size: 1vw;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 0.3vw;
+}
+
+.bandage-desc {
+    font-size: 0.9vw;
+    color: white;
+    margin-bottom: 0.3vw;
+    line-height: 1.2;
+}
+
+.bandage-effectiveness {
+    font-size: 0.7vw;
+    color: #e7af13;
+    font-style: italic;
+}
+
+/* Injured Parts List */
+.injured-parts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5vw;
+    max-height: 15vw;
+    overflow-y: auto;
+}
+
+.injured-part-item {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 0.3vw;
+    padding: 0.8vw;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 0.05vw solid transparent;
+}
+
+.injured-part-item:hover {
+    background: rgba(0, 0, 0, 0.4);
+    border-color: rgba(231, 175, 19, 0.3);
+}
+
+.injured-part-item.selected {
+    border-color: #e7af13;
+    background: rgba(231, 175, 19, 0.1);
+}
+
+.injured-part-name {
+    font-size: 0.9vw;
+    color: white;
+    font-weight: bold;
+}
+
+.injured-part-severity {
+    font-size: 0.8vw;
+    padding: 0.2vw 0.5vw;
+    border-radius: 0.2vw;
+    font-weight: bold;
+}
+
+.severity-minor {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+    border: 0.05vw solid #ffc107;
+}
+
+.severity-moderate {
+    background: rgba(255, 152, 0, 0.2);
+    color: #ff9800;
+    border: 0.05vw solid #ff9800;
+}
+
+.severity-severe {
+    background: rgba(244, 67, 54, 0.2);
+    color: #f44336;
+    border: 0.05vw solid #f44336;
+}
+
+.severity-critical {
+    background: rgba(156, 39, 176, 0.2);
+    color: #9c27b0;
+    border: 0.05vw solid #9c27b0;
+}
+
+/* Selected Treatment Details */
+.selected-treatment-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8vw;
+}
+
+.selected-bandage, .selected-bodypart {
+    font-size: 1vw;
+    color: white;
+}
+
+.selected-bandage span, .selected-bodypart span {
+    color: #e7af13;
+    font-weight: bold;
+}
+
+.treatment-actions {
+    margin-top: 1vw;
+}
+
+.apply-treatment-btn {
+    background: linear-gradient(135deg, #e7af13, #d4a013);
+    border: none;
+    border-radius: 0.5vw;
+    padding: 1vw 2vw;
+    font-size: 1vw;
+    font-weight: bold;
+    color: #2a1810;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5vw;
+    font-family: "RDR Lino Regular", serif;
+}
+
+.apply-treatment-btn:hover {
+    background: linear-gradient(135deg, #f0b214, #e7af13);
+    transform: translateY(-0.1vw);
+    box-shadow: 0 0.3vw 1vw rgba(231, 175, 19, 0.4);
+}
+
+.apply-treatment-btn:active {
+    transform: translateY(0);
+}
+
+.apply-treatment-btn.emergency {
+    background: linear-gradient(135deg, #f44336, #d32f2f);
+    color: #fff;
+}
+
+.apply-treatment-btn.emergency:hover {
+    background: linear-gradient(135deg, #f55a4e, #f44336);
+    box-shadow: 0 0.3vw 1vw rgba(244, 67, 54, 0.4);
+}
+
+/* Medical Warning Section */
+.medical-warning {
+    background: rgba(244, 67, 54, 0.1);
+    border: 0.1vw solid rgba(244, 67, 54, 0.3);
+    border-radius: 0.3vw;
+    padding: 1vw;
+    font-size: 0.8vw;
+    color: white;
+    line-height: 1.4;
+}
+
+.medical-warning p {
+    margin: 0.5vw 0;
+}
+
+.medical-warning strong {
+    color: #f44336;
+    font-weight: bold;
+}
+
+/* Inline Treatment Mode Styles (for swapping content within medical details) */
+.treatment-mode-content {
+    animation: slideInFromRight 0.4s ease-out;
+}
+
+.treatment-section-inline {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 0.3vw;
+    padding: 0.8vw;
+    margin-bottom: 1vw;
+    border: 0.05vw solid rgba(226, 199, 146, 0.2);
+}
+
+.section-header-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.3vw;
+    margin-bottom: 0.8vw;
+    font-size: 0.9vw;
+    font-weight: bold;
+    color: white;
+    text-shadow: none;
+}
+
+.section-header-inline i {
+    font-size: 1vw;
+}
+
+/* Bandage Types Grid - Inline Version */
+.bandage-types-grid-inline {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.8vw;
+}
+
+.bandage-type-inline {
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+    border-radius: 0.3vw;
+    padding: 0.6vw;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    border: 0.05vw solid transparent;
+}
+
+.bandage-type-inline:hover {
+    transform: scale(1.03);
+    border-color: rgba(231, 175, 19, 0.5);
+    box-shadow: 0 0 10px rgba(231, 175, 19, 0.3);
+}
+
+.bandage-type-inline.selected {
+    border-color: #e7af13;
+    box-shadow: 0 0 15px rgba(231, 175, 19, 0.6);
+    transform: scale(1.05);
+}
+
+.bandage-icon-inline {
+    font-size: 1.2vw;
+    color: white;
+    margin-bottom: 0.3vw;
+}
+
+.bandage-name-inline {
+    font-size: 0.7vw;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 0.2vw;
+}
+
+.bandage-desc-inline {
+    font-size: 0.75vw;
+    color: white;
+    margin-bottom: 0.2vw;
+    line-height: 1.2;
+}
+
+.bandage-effectiveness-inline {
+    font-size: 0.5vw;
+    color: #e7af13;
+    font-style: italic;
+}
+
+/* Injured Parts List - Inline Version */
+.injured-parts-list-inline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4vw;
+    max-height: 8vw;
+    overflow-y: auto;
+}
+
+.injured-part-item-inline {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 0.2vw;
+    padding: 0.5vw;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 0.05vw solid transparent;
+    font-size: 0.7vw;
+}
+
+.injured-part-item-inline:hover {
+    background: rgba(0, 0, 0, 0.4);
+    border-color: rgba(231, 175, 19, 0.3);
+}
+
+.injured-part-item-inline.selected {
+    border-color: #e7af13;
+    background: rgba(231, 175, 19, 0.1);
+}
+
+/* Selected Treatment Details - Inline Version */
+.selected-treatment-details-inline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5vw;
+}
+
+.selected-info {
+    font-size: 0.8vw;
+    color: white;
+}
+
+.selected-info span {
+    color: #e7af13;
+    font-weight: bold;
+}
+
+.treatment-actions-inline {
+    margin-top: 0.8vw;
+    display: flex;
+    gap: 0.5vw;
+}
+
+.apply-treatment-btn-inline {
+    background: linear-gradient(135deg, #e7af13, #d4a013);
+    border: none;
+    border-radius: 0.3vw;
+    padding: 0.6vw 1.2vw;
+    font-size: 0.7vw;
+    font-weight: bold;
+    color: #2a1810;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.3vw;
+    font-family: "RDR Lino Regular", serif;
+    flex: 1;
+    justify-content: center;
+}
+
+.apply-treatment-btn-inline:hover {
+    background: linear-gradient(135deg, #f0b214, #e7af13);
+    transform: translateY(-0.05vw);
+    box-shadow: 0 0.2vw 0.8vw rgba(231, 175, 19, 0.4);
+}
+
+.apply-treatment-btn-inline.emergency {
+    background: linear-gradient(135deg, #f44336, #d32f2f);
+    color: #fff;
+}
+
+.apply-treatment-btn-inline.emergency:hover {
+    background: linear-gradient(135deg, #f55a4e, #f44336);
+    box-shadow: 0 0.2vw 0.8vw rgba(244, 67, 54, 0.4);
+}
+
+.apply-treatment-btn-inline.medicine {
+    background: linear-gradient(135deg, #4caf50, #388e3c);
+    color: #fff;
+}
+
+.apply-treatment-btn-inline.medicine:hover {
+    background: linear-gradient(135deg, #66bb6a, #4caf50);
+    box-shadow: 0 0.2vw 0.8vw rgba(76, 175, 80, 0.4);
+}
+
+.back-treatment-btn-inline {
+    background: linear-gradient(135deg, #666, #555);
+    border: none;
+    border-radius: 0.3vw;
+    padding: 0.6vw 1.2vw;
+    font-size: 0.7vw;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.3vw;
+    font-family: "RDR Lino Regular", serif;
+    flex: 0.8;
+    justify-content: center;
+}
+
+.back-treatment-btn-inline:hover {
+    background: linear-gradient(135deg, #777, #666);
+    transform: translateY(-0.05vw);
+}
+
+/* Medical Warning - Inline Version */
+.medical-warning-inline {
+    background: rgba(244, 67, 54, 0.1);
+    border: 0.05vw solid rgba(244, 67, 54, 0.3);
+    border-radius: 0.2vw;
+    padding: 0.6vw;
+    font-size: 0.6vw;
+    color: white;
+    line-height: 1.3;
+}
+
+.medical-warning-inline p {
+    margin: 0.3vw 0;
+}
+
+.medical-warning-inline strong {
+    color: #f44336;
+    font-weight: bold;
+}

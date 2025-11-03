@@ -1,0 +1,3933 @@
+@import url('https://fonts.cdnfonts.com/css/gilroy-bold');
+@import url('https://db.onlinewebfonts.com/c/9b00faf25959e5d0a3615c085585a325?family=RDR+Catalogue+Bold+Bold');
+@import url('https://db.onlinewebfonts.com/c/ab21a97b9cae2e116d8d1473baefc9f0?family=RDR+Lino+Regular');
+* {
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.medic-system {
+    width: 100vw;
+    height: 101vh;
+    margin-top: -0.1vh;
+    background: radial-gradient(circle at center, rgba(0, 0, 0, 0) 15%, rgb(0 0 0 / 28%) 35%, #0000006e 50%);
+}
+.medic-big {
+    position: absolute;
+    width: 16.0938vw;
+    height: 27.5521vw;
+    margin-left: 41.5vw;
+    margin-top: 2vw;
+}
+
+.medic-label {
+    color: #fff;
+    text-align: center;
+    font-family: "RDR Lino Regular";
+    font-size: 2.1628vw;
+    font-style: normal;
+    line-height: normal;
+    letter-spacing: 0.0116vw;
+    background-image: url(../imgs/menu_header_1a.png),url(../imgs/weathered_paper.png);
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    padding: 15px 15px;
+}
+
+.medic-label span {
+  font-family: "RDR Lino Regular";
+}
+
+.medic-span {
+  color: rgba(255, 255, 255, 0.45);
+  text-align: center;
+  font-family: "RDR Lino Regular";
+  width: 100%;
+  font-size: 0.6771vw;
+  font-style: normal;
+  font-weight: 300;
+  margin-top: 0.3vw;
+  line-height: 180%; /* 0px */
+  letter-spacing: 0.0068vw;
+}
+
+.medic-details {
+    width: 100%;
+    margin-top: 1.5vw;
+    height: 31.0208vw;
+}
+
+.medic-head:nth-child(1) {
+  margin-top: 0;
+}
+
+.medic-head {
+    width: 100%;
+    display: flex;
+    height: 2.5396vw;
+    margin-top: 1.9vw;
+    margin-left: -12.1vw;
+}
+
+.medic-head-dd {
+  border-radius: 0.2083vw;
+  width: 80%;
+  margin-left: 0.5vw;
+  height: 100%;
+  /* background: radial-gradient( 83.13% 83.13% at 50% 50%, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 100% ); */
+  background-image: url(../imgs/weathered_paper.png);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.medic-head-dd-label {
+  color: #e2c792;
+  text-shadow: 0px 0.2083vw 1.4583vw rgba(231, 175, 19, 0.55);
+  font-family: "RDR Lino Regular";
+  margin-left: 0.3vw;
+  margin-top: 0.35vw;
+  font-size: 0.725vw;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.medic-head-dd-full {
+  border-radius: 0.1042vw;
+  width: 95%;
+  height: 0.7292vw;
+  margin-left: 0.3vw;
+  margin-top: 0.25vw;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.medic-head-dd-bar {
+  background: #e2c792;
+  height: 100%;
+  transition: 0.3s;
+  border-radius: 0.1vw;
+}
+
+.medic-head-first div {
+  width: 90%;
+  height: 90%;
+  margin-top: 10%;
+  margin-left: 8%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-image: url(../imgs/head.png);
+}
+
+.medic-head-first {
+  width: 2.6vw;
+  height: 100%;
+  border-radius: 0.2083vw;
+  border: 0.0521vw solid #d4c6b8;
+  background: radial-gradient(
+    62.19% 62.19% at 50% 50%,
+    rgba(0, 0, 0, 0.384) 0%,
+    rgba(0, 0, 0, 0.829) 100%
+  );
+}
+
+.medic-spine:nth-child(1) {
+  margin-top: 0;
+}
+
+.medic-spine {
+    width: 100%;
+    display: flex;
+    height: 2.5396vw;
+    margin-top: -2.5vw;
+    margin-left: 11.9vw;
+}
+
+.medic-spine-dd {
+  border-radius: 0.2083vw;
+  width: 80%;
+  margin-left: 0.5vw;
+  height: 100%;
+  /* background: radial-gradient( 83.13% 83.13% at 50% 50%, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 100% ); */
+  background-image: url(../imgs/weathered_paper.png);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.medic-spine-dd-label {
+  color: #e2c792;
+  text-shadow: 0px 0.2083vw 1.4583vw rgba(231, 175, 19, 0.55);
+  font-family: "RDR Lino Regular";
+  margin-left: 0.3vw;
+  margin-top: 0.35vw;
+  font-size: 0.725vw;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.medic-spine-dd-full {
+  border-radius: 0.1042vw;
+  width: 95%;
+  height: 0.7292vw;
+  margin-left: 0.3vw;
+  margin-top: 0.25vw;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.medic-spine-dd-bar {
+  background: #e2c792;
+  height: 100%;
+  transition: 0.3s;
+  border-radius: 0.1vw;
+}
+
+.medic-spine-first div {
+  width: 85%;
+  height: 85%;
+  margin-top: 10%;
+  margin-left: 10%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-image: url(../imgs/spine.png);
+}
+
+.medic-spine-first {
+  width: 2.6vw;
+  height: 100%;
+  border-radius: 0.2083vw;
+  border: 0.0521vw solid #e2c792;
+  background: radial-gradient(
+    62.19% 62.19% at 50% 50%,
+    rgba(0, 0, 0, 0.384) 0%,
+    rgba(0, 0, 0, 0.829) 100%
+  );
+}
+
+.medic-rhand:nth-child(1) {
+  margin-top: 0;
+}
+
+.medic-rhand {
+    width: 100%;
+    display: flex;
+    height: 2.5396vw;
+    margin-top: 0.9vw;
+    margin-left: 16.9vw;
+}
+
+.medic-rhand-dd {
+  border-radius: 0.2083vw;
+  width: 80%;
+  margin-left: 0.5vw;
+  height: 100%;
+  background-image: url(../imgs/weathered_paper.png);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.medic-rhand-dd-label {
+  color: #e2c792;
+  text-shadow: 0px 0.2083vw 1.4583vw rgba(231, 175, 19, 0.55);
+  font-family: "RDR Lino Regular";
+  margin-left: 0.3vw;
+  margin-top: 0.35vw;
+  font-size: 0.725vw;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.medic-rhand-dd-full {
+  border-radius: 0.1042vw;
+  width: 95%;
+  height: 0.7292vw;
+  margin-left: 0.3vw;
+  margin-top: 0.25vw;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.medic-rhand-dd-bar {
+  background: #e2c792;
+  height: 100%;
+  transition: 0.3s;
+  border-radius: 0.1vw;
+}
+
+.medic-rhand-first div {
+  width: 90%;
+  height: 90%;
+  margin-top: 10%;
+  margin-left: 10%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-image: url(../imgs/rhand.png);
+}
+
+.medic-rhand-first {
+  width: 2.6vw;
+  height: 100%;
+  border-radius: 0.2083vw;
+  border: 0.0521vw solid #e2c792;
+  background: radial-gradient(
+    62.19% 62.19% at 50% 50%,
+    rgba(0, 0, 0, 0.384) 0%,
+    rgba(0, 0, 0, 0.829) 100%
+  );
+}
+
+.medic-lhand:nth-child(1) {
+  margin-top: 0;
+}
+
+.medic-lhand {
+    width: 100%;
+    display: flex;
+    height: 2.5396vw;
+    margin-top: 0.8vw;
+    margin-left: -18.1vw;
+}
+
+.medic-lhand-dd {
+  border-radius: 0.2083vw;
+  width: 80%;
+  margin-left: 0.5vw;
+  height: 100%;
+  background-image: url(../imgs/weathered_paper.png);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.medic-lhand-dd-label {
+  color: #e2c792;
+  text-shadow: 0px 0.2083vw 1.4583vw rgba(231, 175, 19, 0.55);
+  font-family: "RDR Lino Regular";
+  margin-left: 0.3vw;
+  margin-top: 0.35vw;
+  font-size: 0.725vw;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.medic-lhand-dd-full {
+  border-radius: 0.1042vw;
+  width: 95%;
+  height: 0.7292vw;
+  margin-left: 0.3vw;
+  margin-top: 0.25vw;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.medic-lhand-dd-bar {
+  background: #e2c792;
+  height: 100%;
+  transition: 0.3s;
+  border-radius: 0.1vw;
+}
+
+.medic-lhand-first div {
+  width: 90%;
+  height: 90%;
+  margin-top: 10%;
+  margin-left: 10%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-image: url(../imgs/lhand.png);
+}
+
+.medic-lhand-first {
+  width: 2.6vw;
+  height: 100%;
+  border-radius: 0.2083vw;
+  border: 0.0521vw solid #e2c792;
+  background: radial-gradient(
+    62.19% 62.19% at 50% 50%,
+    rgba(0, 0, 0, 0.384) 0%,
+    rgba(0, 0, 0, 0.829) 100%
+  );
+}
+
+.medic-upper:nth-child(1) {
+  margin-top: 0;
+}
+
+.medic-upper {
+    width: 100%;
+    display: flex;
+    height: 2.5396vw;
+    margin-top: 0.6vw;
+    margin-left: -0.7vw;
+}
+
+.medic-upper-dd {
+  border-radius: 0.2083vw;
+  width: 80%;
+  margin-left: 0.5vw;
+  height: 100%;
+  background-image: url(../imgs/weathered_paper.png);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.medic-upper-dd-label {
+  color: #e2c792;
+  text-shadow: 0px 0.2083vw 1.4583vw rgba(231, 175, 19, 0.55);
+  font-family: "RDR Lino Regular";
+  margin-left: 0.3vw;
+  margin-top: 0.35vw;
+  font-size: 0.725vw;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.medic-upper-dd-full {
+  border-radius: 0.1042vw;
+  width: 95%;
+  height: 0.7292vw;
+  margin-left: 0.3vw;
+  margin-top: 0.25vw;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.medic-upper-dd-bar {
+  background: #e2c792;
+  height: 100%;
+  transition: 0.3s;
+  border-radius: 0.1vw;
+}
+
+.medic-upper-first div {
+  width: 80%;
+  height: 80%;
+  margin-top: 10%;
+  margin-left: 10%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-image: url(../imgs/upper.png);
+}
+
+.medic-upper-first {
+  width: 2.6vw;
+  height: 100%;
+  border-radius: 0.2083vw;
+  border: 0.0521vw solid #e2c792;
+  background: radial-gradient(
+    62.19% 62.19% at 50% 50%,
+    rgba(0, 0, 0, 0.582) 0%,
+    rgba(0, 0, 0, 0.829) 100%
+  );
+}
+
+.medic-larm:nth-child(1) {
+  margin-top: 0;
+}
+
+.medic-larm {
+    width: 100%;
+    display: flex;
+    height: 2.5396vw;
+    margin-top: 3.9vw;
+    margin-left: -18.1vw;
+}
+
+.medic-larm-first div {
+  width: 90%;
+  height: 90%;
+  margin-top: 10%;
+  margin-left: 10%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-image: url(../imgs/larm.png);
+}
+
+.medic-larm-dd {
+  border-radius: 0.2083vw;
+  width: 80%;
+  margin-left: 0.5vw;
+  height: 100%;
+  background-image: url(../imgs/weathered_paper.png);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.medic-larm-dd-label {
+  color: #e2c792;
+  text-shadow: 0px 0.2083vw 1.4583vw rgba(231, 175, 19, 0.55);
+  font-family: "RDR Lino Regular";
+  margin-left: 0.3vw;
+  margin-top: 0.35vw;
+  font-size: 0.725vw;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.medic-larm-dd-full {
+  border-radius: 0.1042vw;
+  width: 95%;
+  height: 0.7292vw;
+  margin-left: 0.3vw;
+  margin-top: 0.25vw;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.medic-larm-dd-bar {
+  background: #e2c792;
+  height: 100%;
+  transition: 0.3s;
+  border-radius: 0.1vw;
+}
+
+.medic-larm-first {
+  width: 2.6vw;
+  height: 100%;
+  border-radius: 0.2083vw;
+  border: 0.0521vw solid #e2c792;
+  background: radial-gradient(
+    62.19% 62.19% at 50% 50%,
+    rgba(0, 0, 0, 0.384) 0%,
+    rgba(0, 0, 0, 0.829) 100%
+  );
+}
+
+.medic-rarm:nth-child(1) {
+  margin-top: 0;
+}
+
+.medic-rarm {
+    width: 100%;
+    display: flex;
+    height: 2.5396vw;
+    margin-top: -5.9vw;
+    margin-left: 16.9vw;
+}
+
+.medic-rarm-first div {
+  width: 90%;
+  height: 90%;
+  margin-top: 10%;
+  margin-left: 10%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-image: url(../imgs/rarm.png);
+}
+
+.medic-rarm-dd {
+  border-radius: 0.2083vw;
+  width: 80%;
+  margin-left: 0.5vw;
+  height: 100%;
+  background-image: url(../imgs/weathered_paper.png);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.medic-rarm-dd-label {
+  color: #e2c792;
+  text-shadow: 0px 0.2083vw 1.4583vw rgba(231, 175, 19, 0.55);
+  font-family: "RDR Lino Regular";
+  margin-left: 0.3vw;
+  margin-top: 0.35vw;
+  font-size: 0.725vw;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.medic-rarm-dd-full {
+  border-radius: 0.1042vw;
+  width: 95%;
+  height: 0.7292vw;
+  margin-left: 0.3vw;
+  margin-top: 0.25vw;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.medic-rarm-dd-bar {
+  background: #e2c792;
+  height: 100%;
+  transition: 0.3s;
+  border-radius: 0.1vw;
+}
+
+.medic-rarm-first {
+  width: 2.6vw;
+  height: 100%;
+  border-radius: 0.2083vw;
+  border: 0.0521vw solid #e2c792;
+  background: radial-gradient(
+    62.19% 62.19% at 50% 50%,
+    rgba(0, 0, 0, 0.384) 0%,
+    rgba(0, 0, 0, 0.829) 100%
+  );
+}
+
+.medic-lleg:nth-child(1) {
+  margin-top: 0;
+}
+
+.medic-lleg {
+    width: 100%;
+    display: flex;
+    height: 2.5396vw;
+    margin-top: 16.9vw;
+    margin-left: -18.1vw;
+}
+
+.medic-lleg-first div {
+  width: 90%;
+  height: 90%;
+  margin-top: 10%;
+  margin-left: 10%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-image: url(../imgs/lleg.png);
+}
+
+.medic-lleg-dd {
+  border-radius: 0.2083vw;
+  width: 80%;
+  margin-left: 0.5vw;
+  height: 100%;
+  background-image: url(../imgs/weathered_paper.png);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.medic-lleg-dd-label {
+  color: #e2c792;
+  text-shadow: 0px 0.2083vw 1.4583vw rgba(231, 175, 19, 0.55);
+  font-family: "RDR Lino Regular";
+  margin-left: 0.3vw;
+  margin-top: 0.35vw;
+  font-size: 0.725vw;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.medic-lleg-dd-full {
+  border-radius: 0.1042vw;
+  width: 95%;
+  height: 0.7292vw;
+  margin-left: 0.3vw;
+  margin-top: 0.25vw;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.medic-lleg-dd-bar {
+  background: #e2c792;
+  height: 100%;
+  transition: 0.3s;
+  border-radius: 0.1vw;
+}
+
+.medic-lleg-first {
+  width: 2.6vw;
+  height: 100%;
+  border-radius: 0.2083vw;
+  border: 0.0521vw solid #e2c792;
+  background: radial-gradient(
+    62.19% 62.19% at 50% 50%,
+    rgba(0, 0, 0, 0.384) 0%,
+    rgba(0, 0, 0, 0.829) 100%
+  );
+}
+
+.medic-rleg:nth-child(1) {
+  margin-top: 0;
+}
+
+.medic-rleg {
+    width: 100%;
+    display: flex;
+    height: 2.5396vw;
+    margin-top: -2.7vw;
+    margin-left: 16.9vw;
+}
+
+.medic-rleg-first div {
+  width: 90%;
+  height: 90%;
+  margin-top: 10%;
+  margin-left: 10%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-image: url(../imgs/rleg.png);
+}
+
+.medic-rleg-dd {
+  border-radius: 0.2083vw;
+  width: 80%;
+  margin-left: 0.5vw;
+  height: 100%;
+  background-image: url(../imgs/weathered_paper.png);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.medic-rleg-dd-label {
+  color: #e2c792;
+  text-shadow: 0px 0.2083vw 1.4583vw rgba(231, 175, 19, 0.55);
+  font-family: "RDR Lino Regular";
+  margin-left: 0.3vw;
+  margin-top: 0.35vw;
+  font-size: 0.725vw;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.medic-rleg-dd-full {
+  border-radius: 0.1042vw;
+  width: 95%;
+  height: 0.7292vw;
+  margin-left: 0.3vw;
+  margin-top: 0.25vw;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.medic-rleg-dd-bar {
+  background: #e2c792;
+  height: 100%;
+  transition: 0.3s;
+  border-radius: 0.1vw;
+}
+
+.medic-rleg-first {
+  width: 2.6vw;
+  height: 100%;
+  border-radius: 0.2083vw;
+  border: 0.0521vw solid #e2c792;
+  background: radial-gradient(
+    62.19% 62.19% at 50% 50%,
+    rgba(0, 0, 0, 0.384) 0%,
+    rgba(0, 0, 0, 0.829) 100%
+  );
+}
+
+.medic-lfoot:nth-child(1) {
+  margin-top: 0;
+}
+
+.medic-lfoot {
+    width: 100%;
+    display: flex;
+    height: 2.5396vw;
+    margin-top: 0.9vw;
+    margin-left: -18.1vw;
+}
+
+.medic-lfoot-first div {
+  width: 90%;
+  height: 90%;
+  margin-top: 10%;
+  margin-left: 10%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-image: url(../imgs/lfoot.png);
+}
+
+.medic-lfoot-dd {
+  border-radius: 0.2083vw;
+  width: 80%;
+  margin-left: 0.5vw;
+  height: 100%;
+  background-image: url(../imgs/weathered_paper.png);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.medic-lfoot-dd-label {
+  color: #e2c792;
+  text-shadow: 0px 0.2083vw 1.4583vw rgba(231, 175, 19, 0.55);
+  font-family: "RDR Lino Regular";
+  margin-left: 0.3vw;
+  margin-top: 0.35vw;
+  font-size: 0.725vw;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.medic-lfoot-dd-full {
+  border-radius: 0.1042vw;
+  width: 95%;
+  height: 0.7292vw;
+  margin-left: 0.3vw;
+  margin-top: 0.25vw;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.medic-lfoot-dd-bar {
+  background: #e2c792;
+  height: 100%;
+  transition: 0.3s;
+  border-radius: 0.1vw;
+}
+
+.medic-lfoot-first {
+  width: 2.6vw;
+  height: 100%;
+  border-radius: 0.2083vw;
+  border: 0.0521vw solid #e2c792;
+  background: radial-gradient(
+    62.19% 62.19% at 50% 50%,
+    rgba(0, 0, 0, 0.384) 0%,
+    rgba(0, 0, 0, 0.829) 100%
+  );
+}
+
+.medic-rfoot:nth-child(1) {
+  margin-top: 0;
+}
+
+.medic-rfoot {
+    width: 100%;
+    display: flex;
+    height: 2.5396vw;
+    margin-top: -2.7vw;
+    margin-left: 16.9vw;
+}
+
+.medic-rfoot-first div {
+  width: 90%;
+  height: 90%;
+  margin-top: 10%;
+  margin-left: 10%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-image: url(../imgs/rfoot.png);
+}
+
+.medic-rfoot-dd {
+  border-radius: 0.2083vw;
+  width: 80%;
+  margin-left: 0.5vw;
+  height: 100%;
+  background-image: url(../imgs/weathered_paper.png);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.medic-rfoot-dd-label {
+  color: #e2c792;
+  text-shadow: 0px 0.2083vw 1.4583vw rgba(231, 175, 19, 0.55);
+  font-family: "RDR Lino Regular";
+  margin-left: 0.3vw;
+  margin-top: 0.35vw;
+  font-size: 0.725vw;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.medic-rfoot-dd-full {
+  border-radius: 0.1042vw;
+  width: 95%;
+  height: 0.7292vw;
+  margin-left: 0.3vw;
+  margin-top: 0.25vw;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.medic-rfoot-dd-bar {
+  background: #e2c792;
+  height: 100%;
+  transition: 0.3s;
+  border-radius: 0.1vw;
+}
+
+.medic-rfoot-first {
+  width: 2.6vw;
+  height: 100%;
+  border-radius: 0.2083vw;
+  border: 0.0521vw solid #e2c792;
+  background: radial-gradient(
+    62.19% 62.19% at 50% 50%,
+    rgba(0, 0, 0, 0.384) 0%,
+    rgba(0, 0, 0, 0.829) 100%
+  );
+}
+
+.medic-lower:nth-child(1) {
+  margin-top: 0;
+}
+
+.medic-lower {
+    width: 100%;
+    display: flex;
+    height: 2.5396vw;
+    margin-top: -0.5vw;
+    margin-left: -0.7vw;
+}
+
+.medic-lower-first div {
+  width: 80%;
+  height: 80%;
+  margin-top: 10%;
+  margin-left: 10%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-image: url(../imgs/lower.png);
+}
+
+.medic-lower-dd {
+  border-radius: 0.2083vw;
+  width: 80%;
+  margin-left: 0.5vw;
+  height: 100%;
+  background-image: url(../imgs/weathered_paper.png);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.medic-lower-dd-label {
+  color: #e2c792;
+  text-shadow: 0px 0.2083vw 1.4583vw rgba(231, 175, 19, 0.55);
+  font-family: "RDR Lino Regular";
+  margin-left: 0.3vw;
+  margin-top: 0.35vw;
+  font-size: 0.725vw;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.medic-lower-dd-full {
+  border-radius: 0.1042vw;
+  width: 95%;
+  height: 0.7292vw;
+  margin-left: 0.3vw;
+  margin-top: 0.25vw;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.medic-lower-dd-bar {
+  background: #e2c792;
+  height: 100%;
+  transition: 0.3s;
+  border-radius: 0.1vw;
+}
+
+.medic-lower-first {
+  width: 2.6vw;
+  height: 100%;
+  border-radius: 0.2083vw;
+  border: 0.0521vw solid #e2c792;
+  background: radial-gradient(
+    62.19% 62.19% at 50% 50%,
+    rgba(0, 0, 0, 0.384) 0%,
+    rgba(0, 0, 0, 0.829) 100%
+  );
+}
+
+.medic-blood:nth-child(1) {
+  margin-top: 0;
+}
+
+.medic-blood {
+    width: 131%;
+    display: flex;
+    height: 2.5396vw;
+    margin-top: 1.3vw;
+    margin-left: -3.1vw;
+}
+
+.medic-blood-first div {
+  width: 90%;
+  height: 90%;
+  margin-top: 10%;
+  margin-left: 10%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-image: url(../imgs/blood.png);
+}
+
+.medic-blood-dd {
+  border-radius: 0.2083vw;
+  width: 80%;
+  margin-left: 0.5vw;
+  height: 100%;
+  background-image: url(../imgs/weathered_paper.png);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.medic-blood-dd-label {
+  color: #e2c792;
+  text-shadow: 0px 0.2083vw 1.4583vw rgba(231, 175, 19, 0.55);
+  font-family: "RDR Lino Regular";
+  margin-left: 0.3vw;
+  margin-top: 0.35vw;
+  font-size: 0.725vw;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.medic-blood-dd-full {
+  border-radius: 0.1042vw;
+  width: 95%;
+  height: 0.7292vw;
+  margin-left: 0.3vw;
+  margin-top: 0.25vw;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.medic-blood-dd-bar {
+  background: #e2c792;
+  height: 100%;
+  transition: 0.3s;
+  border-radius: 0.1vw;
+}
+
+.medic-blood-first {
+  width: 2.6vw;
+  height: 100%;
+  border-radius: 0.2083vw;
+  border: 0.0521vw solid #e2c792;
+  background: radial-gradient(
+    62.19% 62.19% at 50% 50%,
+    rgba(0, 0, 0, 0.384) 0%,
+    rgba(0, 0, 0, 0.829) 100%
+  );
+}
+.medic-buttons:nth-child(1) {
+  margin-top: 0;
+}
+
+.medic-buttons-bottom {
+    width: 100vw;
+    height: auto;
+    margin: 0;
+    padding: 2vh 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1vw;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.9);
+    border-top: 2px solid #e2c792;
+    z-index: 1000;
+}
+
+/* Removed problematic nth-child selector */
+
+.medic-button {
+    border-radius: 0.1563vw;
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    width: clamp(80px, 5vw, 120px);
+    margin-left: 0;
+    line-height: clamp(30px, 2vw, 40px);
+    color: #fff;
+    font-family: "RDR Lino Regular";
+    font-size: clamp(10px, 0.7vw, 14px);
+    text-align: center;
+    height: clamp(30px, 2vw, 40px);
+    transition: 0.4s;
+    cursor: pointer;
+    border: 1px solid #e2c792;
+}
+
+.medic-button-big {
+    border-radius: 0.1563vw;
+    border: 0.0521vw solid #e2c792;
+    background: linear-gradient(180deg, #e2c792 0%, rgba(207, 153, 53, 0.671) 100%);
+    width: clamp(100px, 6vw, 150px);
+    color: #951515;
+    line-height: clamp(30px, 2vw, 40px);
+    font-family: "RDR Lino Regular";
+    font-size: clamp(10px, 0.7vw, 14px);
+    font-weight: bold;
+    text-align: center;
+    margin-top: 0;
+    margin-left: 0;
+    height: clamp(30px, 2vw, 40px);
+    transition: 0.4s;
+    cursor: pointer;
+}
+
+.medic-mini-buttons {
+  width: 141%;
+  height: 60%;
+  margin-top: -69px;
+}
+
+.medic-button:hover {
+  cursor: pointer;
+  scale: 0.95;
+}
+
+.medic-button-big:hover {
+  scale: 1.05;
+  cursor: pointer;
+}
+
+@keyframes bottomSide {
+  0% {
+    opacity: 0;
+    transform: translateY(50%);
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Medical Treatment Styles */
+.medic-treatments {
+  width: 131%;
+  margin-top: 1.5vw;
+  margin-left: -3.1vw;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 0.2083vw;
+  padding: 0.5vw;
+  max-height: 8vw;
+  overflow-y: auto;
+}
+
+.medic-treatments::-webkit-scrollbar {
+  width: 0.2vw;
+}
+
+.medic-treatments::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 0.1vw;
+}
+
+.medic-treatments::-webkit-scrollbar-thumb {
+  background: #e2c792;
+  border-radius: 0.1vw;
+}
+
+.medic-treatments::-webkit-scrollbar-thumb:hover {
+  background: #c2ae87;
+}
+
+.treatment-section {
+  margin-bottom: 0.5vw;
+}
+
+.treatment-title {
+  color: #e2c792;
+  font-family: "RDR Lino Regular";
+  font-size: 0.9vw;
+  font-weight: 600;
+  margin-bottom: 0.3vw;
+  text-shadow: 0px 0.1vw 0.5vw rgba(231, 175, 19, 0.55);
+}
+
+.treatment-list {
+  min-height: 1.5vw;
+}
+
+.treatment-item {
+  margin: 0.2vw 0;
+  padding: 0.3vw;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 0.1vw;
+  animation: pulseAttention 3s ease-in-out infinite;
+}
+
+.treatment-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transition: 0.2s;
+}
+
+/* Enhanced Infection Risk Color Classes */
+.infection-risk-normal {
+  background-color: #4CAF50 !important; /* Green - normal bandage */
+}
+
+.infection-risk-orange {
+  background-color: #FF9800 !important; /* Orange - 0% effectiveness (infection risk) */
+  box-shadow: 0 0 0.2vw rgba(255, 152, 0, 0.5);
+}
+
+.infection-risk-infected {
+  background-color: #9C27B0 !important; /* Purple - active infection detected */
+  box-shadow: 0 0 0.2vw rgba(156, 39, 176, 0.5);
+}
+
+.infection-risk-critical {
+  background-color: #F44336 !important; /* Red - critical infection stage */
+  box-shadow: 0 0 0.3vw rgba(244, 67, 54, 0.7);
+  animation: infection-pulse 2s infinite;
+}
+
+/* Infection alert animation for critical stages */
+@keyframes infection-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0.2vw rgba(244, 67, 54, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0.5vw rgba(244, 67, 54, 0.9);
+  }
+}
+
+/* Right-Side Action Buttons - Full Height Arc Layout */
+.medic-actions-right {
+    position: fixed;
+    z-index: 1500;
+    width: 300px;
+    height: 100vh;
+}
+
+.action-button {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border: 2px solid #e2c792;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgb(0 0 0 / 40%);
+    overflow: visible;
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+}
+
+/* Radial positioning for each button */
+.action-button:nth-child(1) {
+    top: 13vh;
+    left: -35px;
+    transform: rotate(0deg);
+}
+
+.action-button:nth-child(1):hover {
+  border-color: #e70c0c87;
+  transform: rotate(-10deg) scale(1.1);
+}
+
+.action-button:nth-child(1):active {
+  transform: rotate(-10deg) scale(1.0);
+}
+
+.action-button:nth-child(2) {
+    top: 50vh;
+    left: 90px;
+    transform: translateY(-50%) rotate(0deg);
+}
+
+.action-button:nth-child(2):hover {
+  border-color: #e70c0c87;
+  transform: translateY(-50%) rotate(0deg) scale(1.1);
+}
+
+.action-button:nth-child(2):active {
+  transform: translateY(-50%) rotate(0deg) scale(0.95);
+}
+
+.action-button:nth-child(3) {
+    top: 85vh;
+    left: -35px;
+    transform: rotate(0deg);
+}
+
+.action-button:nth-child(3):hover {
+  border-color: #e70c0c87;
+  transform: rotate(10deg) scale(1.1);
+}
+
+.action-button:nth-child(3):active {
+  transform: rotate(10deg) scale(0.95);
+}
+
+.action-button i {
+  font-size: 24px;
+  color: #eee9e9;
+  transition: all 0.3s ease;
+}
+
+.action-button:hover i {
+  color: #ffffff;
+  text-shadow: 0 0 8px rgba(226, 199, 146, 0.8);
+}
+
+/* Tooltip Styles */
+.action-tooltip {
+  position: absolute;
+  right: 75px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(40, 40, 40, 0.9));
+  color: #e2c792;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: "RDR Lino Regular", serif;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid #e2c792;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1600;
+}
+
+.action-tooltip::after {
+  content: '';
+  position: absolute;
+  left: 0%;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-left-color: #e2c792;
+}
+
+.action-tooltip::before {
+    content: '';
+    position: absolute;
+    left: 1%;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 5px solid transparent;
+    border-left-color: rgba(0, 0, 0, 0.95);
+    margin-left: 1px;
+}
+/* Tooltip Animation */
+.action-button:hover .action-tooltip {
+    opacity: 1;
+    visibility: visible;
+    right: 85px;
+    animation: slideInLeft 0.3s ease;
+    width: 5vw;
+    text-align: center;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+/* Old specific button styling - removed as it's now handled above with rotation */
+
+/* Hide old bottom buttons */
+.medic-buttons-bottom {
+  display: none !important;
+}
+
+/* Responsive Design for Action Buttons */
+@media (max-height: 700px) {
+  .medic-actions-right {
+    gap: 15px;
+  }
+  
+  .action-button {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .action-button i {
+    font-size: 20px;
+  }
+  
+  .action-tooltip {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .medic-actions-right {
+    right: 20px;
+  }
+  
+  .action-tooltip {
+    right: 65px;
+  }
+  
+  .action-button:hover .action-tooltip {
+    right: 75px;
+  }
+}
+
+/* Treatment Context Menu */
+.treatment-context-menu {
+  position: fixed;
+  width: 300px;
+  z-index: 1500;
+  font-family: "RDR Lino Regular", serif;
+  pointer-events: none; /* Allow mouse to pass through when not hovering */
+}
+
+.context-menu-bg {
+  min-height: 120px;
+}
+
+/* Body part pulsing when treatments are active */
+.has-treatment {
+  animation: treatmentPulse 2s ease-in-out infinite;
+}
+
+.has-bandage {
+  animation: bandagePulse 2s ease-in-out infinite;
+}
+
+.has-tourniquet {
+  animation: tourniquetPulse 2s ease-in-out infinite;
+}
+
+.treatments-paper-bg {
+  position: relative;
+  width: 100%;
+  min-height: 180px;
+  background-image: url('../imgs/weathered_paper.png');
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 20px 15px;
+  overflow: visible;
+  border-radius: 8px;
+}
+
+.treatments-paper-bg.bandages-panel {
+  /* No special border or glow */
+}
+
+.treatments-paper-bg.tourniquets-panel {
+  /* No special border or glow */
+}
+
+/* Remove all overlays to keep PNG pure */
+
+/* Header styling */
+.treatments-header {
+  text-align: center;
+  margin-bottom: 25px;
+  position: relative;
+}
+
+.treatments-title {
+  font-size: 22px;
+  font-weight: bold;
+  color: #ffffff;
+  /* text-shadow: 0px 0.05vw 0.3vw rgba(231, 175, 19, 0.4); */
+  letter-spacing: 2px;
+  margin-bottom: 5px;
+}
+
+.treatments-subtitle {
+  font-size: 14px;
+  color: #e2c792;
+  font-style: italic;
+  letter-spacing: 1px;
+  text-shadow: 0px 0.05vw 0.2vw rgba(231, 175, 19, 0.3);
+  opacity: 0.9;
+}
+
+.treatments-header::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 2px;
+  background: linear-gradient(to right, transparent, #8b5a3c, transparent);
+}
+
+/* Treatment sections */
+.treatment-section {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.treatment-category {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding: 12px;
+  text-align: center;
+}
+
+.category-icon {
+  font-size: 18px;
+  color: #e2c792;
+  text-shadow: 0px 0.05vw 0.2vw rgba(231, 175, 19, 0.3);
+}
+
+.category-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #ffffff;
+  letter-spacing: 1px;
+  /* text-shadow: 0px 0.05vw 0.3vw rgba(231, 175, 19, 0.4); */
+}
+
+/* Treatment entries */
+.treatment-entries {
+  padding-left: 15px;
+}
+
+.treatment-item {
+  margin: 8px 0;
+  padding: 10px 12px;
+  animation: pulseAttention 3s ease-in-out infinite;
+}
+
+.treatment-item div:first-child {
+  color: #e2c792 !important;
+  font-size: 13px !important;
+  font-weight: bold !important;
+/*   text-shadow: 0px 0.05vw 0.2vw rgba(231, 175, 19, 0.3) !important; */
+}
+
+.treatment-item div:last-child {
+  color: #d4c4a0 !important;
+  font-size: 11px !important;
+  margin-top: 4px !important;
+/*   text-shadow: 0px 0.03vw 0.15vw rgba(231, 175, 19, 0.25) !important; */
+}
+
+/* Paper stains only - removed fold */
+.paper-stains {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  width: 40px;
+  height: 60px;
+  background: 
+    radial-gradient(ellipse at center, rgba(101, 67, 33, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: rotate(-15deg);
+  pointer-events: none;
+}
+
+/* Scroll styling for long lists */
+.medic-treatments-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.medic-treatments-panel::-webkit-scrollbar-track {
+  background: rgba(139, 90, 43, 0.2);
+  border-radius: 4px;
+}
+
+.medic-treatments-panel::-webkit-scrollbar-thumb {
+  background: #8b5a3c;
+  border-radius: 4px;
+  border: 1px solid rgba(101, 67, 33, 0.5);
+}
+
+.medic-treatments-panel::-webkit-scrollbar-thumb:hover {
+  background: #6b4423;
+}
+
+/* Animation for panel appearance */
+@keyframes paperUnfold {
+  from {
+    transform: scale(0.8) rotateY(-10deg);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) rotateY(0deg);
+    opacity: 1;
+  }
+}
+
+/* Pulsing attention animation */
+@keyframes pulseAttention {
+  0% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.02);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+}
+
+/* Body part treatment pulsing animations */
+@keyframes treatmentPulse {
+  0% {
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 0 25px rgba(255, 255, 255, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+  }
+}
+
+@keyframes bandagePulse {
+  0% {
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.8), 0 0 25px rgba(76, 175, 80, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+  }
+}
+
+@keyframes tourniquetPulse {
+  0% {
+    box-shadow: 0 0 5px rgba(241, 196, 15, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(241, 196, 15, 0.8), 0 0 25px rgba(241, 196, 15, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(241, 196, 15, 0.3);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-height: 800px) {
+  .medic-treatments-panel {
+    top: 80px;
+    max-height: 350px;
+  }
+  
+  .treatments-paper-bg {
+    min-height: 300px;
+    padding: 20px 15px;
+  }
+  
+  .treatments-title {
+    font-size: 18px;
+  }
+  
+  .category-title {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .medic-treatments-panel {
+    left: 20px;
+    width: 280px;
+  }
+}
+
+/* Active Treatments Detail Panel - RIGHT SIDE */
+.active-treatments-detail-panel {
+  position: fixed;
+  right: -500px; /* Start off-screen */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 450px;
+  max-height: 80vh;
+  z-index: 1500;
+  font-family: "RDR Lino Regular", serif;
+  transition: right 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow-y: auto;
+}
+
+.active-treatments-detail-panel.visible {
+  right: 20px; /* Slide in position */
+}
+
+.treatments-detail-bg {
+  position: relative;
+  width: 100%;
+  min-height: 400px;
+  background-image: url(../imgs/weathered_paper.png);
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  padding: 25px 20px;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.treatments-detail-header {
+  text-align: center;
+  margin-bottom: 25px;
+  position: relative;
+}
+
+.treatments-detail-title {
+  font-size: 22px;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  letter-spacing: 2px;
+  margin-bottom: 5px;
+}
+
+.treatments-detail-subtitle {
+  font-size: 14px;
+  color: #e0e0e0;
+  font-style: italic;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.treatments-close-btn {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 30px;
+  height: 30px;
+  background: rgba(139, 105, 20, 0.8);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  border: 2px solid #8b6914;
+}
+
+.treatments-close-btn:hover {
+  background: rgba(139, 105, 20, 1);
+  transform: scale(1.1);
+}
+
+.treatments-detail-content {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+/* Treatment Entry Styling */
+.treatment-detail-section {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(139, 105, 20, 0.3);
+}
+
+.treatment-detail-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(139, 105, 20, 0.2);
+}
+
+.treatment-detail-icon {
+  font-size: 20px;
+  margin-right: 10px;
+  width: 25px;
+  text-align: center;
+}
+
+.treatment-detail-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  flex-grow: 1;
+}
+
+.treatment-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6.5px 10px;
+    margin: 4px 0px;
+    background-image: url(../imgs/selection_box_bg_1d.png);
+    background-size: cover;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.treatment-entry:hover {
+  background-image: url(../imgs/selsected.png);
+  background-size: contain;
+  border-color: #8b6914;
+  transform: translateX(4px);
+}
+
+.treatment-entry-info {
+  flex-grow: 1;
+}
+
+.treatment-entry-name {
+  font-size: 14px;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  margin-bottom: 2px;
+}
+
+.treatment-entry-details {
+  font-size: 12px;
+  color: #e0e0e0;
+  font-style: italic;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.treatment-entry-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.status-icon {
+  font-size: 14px;
+}
+
+.status-text {
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Decorative elements for detail panel */
+.detail-paper-stains {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  width: 30px;
+  height: 30px;
+  background: radial-gradient(circle, rgba(139, 105, 20, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.detail-paper-fold {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  width: 0;
+  height: 0;
+  border-left: 15px solid transparent;
+  border-right: 15px solid transparent;
+  border-bottom: 15px solid rgba(139, 105, 20, 0.1);
+  transform: rotate(45deg);
+}
+
+/* Scrollbar styling for detail panel */
+.treatments-detail-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.treatments-detail-content::-webkit-scrollbar-track {
+  background: rgba(139, 105, 20, 0.1);
+  border-radius: 4px;
+}
+
+.treatments-detail-content::-webkit-scrollbar-thumb {
+  background: rgba(139, 105, 20, 0.6);
+  border-radius: 4px;
+}
+
+.treatments-detail-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 105, 20, 0.8);
+}
+
+/* Animation for sliding in */
+@keyframes slideInFromRight {
+  from {
+    right: -500px;
+    opacity: 0;
+  }
+  to {
+    right: 100px;
+    opacity: 1;
+  }
+}
+
+/* Responsive design for detail panel */
+@media (max-width: 1200px) {
+  .active-treatments-detail-panel {
+    width: 380px;
+  }
+  
+  .treatments-detail-bg {
+    padding: 20px 15px;
+  }
+}
+
+@media (max-height: 700px) {
+  .active-treatments-detail-panel {
+    max-height: 90vh;
+  }
+  
+  .treatments-detail-content {
+    max-height: 40vh;
+  }
+}
+
+/* Bandage Selection Panel */
+.bandage-selection-panel {
+  position: fixed;
+  right: -500px;
+  top: 4vh;
+  width: 450px;
+  max-height: 70vh;
+  z-index: 1000;
+  animation: slideInFromRight 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.bandage-selection-panel.visible {
+  right: 100px;
+}
+
+.bandage-selection-panel.slide-out {
+  animation: slideOutToRight 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Body part selection styling */
+.bandage-body-part {
+  padding: 12px 15px;
+  margin: 8px 0;
+  background: rgba(139, 105, 20, 0.2);
+  border: 1px solid rgba(139, 105, 20, 0.4);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bandage-body-part:hover {
+  background: rgba(139, 105, 20, 0.3);
+  border-color: rgba(139, 105, 20, 0.6);
+  transform: translateX(5px);
+}
+
+.bandage-body-part-name {
+  color: #e2c792;
+  font-weight: bold;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
+.bandage-body-part-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bleeding-indicator {
+  color: #dc3545;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bleeding-indicator i {
+  font-size: 10px;
+}
+
+.severity-level {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+}
+
+/* No bleeding message */
+.no-bleeding-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: rgba(226, 199, 146, 0.7);
+  font-style: italic;
+}
+
+@keyframes slideOutToRight {
+  from {
+    right: 100px;
+    opacity: 1;
+  }
+  to {
+    right: -500px;
+    opacity: 0;
+  }
+}
+
+/* Tourniquet Selection Panel */
+.tourniquet-selection-panel {
+  position: fixed;
+  right: -500px;
+  top: 67vh;
+  width: 450px;
+  max-height: 40vh;
+  z-index: 1000;
+  animation: slideInFromRight 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.tourniquet-selection-panel.visible {
+  right: 100px;
+}
+
+.tourniquet-selection-panel.slide-out {
+  animation: slideOutToRight 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Severe bleeding styling for tourniquet */
+.tourniquet-body-part {
+  padding: 12px 15px;
+  margin: 8px 0;
+  background: rgba(139, 105, 20, 0.2);
+  border: 1px solid rgba(139, 105, 20, 0.4);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tourniquet-body-part.severe-bleeding {
+  background: rgba(220, 53, 69, 0.3);
+  border-color: rgba(220, 53, 69, 0.6);
+}
+
+.tourniquet-body-part:hover {
+  background: rgba(139, 105, 20, 0.3);
+  border-color: rgba(139, 105, 20, 0.6);
+  transform: translateX(5px);
+}
+
+.tourniquet-body-part.severe-bleeding:hover {
+  background: rgba(220, 53, 69, 0.4);
+  border-color: rgba(220, 53, 69, 0.8);
+}
+
+.tourniquet-body-part-name {
+  color: #e2c792;
+  font-weight: bold;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
+.tourniquet-body-part-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.severe-bleeding-indicator {
+  color: #dc3545;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: bold;
+}
+
+.tourniquet-severity-level {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: rgba(220, 53, 69, 0.3);
+  color: #dc3545;
+  font-weight: bold;
+}
+
+/* No severe bleeding message */
+.no-severe-bleeding-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: rgba(226, 199, 146, 0.7);
+  font-style: italic;
+}
+
+.no-bleeding-wounds-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: rgba(226, 199, 146, 0.7);
+  font-style: italic;
+}
+
+.no-treatments-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: rgba(226, 199, 146, 0.7);
+  font-style: italic;
+}
+
+/* Clickable bleeding wounds styling */
+.clickable-wound {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
+}
+
+.clickable-wound:hover {
+  background: rgba(220, 53, 69, 0.1);
+  border-left: 3px solid #dc3545;
+  transform: translateX(2px);
+}
+
+.action-hint {
+  color: rgba(226, 199, 146, 0.8);
+  font-size: 11px;
+  font-style: italic;
+  margin-top: 5px;
+  padding: 3px 6px;
+  background: rgba(139, 105, 20, 0.2);
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.bleeding-wound-info {
+  background: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.wound-status-header {
+  color: #e2c792;
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.wound-description {
+  color: rgba(226, 199, 146, 0.8);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* ========================================
+   ENHANCED VISUAL FEEDBACK SYSTEM
+   Phase 1: Advanced NUI Enhancements
+======================================== */
+
+/* Bleeding Animation Effects */
+.bleeding-droplet {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #dc3545;
+  border-radius: 50%;
+  animation: bloodDrop 3s infinite linear;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes bloodDrop {
+  0% {
+    opacity: 0;
+    transform: translateY(-5px) scale(0.8);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0px) scale(1);
+  }
+  80% {
+    opacity: 0.7;
+    transform: translateY(15px) scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(25px) scale(0.3);
+  }
+}
+
+/* Enhanced Body Part States */
+.body-part-bleeding {
+  position: relative;
+  overflow: visible;
+}
+
+.body-part-bleeding::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, rgba(220, 53, 69, 0.6), rgba(220, 53, 69, 0.2));
+  border-radius: inherit;
+  z-index: -1;
+  animation: bleedingPulse 2s ease-in-out infinite;
+}
+
+@keyframes bleedingPulse {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(220, 53, 69, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(220, 53, 69, 0.8), 0 0 25px rgba(220, 53, 69, 0.4);
+    transform: scale(1.02);
+  }
+}
+
+/* Critical Injury States */
+.body-part-critical {
+  position: relative;
+  animation: criticalFlash 1.5s ease-in-out infinite;
+}
+
+.body-part-critical::after {
+  content: '⚠';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  color: #ff4444;
+  font-size: 12px;
+  animation: warningBlink 1s ease-in-out infinite;
+  text-shadow: 0 0 4px rgba(255, 68, 68, 0.8);
+}
+
+@keyframes criticalFlash {
+  0%, 100% {
+    box-shadow: 0 0 3px rgba(255, 68, 68, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(255, 68, 68, 1), 0 0 20px rgba(255, 68, 68, 0.6);
+  }
+}
+
+@keyframes warningBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* Progressive Damage Visualization */
+.damage-severity-1, .damage-severity-2 {
+  border-color: #4CAF50 !important;
+  box-shadow: 0 0 3px rgba(76, 175, 80, 0.4);
+}
+
+.damage-severity-3, .damage-severity-4 {
+  border-color: #FFC107 !important;
+  box-shadow: 0 0 5px rgba(255, 193, 7, 0.5);
+  animation: minorDamageGlow 3s ease-in-out infinite;
+}
+
+.damage-severity-5, .damage-severity-6 {
+  border-color: #FF9800 !important;
+  box-shadow: 0 0 7px rgba(255, 152, 0, 0.6);
+  animation: moderateDamageGlow 2.5s ease-in-out infinite;
+}
+
+.damage-severity-7, .damage-severity-8 {
+  border-color: #F44336 !important;
+  box-shadow: 0 0 10px rgba(244, 67, 54, 0.7);
+  animation: severeDamageGlow 2s ease-in-out infinite;
+}
+
+.damage-severity-9, .damage-severity-10 {
+  border-color: #B71C1C !important;
+  box-shadow: 0 0 15px rgba(183, 28, 28, 0.9), 0 0 25px rgba(183, 28, 28, 0.5);
+  animation: criticalDamageGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes minorDamageGlow {
+  0%, 100% { box-shadow: 0 0 5px rgba(255, 193, 7, 0.5); }
+  50% { box-shadow: 0 0 8px rgba(255, 193, 7, 0.7); }
+}
+
+@keyframes moderateDamageGlow {
+  0%, 100% { box-shadow: 0 0 7px rgba(255, 152, 0, 0.6); }
+  50% { box-shadow: 0 0 12px rgba(255, 152, 0, 0.8); }
+}
+
+@keyframes severeDamageGlow {
+  0%, 100% { box-shadow: 0 0 10px rgba(244, 67, 54, 0.7); }
+  50% { box-shadow: 0 0 18px rgba(244, 67, 54, 0.9); }
+}
+
+@keyframes criticalDamageGlow {
+  0%, 100% { 
+    box-shadow: 0 0 15px rgba(183, 28, 28, 0.9), 0 0 25px rgba(183, 28, 28, 0.5);
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: 0 0 25px rgba(183, 28, 28, 1), 0 0 35px rgba(183, 28, 28, 0.7);
+    transform: scale(1.03);
+  }
+}
+
+/* Infection Progression Indicators */
+.infection-stage-1 {
+  box-shadow: 0 0 5px rgba(156, 39, 176, 0.4);
+  border-color: rgba(156, 39, 176, 0.6);
+}
+
+.infection-stage-2 {
+  box-shadow: 0 0 8px rgba(156, 39, 176, 0.6);
+  border-color: rgba(156, 39, 176, 0.8);
+  animation: infectionProgression1 4s ease-in-out infinite;
+}
+
+.infection-stage-3 {
+  box-shadow: 0 0 12px rgba(156, 39, 176, 0.8);
+  border-color: rgba(156, 39, 176, 1);
+  animation: infectionProgression2 3s ease-in-out infinite;
+}
+
+.infection-stage-4 {
+  box-shadow: 0 0 20px rgba(156, 39, 176, 1), 0 0 30px rgba(156, 39, 176, 0.6);
+  border-color: rgba(156, 39, 176, 1);
+  animation: infectionProgression3 2s ease-in-out infinite;
+}
+
+.infection-stage-4::before {
+  content: '🦠';
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 10px;
+  animation: infectionBlink 1.5s ease-in-out infinite;
+}
+
+@keyframes infectionProgression1 {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes infectionProgression2 {
+  0%, 100% { 
+    box-shadow: 0 0 12px rgba(156, 39, 176, 0.8);
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: 0 0 18px rgba(156, 39, 176, 1);
+    transform: scale(1.01);
+  }
+}
+
+@keyframes infectionProgression3 {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(156, 39, 176, 1), 0 0 30px rgba(156, 39, 176, 0.6);
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: 0 0 30px rgba(156, 39, 176, 1), 0 0 40px rgba(156, 39, 176, 0.8);
+    transform: scale(1.02);
+  }
+}
+
+@keyframes infectionBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Enhanced Treatment Status Indicators */
+.treatment-active {
+  position: relative;
+}
+
+.treatment-active::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  background: #4CAF50;
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(76, 175, 80, 0.8);
+  animation: treatmentActive 2s ease-in-out infinite;
+}
+
+@keyframes treatmentActive {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.2); }
+}
+
+.bandage-deteriorating::after {
+  background: #FF9800 !important;
+  box-shadow: 0 0 4px rgba(255, 152, 0, 0.8) !important;
+  animation: bandageWarning 1.5s ease-in-out infinite !important;
+}
+
+@keyframes bandageWarning {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.tourniquet-expiring::after {
+  background: #F44336 !important;
+  box-shadow: 0 0 6px rgba(244, 67, 54, 1) !important;
+  animation: tourniquetUrgent 1s ease-in-out infinite !important;
+}
+
+@keyframes tourniquetUrgent {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.4; 
+    transform: scale(1.3);
+  }
+}
+
+/* Blood Level Visual Enhancement */
+.blood-level-critical {
+  animation: bloodCritical 2s ease-in-out infinite;
+}
+
+.blood-level-low {
+  animation: bloodLow 3s ease-in-out infinite;
+}
+
+@keyframes bloodCritical {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(183, 28, 28, 0.8);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(183, 28, 28, 1), 0 0 24px rgba(183, 28, 28, 0.6);
+  }
+}
+
+@keyframes bloodLow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(244, 67, 54, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(244, 67, 54, 0.8);
+  }
+}
+
+/* Interactive Hover Enhancements */
+.medic-head-first:hover,
+.medic-spine-first:hover,
+.medic-upper-first:hover,
+.medic-larm-first:hover,
+.medic-rarm-first:hover,
+.medic-lhand-first:hover,
+.medic-rhand-first:hover,
+.medic-lleg-first:hover,
+.medic-rleg-first:hover,
+.medic-lfoot-first:hover,
+.medic-rfoot-first:hover,
+.medic-lower-first:hover {
+  cursor: pointer;
+  transform: scale(1.05);
+  transition: all 0.2s ease;
+  z-index: 10;
+  position: relative;
+}
+
+/* Body Part Click Highlight */
+.body-part-clicked {
+  animation: clickHighlight 0.5s ease-out;
+}
+
+@keyframes clickHighlight {
+  0% {
+    box-shadow: 0 0 0 rgba(226, 199, 146, 0.8);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(226, 199, 146, 1);
+    transform: scale(1.1);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(226, 199, 146, 0);
+    transform: scale(1);
+  }
+}
+
+/* ========================================
+   INTERACTIVE 3D-STYLE BODY MODEL
+   Phase 1: Enhanced Body Visualization
+======================================== */
+
+/* Enhanced 3D Body Part Styling */
+.medic-head-first,
+.medic-spine-first,
+.medic-upper-first,
+.medic-larm-first,
+.medic-rarm-first,
+.medic-lhand-first,
+.medic-rhand-first,
+.medic-lleg-first,
+.medic-rleg-first,
+.medic-lfoot-first,
+.medic-rfoot-first,
+.medic-lower-first {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  overflow: visible;
+}
+
+/* 3D Depth Effect */
+.medic-head-first::before,
+.medic-spine-first::before,
+.medic-upper-first::before,
+.medic-larm-first::before,
+.medic-rarm-first::before,
+.medic-lhand-first::before,
+.medic-rhand-first::before,
+.medic-lleg-first::before,
+.medic-rleg-first::before,
+.medic-lfoot-first::before,
+.medic-rfoot-first::before,
+.medic-lower-first::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 50%, 
+    rgba(0, 0, 0, 0.1) 100%);
+  border-radius: inherit;
+  z-index: 1;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+/* Enhanced Hover Effects with 3D Transform */
+.medic-head-first:hover {
+  transform: perspective(1000px) rotateX(5deg) rotateY(-5deg) rotateZ(-2deg) scale(1.08);
+  box-shadow: 
+    0 8px 16px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(226, 199, 146, 0.4);
+}
+
+.medic-spine-first:hover {
+  transform: perspective(1000px) rotateX(5deg) rotateZ(2deg) scale(1.08);
+  box-shadow: 
+    0 8px 16px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(226, 199, 146, 0.4);
+}
+
+.medic-upper-first:hover {
+  transform: perspective(1000px) rotateX(10deg) rotateZ(-2deg) scale(1.08);
+  box-shadow: 
+    0 8px 16px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(226, 199, 146, 0.4);
+}
+
+.medic-larm-first:hover {
+  transform: perspective(1000px) rotateY(15deg) rotateZ(-3deg) scale(1.08);
+  box-shadow: 
+    0 8px 16px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(226, 199, 146, 0.4);
+}
+
+.medic-rarm-first:hover {
+  transform: perspective(1000px) rotateY(-15deg) rotateZ(3deg) scale(1.08);
+  box-shadow: 
+    0 8px 16px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(226, 199, 146, 0.4);
+}
+
+.medic-lhand-first:hover,
+.medic-rhand-first:hover {
+  transform: perspective(1000px) rotateX(10deg) rotateY(5deg) rotateZ(-2deg) scale(1.12);
+  box-shadow: 
+    0 6px 12px rgba(0, 0, 0, 0.3),
+    0 0 16px rgba(226, 199, 146, 0.4);
+}
+
+.medic-lleg-first:hover {
+  transform: perspective(1000px) rotateY(10deg) rotateX(-5deg) rotateZ(2deg) scale(1.08);
+  box-shadow: 
+    0 8px 16px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(226, 199, 146, 0.4);
+}
+
+.medic-rleg-first:hover {
+  transform: perspective(1000px) rotateY(-10deg) rotateX(-5deg) rotateZ(-2deg) scale(1.08);
+  box-shadow: 
+    0 8px 16px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(226, 199, 146, 0.4);
+}
+
+.medic-lfoot-first:hover,
+.medic-rfoot-first:hover {
+  transform: perspective(1000px) rotateX(-10deg) rotateZ(2deg) scale(1.12);
+  box-shadow: 
+    0 6px 12px rgba(0, 0, 0, 0.3),
+    0 0 16px rgba(226, 199, 146, 0.4);
+}
+
+.medic-lower-first:hover {
+  transform: perspective(1000px) rotateX(-10deg) rotateZ(-2deg) scale(1.08);
+  box-shadow: 
+    0 8px 16px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(226, 199, 146, 0.4);
+}
+
+/* Interactive Body Part Labels */
+.body-part-label {
+  position: absolute;
+  bottom: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(40, 40, 40, 0.8));
+  color: #e2c792;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: bold;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 100;
+  border: 1px solid rgba(226, 199, 146, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  font-family: "RDR Lino Regular", serif;
+}
+
+.body-part-label::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-bottom-color: rgba(0, 0, 0, 0.9);
+}
+
+/* Labels stay hidden - no hover tooltips */
+
+/* ========================================
+   PHASE 2: DRAG-AND-DROP TREATMENT SYSTEM
+   Advanced medical interaction system
+======================================== */
+
+/* Medical Inspection Treatment Inventory */
+.medical-inspection-inventory {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(40, 40, 40, 0.9));
+  border: 2px solid #e2c792;
+  border-radius: 15px;
+  padding: 20px 30px;
+  z-index: 1500;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+  font-family: "RDR Lino Regular", serif;
+  min-width: 400px;
+}
+
+.inspection-inventory-header {
+  text-align: center;
+  margin-bottom: 15px;
+  border-bottom: 1px solid rgba(226, 199, 146, 0.3);
+  padding-bottom: 10px;
+}
+
+.inventory-title {
+  color: #e2c792;
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 4px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.inventory-subtitle {
+  color: #ccc;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.inspection-treatments {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+.draggable-treatment {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+  border: 2px solid #555;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  transition: all 0.3s ease;
+  position: relative;
+  user-select: none;
+  color: #e2c792;
+}
+
+.draggable-treatment:hover {
+  border-color: #e2c792;
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(226, 199, 146, 0.4);
+}
+
+.draggable-treatment.dragging {
+  cursor: grabbing;
+  transform: scale(1.2) rotate(5deg);
+  z-index: 2000;
+  box-shadow: 0 8px 32px rgba(226, 199, 146, 0.6);
+  border-color: #fff;
+}
+
+.draggable-treatment .item-icon {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.draggable-treatment .item-label {
+  font-size: 8px;
+  font-weight: bold;
+  text-align: center;
+  line-height: 1;
+}
+
+.draggable-treatment .item-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #e74c3c;
+  color: #e2c792;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+}
+
+/* Drop Zone Styling */
+.drop-zone {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.drop-zone.valid-target {
+  background: rgba(76, 175, 80, 0.2) !important;
+  border: 2px dashed #4CAF50 !important;
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.5) !important;
+  animation: validTargetPulse 1s ease-in-out infinite;
+}
+
+.drop-zone.invalid-target {
+  background: rgba(244, 67, 54, 0.2) !important;
+  border: 2px dashed #f44336 !important;
+  box-shadow: 0 0 20px rgba(244, 67, 54, 0.5) !important;
+  animation: invalidTargetShake 0.5s ease-in-out;
+}
+
+.drop-zone.drop-hover {
+  transform: scale(1.1);
+  z-index: 100;
+}
+
+@keyframes validTargetPulse {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.5);
+    border-color: #4CAF50;
+  }
+  50% { 
+    box-shadow: 0 0 30px rgba(76, 175, 80, 0.8);
+    border-color: #66BB6A;
+  }
+}
+
+@keyframes invalidTargetShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Treatment Effectiveness Indicators */
+.treatment-effectiveness-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  z-index: 200;
+  border: 2px solid;
+}
+
+.treatment-effectiveness-indicator.excellent {
+  border-color: #4CAF50;
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.9), rgba(46, 125, 50, 0.9));
+}
+
+.treatment-effectiveness-indicator.good {
+  border-color: #8BC34A;
+  background: linear-gradient(135deg, rgba(139, 195, 74, 0.9), rgba(85, 139, 47, 0.9));
+}
+
+.treatment-effectiveness-indicator.fair {
+  border-color: #FFC107;
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.9), rgba(245, 124, 0, 0.9));
+}
+
+.treatment-effectiveness-indicator.poor {
+  border-color: #FF9800;
+  background: linear-gradient(135deg, rgba(255, 152, 0, 0.9), rgba(230, 81, 0, 0.9));
+}
+
+.treatment-effectiveness-indicator.invalid {
+  border-color: #f44336;
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.9), rgba(198, 40, 40, 0.9));
+}
+
+.drop-zone.valid-target .treatment-effectiveness-indicator {
+  opacity: 1;
+  transform: translate(-50%, -70%);
+}
+
+/* Drag Preview */
+.drag-preview {
+  position: fixed;
+  pointer-events: none;
+  z-index: 3000;
+  transform: scale(1.3);
+  opacity: 0.8;
+  transition: none;
+}
+
+/* Ghost placeholder for dragged item */
+.treatment-ghost {
+  opacity: 0.3;
+  transform: scale(0.9);
+  border-style: dashed;
+}
+
+/* ========================================
+   ENHANCED MEDICAL INSPECTION DASHBOARD
+   Professional medical examination interface
+======================================== */
+
+/* Main Dashboard Container */
+.medical-inspection-dashboard {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(20, 20, 20, 0.98));
+  z-index: 2000;
+  font-family: "RDR Lino Regular", serif;
+  overflow: hidden;
+  backdrop-filter: blur(5px);
+}
+
+.dashboard-close {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  font-size: 32px;
+  color: #e2c792;
+  cursor: pointer;
+  z-index: 2100;
+  transition: all 0.3s ease;
+  background: rgba(0, 0, 0, 0.5);
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #e2c792;
+}
+
+.dashboard-close:hover {
+  background: rgba(226, 199, 146, 0.2);
+  transform: scale(1.1);
+  box-shadow: 0 0 20px rgba(226, 199, 146, 0.5);
+}
+
+/* Patient Information Header */
+.patient-info-header {
+  display: flex;
+  align-items: center;
+  padding: 25px 40px;
+  background: linear-gradient(135deg, rgba(226, 199, 146, 0.15), rgba(194, 174, 135, 0.1));
+  border-bottom: 2px solid rgba(226, 199, 146, 0.3);
+  margin-bottom: 20px;
+}
+
+.patient-avatar {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #e2c792, #c2ae87);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: #2c2c2c;
+  margin-right: 25px;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.patient-details {
+  flex: 1;
+  margin-right: 30px;
+}
+
+.patient-details .patient-name {
+  font-size: 24px;
+  font-weight: bold;
+  color: #e2c792;
+  margin-bottom: 5px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.patient-details .patient-id {
+  font-size: 14px;
+  color: #ccc;
+  margin-bottom: 8px;
+}
+
+.patient-details .patient-status {
+  font-size: 16px;
+  font-weight: bold;
+  color: #ff6b6b;
+  text-transform: uppercase;
+}
+
+.patient-details .patient-status.stable { color: #51cf66; }
+.patient-details .patient-status.warning { color: #ffd43b; }
+.patient-details .patient-status.critical { color: #ff6b6b; }
+
+/* Vital Signs */
+.vital-signs {
+  display: flex;
+  gap: 30px;
+}
+
+.vital-item {
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 15px 20px;
+  border-radius: 10px;
+  border: 1px solid rgba(226, 199, 146, 0.3);
+  min-width: 120px;
+}
+
+.vital-icon {
+  font-size: 24px;
+  color: #e2c792;
+  margin-right: 12px;
+}
+
+.vital-icon.pulse {
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+.vital-data {
+  display: flex;
+  flex-direction: column;
+}
+
+.vital-value {
+  font-size: 20px;
+  font-weight: bold;
+  color: #fff;
+  line-height: 1;
+}
+
+.vital-unit {
+  font-size: 12px;
+  color: #ccc;
+  margin-top: 2px;
+}
+
+/* Dashboard Content Layout */
+.dashboard-content {
+  display: flex;
+  height: calc(100vh - 140px);
+  padding: 0 20px 20px 20px;
+  gap: 20px;
+}
+
+.dashboard-left-panel,
+.dashboard-right-panel {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dashboard-center-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Panel Sections */
+.panel-section {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(40, 40, 40, 0.6));
+  border: 2px solid rgba(226, 199, 146, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+  backdrop-filter: blur(10px);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  font-weight: bold;
+  color: #e2c792;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.section-title i {
+  margin-right: 10px;
+  font-size: 18px;
+}
+
+/* Overview Stats */
+.overview-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 15px;
+  border-radius: 8px;
+  border: 2px solid;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.stat-item.critical {
+  border-color: #ff6b6b;
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 107, 107, 0.05));
+}
+
+.stat-item.warning {
+  border-color: #ffd43b;
+  background: linear-gradient(135deg, rgba(255, 212, 59, 0.1), rgba(255, 212, 59, 0.05));
+}
+
+.stat-item.info {
+  border-color: #74c0fc;
+  background: linear-gradient(135deg, rgba(116, 192, 252, 0.1), rgba(116, 192, 252, 0.05));
+}
+
+.stat-item.success {
+  border-color: #51cf66;
+  background: linear-gradient(135deg, rgba(81, 207, 102, 0.1), rgba(81, 207, 102, 0.05));
+}
+
+.stat-number {
+  font-size: 24px;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #ccc;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Blood Level Indicator */
+.blood-level-container {
+  margin-top: 10px;
+}
+
+.blood-level-bar {
+  width: 100%;
+  height: 25px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid rgba(226, 199, 146, 0.3);
+  margin-bottom: 10px;
+}
+
+.blood-level-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff6b6b, #ffd43b, #51cf66);
+  transition: width 0.5s ease;
+  border-radius: 10px;
+}
+
+.blood-level-text {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.blood-level-text span:first-child {
+  color: #fff;
+  font-weight: bold;
+}
+
+.blood-status {
+  color: #51cf66;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+/* Treatment Recommendations */
+.recommendations-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.recommendation-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(226, 199, 146, 0.2);
+}
+
+.recommendation-item:last-child {
+  border-bottom: none;
+}
+
+.recommendation-priority {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 12px;
+}
+
+.recommendation-priority.high { background: #ff6b6b; }
+.recommendation-priority.medium { background: #ffd43b; }
+.recommendation-priority.low { background: #51cf66; }
+
+.recommendation-text {
+  flex: 1;
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* Body Model Container */
+.body-model-container {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(40, 40, 40, 0.6));
+  border: 2px solid rgba(226, 199, 146, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(10px);
+}
+
+.body-model-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #e2c792;
+  text-align: center;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.body-model-subtitle {
+  font-size: 12px;
+  color: #ccc;
+  text-align: center;
+  margin-bottom: 20px;
+  font-style: italic;
+}
+
+.inspection-body-model {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Will contain the body model */
+}
+
+/* Medical Tabs */
+.medical-tabs {
+  display: flex;
+  margin-bottom: 20px;
+  border-bottom: 2px solid rgba(226, 199, 146, 0.3);
+}
+
+.tab-button {
+  flex: 1;
+  padding: 12px 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
+  color: #ccc;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.tab-button:hover {
+  color: #e2c792;
+  background: rgba(226, 199, 146, 0.1);
+}
+
+.tab-button.active {
+  color: #e2c792;
+  border-bottom-color: #e2c792;
+  background: rgba(226, 199, 146, 0.15);
+}
+
+.tab-button i {
+  font-size: 14px;
+}
+
+/* Tab Content */
+.tab-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+/* Medical Records */
+.medical-record-item {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(226, 199, 146, 0.2);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 10px;
+  transition: all 0.3s ease;
+}
+
+.medical-record-item:hover {
+  border-color: rgba(226, 199, 146, 0.5);
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.record-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.record-title {
+  color: #e2c792;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.record-severity {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.record-severity.critical { background: #ff6b6b; color: #fff; }
+.record-severity.high { background: #ffd43b; color: #2c2c2c; }
+.record-severity.medium { background: #74c0fc; color: #fff; }
+.record-severity.low { background: #51cf66; color: #fff; }
+
+.record-description {
+  color: #ccc;
+  font-size: 12px;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.record-location {
+  color: #e2c792;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+/* Anatomical Connection Lines */
+.anatomical-connection {
+  position: absolute;
+  background: linear-gradient(90deg, transparent, rgba(226, 199, 146, 0.3), transparent);
+  height: 1px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 5;
+}
+
+.medic-system:hover .anatomical-connection {
+  opacity: 1;
+}
+
+/* Body System Highlighting */
+.body-system-cardiovascular {
+  animation: cardioHighlight 3s ease-in-out infinite;
+}
+
+.body-system-nervous {
+  animation: nervousHighlight 4s ease-in-out infinite;
+}
+
+.body-system-musculoskeletal {
+  animation: musculoHighlight 5s ease-in-out infinite;
+}
+
+@keyframes cardioHighlight {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.1) hue-rotate(10deg); }
+}
+
+@keyframes nervousHighlight {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.05) hue-rotate(-5deg); }
+}
+
+@keyframes musculoHighlight {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.03) hue-rotate(5deg); }
+}
+
+/* Enhanced Body Part Details Panel */
+.body-part-detail-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  width: 320px;
+  max-height: 400px;
+  background-image: url(../imgs/weathered_paper.png);
+  background-size: cover;
+  background-position: center;
+  border: 2px solid #e2c792;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+  z-index: 2000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  font-family: "RDR Lino Regular", serif;
+}
+
+.body-part-detail-popup.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.body-part-detail-header {
+  padding: 20px 20px 15px;
+  text-align: center;
+  border-bottom: 1px solid rgba(139, 105, 20, 0.3);
+}
+
+.body-part-detail-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #2c2c2c;
+  margin-bottom: 8px;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.body-part-detail-subtitle {
+  font-size: 12px;
+  color: #8b6914;
+  font-style: italic;
+}
+
+.body-part-detail-content {
+  padding: 15px 20px 20px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.detail-section {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  border-left: 3px solid #e2c792;
+}
+
+.detail-section-title {
+  font-size: 12px;
+  font-weight: bold;
+  color: #2c2c2c;
+  margin-bottom: 4px;
+}
+
+.detail-section-content {
+  font-size: 11px;
+  color: #5a5a5a;
+  line-height: 1.4;
+}
+
+.body-part-close-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  background: rgba(139, 105, 20, 0.8);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  border: 1px solid #8b6914;
+}
+
+.body-part-close-btn:hover {
+  background: rgba(139, 105, 20, 1);
+  transform: scale(1.1);
+}
+
+/* Interactive Body Connection Visualization */
+.body-connection-line {
+  position: absolute;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(226, 199, 146, 0.6), 
+    rgba(226, 199, 146, 0.3), 
+    transparent);
+  height: 2px;
+  opacity: 0;
+  transition: all 0.5s ease;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.body-connection-line.active {
+  opacity: 1;
+  animation: connectionPulse 2s ease-in-out infinite;
+}
+
+@keyframes connectionPulse {
+  0%, 100% { 
+    box-shadow: 0 0 4px rgba(226, 199, 146, 0.4);
+    transform: scaleY(1);
+  }
+  50% { 
+    box-shadow: 0 0 12px rgba(226, 199, 146, 0.8);
+    transform: scaleY(1.5);
+  }
+}
+
+/* Medical Status Indicators */
+.medical-status-indicator {
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  z-index: 10;
+}
+
+.status-healthy {
+  background: #4CAF50;
+  box-shadow: 0 0 6px rgba(76, 175, 80, 0.6);
+}
+
+.status-injured {
+  background: #FF9800;
+  box-shadow: 0 0 6px rgba(255, 152, 0, 0.6);
+  animation: statusWarning 2s ease-in-out infinite;
+}
+
+.status-critical {
+  background: #F44336;
+  box-shadow: 0 0 8px rgba(244, 67, 54, 0.8);
+  animation: statusCritical 1s ease-in-out infinite;
+}
+
+.status-treated {
+  background: #2196F3;
+  box-shadow: 0 0 6px rgba(33, 150, 243, 0.6);
+  animation: statusTreated 3s ease-in-out infinite;
+}
+
+@keyframes statusWarning {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes statusCritical {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.4; 
+    transform: scale(1.2);
+  }
+}
+
+@keyframes statusTreated {
+  0%, 100% { opacity: 1; }
+  33% { opacity: 0.7; }
+  66% { opacity: 0.9; }
+}
+
+/* ========================================
+   REAL-TIME TREATMENT FEEDBACK SYSTEM
+   Phase 1: Progress Indicators & Feedback
+======================================== */
+
+/* Treatment Progress Overlay */
+.treatment-progress-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.treatment-progress-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Treatment Progress Panel */
+.treatment-progress-panel {
+  width: 400px;
+  max-width: 90vw;
+  background-image: url(../imgs/weathered_paper.png);
+  background-size: cover;
+  background-position: center;
+  border: 3px solid #e2c792;
+  border-radius: 15px;
+  padding: 30px 25px;
+  text-align: center;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);
+  font-family: "RDR Lino Regular", serif;
+  transform: scale(0.8);
+  transition: transform 0.3s ease;
+}
+
+.treatment-progress-overlay.visible .treatment-progress-panel {
+  transform: scale(1);
+}
+
+.treatment-progress-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #2c2c2c;
+  margin-bottom: 8px;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.treatment-progress-subtitle {
+  font-size: 14px;
+  color: #8b6914;
+  margin-bottom: 25px;
+  font-style: italic;
+}
+
+/* Progress Bar Container */
+.progress-container {
+  width: 100%;
+  height: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid #8b6914;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #e2c792, #c2ae87, #e2c792);
+  border-radius: 6px;
+  width: 0%;
+  transition: width 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.4), 
+    transparent);
+  animation: progressShine 2s ease-in-out infinite;
+}
+
+@keyframes progressShine {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.progress-percentage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+  font-weight: bold;
+  color: #2c2c2c;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+.progress-status {
+  font-size: 13px;
+  color: #5a5a5a;
+  margin-bottom: 20px;
+  min-height: 20px;
+}
+
+/* Treatment Steps Indicator */
+.treatment-steps {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.treatment-step {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(139, 105, 20, 0.3);
+  border: 2px solid #8b6914;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.treatment-step.completed {
+  background: #4CAF50;
+  border-color: #2E7D32;
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.6);
+}
+
+.treatment-step.active {
+  background: #e2c792;
+  border-color: #c2ae87;
+  box-shadow: 0 0 12px rgba(226, 199, 146, 0.8);
+  animation: stepPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes stepPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+.treatment-step.active::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border-radius: 50%;
+  border: 2px solid rgba(226, 199, 146, 0.5);
+  animation: stepRipple 1.5s ease-out infinite;
+}
+
+@keyframes stepRipple {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+/* Cancel Button */
+.treatment-cancel-btn {
+  background: rgba(139, 105, 20, 0.8);
+  color: #fff;
+  border: 2px solid #8b6914;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: "RDR Lino Regular", serif;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.treatment-cancel-btn:hover {
+  background: rgba(139, 105, 20, 1);
+  transform: scale(1.05);
+}
+
+/* Real-time Status Notifications */
+.status-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 300px;
+  max-width: 90vw;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(40, 40, 40, 0.9));
+  border: 2px solid #e2c792;
+  border-radius: 8px;
+  padding: 15px;
+  color: #e2c792;
+  font-family: "RDR Lino Regular", serif;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  z-index: 2500;
+  transform: translateX(350px);
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.status-notification.visible {
+  transform: translateX(0);
+}
+
+.notification-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.notification-icon {
+  font-size: 18px;
+  margin-right: 10px;
+}
+
+.notification-title {
+  font-size: 14px;
+  font-weight: bold;
+  flex-grow: 1;
+}
+
+.notification-time {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.notification-message {
+  font-size: 12px;
+  line-height: 1.4;
+  opacity: 0.9;
+}
+
+/* Notification Types */
+.notification-success {
+  border-color: #4CAF50;
+}
+
+.notification-success .notification-icon {
+  color: #4CAF50;
+}
+
+.notification-warning {
+  border-color: #FF9800;
+}
+
+.notification-warning .notification-icon {
+  color: #FF9800;
+}
+
+.notification-error {
+  border-color: #F44336;
+}
+
+.notification-error .notification-icon {
+  color: #F44336;
+}
+
+.notification-info {
+  border-color: #2196F3;
+}
+
+.notification-info .notification-icon {
+  color: #2196F3;
+}
+
+/* Treatment Effectiveness Indicator */
+.effectiveness-indicator {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  z-index: 12;
+}
+
+.effectiveness-excellent {
+  background: linear-gradient(135deg, #4CAF50, #2E7D32);
+  animation: excellentPulse 3s ease-in-out infinite;
+}
+
+.effectiveness-good {
+  background: linear-gradient(135deg, #8BC34A, #558B2F);
+}
+
+.effectiveness-fair {
+  background: linear-gradient(135deg, #FFC107, #F57C00);
+  animation: fairWarning 2s ease-in-out infinite;
+}
+
+.effectiveness-poor {
+  background: linear-gradient(135deg, #FF9800, #E65100);
+  animation: poorWarning 1.5s ease-in-out infinite;
+}
+
+.effectiveness-critical {
+  background: linear-gradient(135deg, #F44336, #C62828);
+  animation: criticalWarning 1s ease-in-out infinite;
+}
+
+@keyframes excellentPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 8px rgba(76, 175, 80, 0.6); }
+  50% { transform: scale(1.1); box-shadow: 0 0 16px rgba(76, 175, 80, 0.8); }
+}
+
+@keyframes fairWarning {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes poorWarning {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.05); }
+}
+
+@keyframes criticalWarning {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1);
+    box-shadow: 0 0 8px rgba(244, 67, 54, 0.8);
+  }
+  50% { 
+    opacity: 0.5; 
+    transform: scale(1.1);
+    box-shadow: 0 0 16px rgba(244, 67, 54, 1);
+  }
+}
+
+/* Mini Progress Indicators for Body Parts */
+.body-part-mini-progress {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.body-part-mini-progress.visible {
+  opacity: 1;
+}
+
+.mini-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50, #8BC34A);
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.5s ease;
+}
+
+/* Healing progress animation */
+.healing-progress {
+  background: linear-gradient(90deg, #4CAF50, #8BC34A) !important;
+  animation: healingShine 2s ease-in-out infinite;
+}
+
+@keyframes healingShine {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.2); }
+}
+
