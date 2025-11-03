@@ -240,9 +240,9 @@ See [DEVLOG.md](DEVLOG.md) for detailed development history and fixes.
 
 ## Support
 
-**Issues**: [GitHub Issues](https://github.com/YOUR_ORG/QC-AdvancedMedic/issues)
-**Discussions**: [GitHub Discussions](https://github.com/YOUR_ORG/QC-AdvancedMedic/discussions)
-**Discord**: [Your Discord Server](https://discord.gg/YOUR_INVITE)
+**Issues**: [GitHub Issues](https://github.com/Quantum-Projects-RedM/QC-AdvancedMedic/issues)
+**Discussions**: [GitHub Discussions](https://github.com/Quantum-Projects-RedM/QC-AdvancedMedic/discussions)
+**Discord**: [Your Discord Server](https://discord.gg/kJ8ZrGM8TS)
 
 ## License
 
