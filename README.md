@@ -8,7 +8,7 @@ Advanced medical roleplay system for RedM with realistic wound mechanics, treatm
 ![Platform](https://img.shields.io/badge/platform-CFX.re%20(RedM%2FFiveM)-purple.svg)
 ![Status](https://img.shields.io/badge/status-WIP%20Alpha-orange.svg)
 
-> **⚠️ Beta Status**: Core systems are functional. The bandage maintenance mechanic requires ongoing wound care, making it ideal for roleplay servers. We're seeking feedback and collaboration! Please report issues and suggestions via GitHub Issues.
+> **⚠️ Beta Status**: Core systems are in progress. The bandage maintenance mechanic requires ongoing wound care, making it ideal for roleplay servers. We're seeking feedback and collaboration! Please report issues and suggestions via GitHub Issues.
 
 ## Features
 
