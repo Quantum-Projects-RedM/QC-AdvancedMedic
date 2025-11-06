@@ -15,7 +15,7 @@ local Dead = false
 local deadcam = nil
 local isBusy = false
 local targetBodyPartOverride = nil  -- Used by /usebandage command to specify exact body part
-
+local AllowedMedicJobs = {}
 
 -- Medical data globals (remove duplicate declaration if exists)
 -- Note: ActiveTreatments is declared in treatment_system.lua
@@ -2567,3 +2567,46 @@ RegisterCommand('removebandage', function(source, args)
     print(string.format("[BANDAGE] Removed bandage from %s", Config.BodyParts[bodyPart].label))
 end)
 
+
+
+
+CreateThread(function()
+    for _, loc in ipairs(Config.MedicJobLocations or {}) do
+        if loc.job then AllowedMedicJobs[loc.job] = true end
+    end
+end)
+
+local function IsLocalMedic()
+    local pdata = RSGCore.Functions.GetPlayerData()
+    local jobName = pdata and pdata.job and pdata.job.name
+    return jobName and AllowedMedicJobs[jobName] == true
+end
+
+CreateThread(function()
+    while not exports.ox_target do Wait(100) end
+
+    exports.ox_target:addGlobalPlayer({
+        {
+            name = 'qcmedic_inspect_player',
+            icon = 'fa-solid fa-stethoscope',
+            label = 'Inspect Patient',
+            distance = 3.0, -- interaction distance (server will still enforce 10.0m check)
+            canInteract = function(targetPed, distance, coords, name, bone)
+                if distance > 3.0 then return false end
+                if not IsLocalMedic() then return false end
+                if targetPed == PlayerPedId() then return false end
+                return true
+            end,
+            onSelect = function(data)
+                local targetPed = data.entity
+                if not targetPed or targetPed == 0 then return end
+                local targetPlayer = NetworkGetPlayerIndexFromPed(targetPed)
+                if not targetPlayer then return end
+                local targetId = GetPlayerServerId(targetPlayer)
+                if not targetId or targetId == 0 then return end
+
+                TriggerServerEvent('QC-AdvancedMedic:server:PerformInspection', targetId)
+            end
+        }
+    })
+end)
