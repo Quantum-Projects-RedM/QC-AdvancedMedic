@@ -5,7 +5,7 @@ author 'Quantum Projects Community'
 description 'Quantum Beekeeping | Dev: Artmines'
 quantum_github 'https://github.com/Quantum-Projects-RedM/QC-AdvancedMedic'
 use_experimental_fxv2_oal 'yes'
-version '0.2.8'
+version '0.2.9'
 
 shared_scripts {
     '@ox_lib/init.lua',

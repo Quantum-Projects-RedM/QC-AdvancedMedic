@@ -610,6 +610,35 @@ RSGCore.Commands.Add('inspect', 'Inspect another player\'s medical condition (Me
     end
     
 
+    -- Check medic's inventory for doctor bag tools and medicines
+    local medicInventory = {
+        tools = {},
+        medicines = {}
+    }
+
+    -- Check doctor bag tools
+    for toolKey, toolConfig in pairs(Config.DoctorsBagTools or {}) do
+        local itemName = toolConfig.itemName
+        local hasItem = Medic.Functions.GetItemByName(itemName) ~= nil
+        medicInventory.tools[toolKey] = {
+            hasItem = hasItem,
+            itemName = itemName,
+            label = toolConfig.label,
+            consumable = toolConfig.consumable
+        }
+    end
+
+    -- Check medicines (laudanum, whiskey already in MedicineTypes)
+    for medKey, medConfig in pairs(Config.MedicineTypes or {}) do
+        local itemName = medConfig.itemName
+        local hasItem = Medic.Functions.GetItemByName(itemName) ~= nil
+        medicInventory.medicines[medKey] = {
+            hasItem = hasItem,
+            itemName = itemName,
+            label = medConfig.label
+        }
+    end
+
     -- Prepare inspection data for the frontend (lightweight - no configs)
     local inspectionData = {
         playerName = Patient.PlayerData.charinfo.firstname .. " " .. Patient.PlayerData.charinfo.lastname,
@@ -620,7 +649,8 @@ RSGCore.Commands.Add('inspect', 'Inspect another player\'s medical condition (Me
         infections = patientData.infections or {},
         bandages = patientData.bandages or {},
         inspectedBy = Medic.PlayerData.citizenid,
-        inspectionTime = os.time()
+        inspectionTime = os.time(),
+        medicInventory = medicInventory  -- Add medic's inventory
     }
     
     -- Send inspection data to medic's NUI
@@ -711,33 +741,290 @@ AddEventHandler('QC-AdvancedMedic:server:ReceiveVitalsData', function(medicSourc
 end)
 
 --=========================================================
--- ADMIN COMMANDS FOR TESTING
+-- DOCTOR BAG TOOL USAGE HANDLER
 --=========================================================
-RSGCore.Commands.Add('medwounds', 'Show player wound data (Admin)', {{name = 'id', help = 'Player ID (optional)'}}, false, function(source, args)
+RegisterServerEvent('QC-AdvancedMedic:server:UseDoctorBagTool')
+AddEventHandler('QC-AdvancedMedic:server:UseDoctorBagTool', function(toolAction, targetPlayerId)
     local src = source
-    local targetId = args[1] and tonumber(args[1]) or src
-    
-    if PlayerMedicalData[targetId] then
-        local data = PlayerMedicalData[targetId]
-        TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Medical Data',
-            description = string.format('Wounds: %d, Treatments: %d, Infections: %d', 
-                #(data.wounds or {}),
-                #(data.treatments or {}), 
-                #(data.infections or {})
-            ),
-            type = 'inform',
-            duration = 8000
+    local Medic = RSGCore.Functions.GetPlayer(src)
+
+    if Config.Debug then
+        print(string.format("^3[SERVER UseDoctorBagTool] Triggered by src=%s, toolAction=%s, targetPlayerId=%s^7", tostring(src), tostring(toolAction), tostring(targetPlayerId)))
+    end
+
+    if not Medic then
+        print('[ERROR] Invalid medic player in UseDoctorBagTool')
+        return
+    end
+
+    -- Handle medicines separately (they're in Config.MedicineTypes, not DoctorsBagTools)
+    if toolAction == 'medicine_laudanum' or toolAction == 'medicine_whiskey' then
+        local medicineType = toolAction:gsub('medicine_', '')  -- Extract medicine key (laudanum or whiskey)
+        local medicineConfig = Config.MedicineTypes[medicineType]
+
+        if Config.Debug then
+            print(string.format("^3[SERVER UseDoctorBagTool] Medicine action detected: %s^7", medicineType))
+        end
+
+        if not medicineConfig then
+            TriggerClientEvent('QC-AdvancedMedic:client:ToolUsageResult', src, {
+                success = false,
+                message = 'Invalid medicine type: ' .. tostring(medicineType)
+            })
+            return
+        end
+
+        local itemName = medicineConfig.itemName
+
+        if Config.Debug then
+            print(string.format("^3[SERVER UseDoctorBagTool] Checking for medicine: %s^7", itemName))
+        end
+
+        -- Try to remove medicine item
+        local removed = Medic.Functions.RemoveItem(itemName, 1)
+
+        if Config.Debug then
+            print(string.format("^3[SERVER UseDoctorBagTool] Medicine check result: removed=%s^7", tostring(removed)))
+        end
+
+        if not removed then
+            if Config.Debug then
+                print(string.format("^1[SERVER UseDoctorBagTool] Player missing medicine: %s^7", medicineConfig.label))
+            end
+            TriggerClientEvent('QC-AdvancedMedic:client:ToolUsageResult', src, {
+                success = false,
+                message = string.format('Missing item: %s', medicineConfig.label),
+                refreshInventory = true
+            })
+            return
+        end
+
+        -- Successfully removed medicine - continue to medicine administration below
+        local Patient = RSGCore.Functions.GetPlayer(targetPlayerId)
+        if not Patient then
+            -- Refund medicine if patient not found
+            Medic.Functions.AddItem(itemName, 1)
+            TriggerClientEvent('QC-AdvancedMedic:client:ToolUsageResult', src, {
+                success = false,
+                message = 'Patient not found'
+            })
+            return
+        end
+
+        -- Trigger client to apply medicine using existing system
+        TriggerClientEvent('QC-AdvancedMedic:client:AdministreMedicine', Patient.PlayerData.source, medicineType, src)
+
+        TriggerClientEvent('QC-AdvancedMedic:client:ToolUsageResult', src, {
+            success = true,
+            message = string.format('Administered %s', medicineConfig.label),
+            refreshInventory = true
         })
+
+        return
+    end
+
+    -- Find the tool config by action (for non-medicine tools)
+    local toolConfig = nil
+    local toolKey = nil
+    for key, config in pairs(Config.DoctorsBagTools or {}) do
+        if config.action == toolAction then
+            toolConfig = config
+            toolKey = key
+            break
+        end
+    end
+
+    if Config.Debug then
+        print(string.format("^3[SERVER UseDoctorBagTool] Tool config found: %s (key=%s)^7", tostring(toolConfig ~= nil), tostring(toolKey)))
+    end
+
+    if not toolConfig then
+        if Config.Debug then
+            print(string.format("^1[SERVER UseDoctorBagTool] Invalid tool action: %s^7", tostring(toolAction)))
+        end
+        TriggerClientEvent('QC-AdvancedMedic:client:ToolUsageResult', src, {
+            success = false,
+            message = 'Invalid tool action: ' .. tostring(toolAction)
+        })
+        return
+    end
+
+    local itemName = toolConfig.itemName
+
+    if Config.Debug then
+        print(string.format("^3[SERVER UseDoctorBagTool] Checking for item: %s (consumable=%s)^7", itemName, tostring(toolConfig.consumable)))
+    end
+
+    -- Try to remove item (framework handles validation)
+    local removed = false
+    if toolConfig.consumable then
+        removed = Medic.Functions.RemoveItem(itemName, 1)
     else
+        -- Non-consumable: just check if they have it
+        removed = Medic.Functions.GetItemByName(itemName) ~= nil
+    end
+
+    if Config.Debug then
+        print(string.format("^3[SERVER UseDoctorBagTool] Item check result: removed=%s^7", tostring(removed)))
+    end
+
+    if not removed then
+        -- Failed to remove = don't have item
+        if Config.Debug then
+            print(string.format("^1[SERVER UseDoctorBagTool] Player missing item: %s^7", toolConfig.label))
+        end
+        TriggerClientEvent('QC-AdvancedMedic:client:ToolUsageResult', src, {
+            success = false,
+            message = string.format('Missing item: %s', toolConfig.label),
+            refreshInventory = true  -- Tell client to refresh inventory
+        })
+        return
+    end
+
+    -- Successfully removed/has item - perform action
+    local Patient = RSGCore.Functions.GetPlayer(targetPlayerId)
+    if not Patient then
+        -- Refund consumable if patient not found
+        if toolConfig.consumable then
+            Medic.Functions.AddItem(itemName, 1)
+        end
+        TriggerClientEvent('QC-AdvancedMedic:client:ToolUsageResult', src, {
+            success = false,
+            message = 'Patient not found'
+        })
+        return
+    end
+
+    -- Perform the tool action
+    if toolAction == 'revive_unconscious' then
+        -- Smelling salts - revive unconscious player
+        TriggerClientEvent('QC-AdvancedMedic:client:playerRevive', Patient.PlayerData.source)
+
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Medical Data',
-            description = 'No medical data found for this player',
-            type = 'error',
+            title = 'Smelling Salts',
+            description = string.format('Administered smelling salts to %s %s',
+                Patient.PlayerData.charinfo.firstname,
+                Patient.PlayerData.charinfo.lastname
+            ),
+            type = 'success',
+            duration = 5000
+        })
+
+        TriggerClientEvent('ox_lib:notify', Patient.PlayerData.source, {
+            title = 'Revived',
+            description = 'You have been revived with smelling salts',
+            type = 'success',
+            duration = 5000
+        })
+
+    elseif toolAction == 'check_heart_lungs' then
+        -- Stethoscope - trigger vitals check
+        TriggerEvent('QC-AdvancedMedic:server:CheckVitals', targetPlayerId)
+
+    elseif toolAction == 'check_temperature' then
+        -- Thermometer - check for infections/fever
+        local patientData = PlayerMedicalData[Patient.PlayerData.source]
+        local infectionCount = 0
+        if patientData and patientData.infections then
+            for _ in pairs(patientData.infections) do
+                infectionCount = infectionCount + 1
+            end
+        end
+
+        TriggerClientEvent('ox_lib:notify', src, {
+            title = 'Temperature Check',
+            description = infectionCount > 0 and
+                string.format('Patient has elevated temperature - %d active infection(s)', infectionCount) or
+                'Patient temperature normal',
+            type = infectionCount > 0 and 'warning' or 'success',
+            duration = 5000
+        })
+
+    elseif toolAction == 'emergency_surgery' then
+        -- Field surgery kit - heal all wounds
+        TriggerClientEvent('QC-AdvancedMedic:client:ClearAllWounds', Patient.PlayerData.source)
+
+        TriggerClientEvent('ox_lib:notify', src, {
+            title = 'Emergency Surgery',
+            description = 'Field surgery completed successfully',
+            type = 'success',
+            duration = 5000
+        })
+
+    elseif toolAction == 'medicine_laudanum' or toolAction == 'medicine_whiskey' then
+        -- Medicines from doctor bag - use existing medicine application logic
+        local medicineType = toolAction:gsub('medicine_', '')  -- Extract medicine key
+
+        -- Trigger client to apply medicine using existing system
+        TriggerClientEvent('QC-AdvancedMedic:client:AdministreMedicine', Patient.PlayerData.source, medicineType, src)
+
+        TriggerClientEvent('ox_lib:notify', src, {
+            title = 'Medicine Administered',
+            description = string.format('Administered %s to %s %s',
+                medicineType,
+                Patient.PlayerData.charinfo.firstname,
+                Patient.PlayerData.charinfo.lastname
+            ),
+            type = 'success',
             duration = 5000
         })
     end
-end, 'admin')
+
+    -- Success - return with updated inventory
+    TriggerClientEvent('QC-AdvancedMedic:client:ToolUsageResult', src, {
+        success = true,
+        message = string.format('Successfully used %s', toolConfig.label),
+        refreshInventory = true
+    })
+end)
+
+--=========================================================
+-- REFRESH MEDIC INVENTORY (after item usage)
+--=========================================================
+RegisterServerEvent('QC-AdvancedMedic:server:RefreshMedicInventory')
+AddEventHandler('QC-AdvancedMedic:server:RefreshMedicInventory', function()
+    local src = source
+    local Medic = RSGCore.Functions.GetPlayer(src)
+
+    if not Medic then return end
+
+    -- Re-check medic's inventory
+    local medicInventory = {
+        tools = {},
+        medicines = {}
+    }
+
+    -- Check doctor bag tools
+    for toolKey, toolConfig in pairs(Config.DoctorsBagTools or {}) do
+        local itemName = toolConfig.itemName
+        local hasItem = Medic.Functions.GetItemByName(itemName) ~= nil
+        medicInventory.tools[toolKey] = {
+            hasItem = hasItem,
+            itemName = itemName,
+            label = toolConfig.label,
+            consumable = toolConfig.consumable
+        }
+    end
+
+    -- Check medicines
+    for medKey, medConfig in pairs(Config.MedicineTypes or {}) do
+        local itemName = medConfig.itemName
+        local hasItem = Medic.Functions.GetItemByName(itemName) ~= nil
+        medicInventory.medicines[medKey] = {
+            hasItem = hasItem,
+            itemName = itemName,
+            label = medConfig.label
+        }
+    end
+
+    -- Send updated inventory to client
+    TriggerClientEvent('QC-AdvancedMedic:client:UpdateMedicInventory', src, medicInventory)
+end)
+
+--=========================================================
+-- ADMIN COMMANDS FOR TESTING
+--=========================================================
+-- medwounds command removed - use /clearwounds or /inspect instead
 
 --=========================================================
 -- SERVER-SIDE WOUND PROGRESSION SYSTEM

@@ -147,6 +147,17 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
           
           console.log('[MISSION UPDATE] Wound data refreshed after treatment');
         }
+      } else if (event.data.type === 'tool-usage-result') {
+        // Handle doctor bag tool usage results from server
+        const { success, message } = event.data.data;
+
+        if (success) {
+          // Show success notification
+          showNotification(message || 'Tool used successfully', 'fa-check-circle');
+        } else {
+          // Show error notification (e.g., missing item)
+          showNotification(message || 'Unable to use tool', 'fa-times-circle');
+        }
       }
     };
 
@@ -1181,16 +1192,29 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
 
   // Medical actions
   const handleMedicalAction = (action: string, target?: string, extra?: any) => {
-    window.postMessage({ 
-      type: 'medical-action', 
-      data: {
+    // Use fetch() to properly communicate with Lua RegisterNUICallback
+    fetch(`https://${(window as any).GetParentResourceName()}/medical-action`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
         action,
         target,
         extra,
         playerId: data.playerId,
         patientName: data.playerName
+      })
+    })
+    .then(resp => resp.json())
+    .then(result => {
+      if (result.status === 'error') {
+        console.error('[QC-AdvancedMedic] Medical action error:', result.message);
       }
-    }, '*');
+    })
+    .catch(err => {
+      console.error('[QC-AdvancedMedic] Medical action failed:', err);
+    });
   };
 
   // Render discovered wounds for assessment
@@ -2420,19 +2444,12 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
               { name: 'Field Surgery Kit', icon: 'fa-first-aid', action: 'field-kit', desc: 'Emergency surgical tools' },
               { name: 'Smelling Salts', icon: 'fa-vial', action: 'smelling-salts', desc: 'Revive unconscious patients' }
             ].map((tool, index) => (
-              <div 
+              <div
                 key={index}
                 className="medical-tool"
                 onClick={() => {
-                  if (tool.action === 'thermometer') {
-                    setShowThermometerSubMenu(true);
-                    closeDoctorsBagSubMenu();
-                    closeVitalsSubMenu();
-                  } else {
-                    handleMedicalAction('use-tool', tool.action);
-                    showNotification(`${data.translations?.ui_administeredTo || 'Administered'} ${tool.name} ${data.translations?.ui_toPatient || 'to patient'}`, tool.icon);
-                    closeDoctorsBagSubMenu();
-                  }
+                  // All tools now go through handleMedicalAction for inventory validation
+                  handleMedicalAction('use-tool', tool.action);
                 }}
                 style={{
                   backgroundImage: 'url("./static/media/selection_box_bg_1d.db795b7cbe6db75cb337.png")',

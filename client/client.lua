@@ -1357,6 +1357,48 @@ RegisterNUICallback('hide-death-screen', function(data, cb)
     cb({status = 'ok'})
 end)
 
+-- Handle tool usage result from server (NUI handles notifications)
+RegisterNetEvent('QC-AdvancedMedic:client:ToolUsageResult')
+AddEventHandler('QC-AdvancedMedic:client:ToolUsageResult', function(result)
+    if not result then return end
+
+    if Config.Debug then
+        print(string.format("^3[CLIENT ToolUsageResult] success=%s, message=%s, refreshInventory=%s^7",
+            tostring(result.success), tostring(result.message), tostring(result.refreshInventory)))
+    end
+
+    -- Send result to NUI for notification display
+    SendNUIMessage({
+        type = 'tool-usage-result',
+        data = {
+            success = result.success,
+            message = result.message
+        }
+    })
+
+    -- If inventory needs refresh (item ran out or was consumed)
+    if result.refreshInventory then
+        -- Request updated inspection data from server
+        -- This silently updates inventory in background without closing NUI
+        Wait(500)  -- Small delay to let server process
+        TriggerServerEvent('QC-AdvancedMedic:server:RefreshMedicInventory')
+    end
+end)
+
+-- Server sends updated inventory after tool usage
+RegisterNetEvent('QC-AdvancedMedic:client:UpdateMedicInventory')
+AddEventHandler('QC-AdvancedMedic:client:UpdateMedicInventory', function(medicInventory)
+    -- Send updated inventory to NUI without closing panel
+    SendNUIMessage({
+        type = 'update-medic-inventory',
+        data = medicInventory
+    })
+
+    if Config.Debug then
+        print("^2[DOCTOR BAG] Updated medic inventory in NUI^7")
+    end
+end)
+
 -- Emergency alert for medics
 RegisterNetEvent('QC-AdvancedMedic:client:EmergencyAlert', function(data)
     lib.notify({
@@ -1388,6 +1430,59 @@ RegisterNUICallback('disable-nui-focus', function(data, cb)
     })
     
     cb({status = 'ok'})
+end)
+
+-- Handle doctor bag tool usage from NUI (including medicines clicked from doctor bag)
+RegisterNUICallback('medical-action', function(data, cb)
+    local action = data.action
+    local target = data.target
+    local targetPlayerId = data.playerId
+
+    if not action or not target then
+        cb({status = 'error', message = 'Invalid medical action data'})
+        return
+    end
+
+    if Config.Debug then
+        print(string.format("^3[NUI MEDICAL-ACTION] Action: %s, Target: %s, PlayerId: %s^7", action, target, tostring(targetPlayerId)))
+    end
+
+    -- Handle 'use-tool' actions from doctor bag
+    if action == 'use-tool' then
+        -- Map NUI tool actions to server actions
+        local toolActionMap = {
+            -- Diagnostic tools
+            ['smelling-salts'] = 'revive_unconscious',
+            ['stethoscope'] = 'check_heart_lungs',
+            ['thermometer'] = 'check_temperature',
+            ['field-kit'] = 'emergency_surgery',
+            -- Medicines (from doctor bag - need inventory check + removal)
+            ['laudanum'] = 'medicine_laudanum',
+            ['whiskey'] = 'medicine_whiskey'
+        }
+
+        local toolAction = toolActionMap[target]
+
+        if not toolAction then
+            cb({status = 'error', message = 'Unknown tool: ' .. tostring(target)})
+            return
+        end
+
+        if Config.Debug then
+            print(string.format("^3[CLIENT] Triggering server event UseDoctorBagTool with toolAction=%s, targetPlayerId=%s^7", tostring(toolAction), tostring(targetPlayerId)))
+        end
+
+        -- Send to server to use tool (server validates inventory + removes item)
+        TriggerServerEvent('QC-AdvancedMedic:server:UseDoctorBagTool', toolAction, targetPlayerId)
+
+        if Config.Debug then
+            print("^3[CLIENT] Server event triggered, returning pending status^7")
+        end
+
+        cb({status = 'pending', message = 'Processing...'})
+    else
+        cb({status = 'error', message = 'Unknown medical action: ' .. tostring(action)})
+    end
 end)
 
 -- Handle medical treatment messages from NUI (via window.postMessage)
