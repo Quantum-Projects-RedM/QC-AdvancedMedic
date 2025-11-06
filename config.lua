@@ -3,7 +3,7 @@
 --=========================================================
 -- IMPORTANT: This is a production-ready configuration file
 -- Please read the documentation before making changes
--- Support: [Your Support Link Here]
+-- Support: 
 --=========================================================
 
 Config = {}
@@ -777,6 +777,51 @@ Config.InjectionTypes = {
         conditions = {'dehydration', 'blood_loss', 'shock'},
         riskLevel = 'low',           -- Very safe
         overdoseRisk = 2             -- Minimal risk
+    }
+}
+
+--=========================================================
+-- DOCTOR'S BAG DIAGNOSTIC TOOLS - Wild West 1899 Medical Equipment
+--=========================================================
+-- NOTE: laudanum and whiskey are already in Config.MedicineTypes above
+-- These are specialized diagnostic/surgical tools for medics
+
+Config.DoctorsBagTools = {
+    ['smelling_salts'] = {
+        label = 'Smelling Salts',
+        itemName = 'smelling_salts',        -- Item name in inventory
+        action = 'revive_unconscious',      -- Action to perform
+        description = 'Revive unconscious patients',
+        consumable = true,                  -- Consumed on use
+        price = 20,                         -- $20 per vial
+        medicOnly = true                    -- Only medics can use
+    },
+    ['stethoscope'] = {
+        label = 'Stethoscope',
+        itemName = 'stethoscope',
+        action = 'check_heart_lungs',
+        description = 'Check heart and lung sounds',
+        consumable = false,                 -- Reusable tool
+        price = 45,                         -- $45 purchase price
+        medicOnly = true
+    },
+    ['thermometer'] = {
+        label = 'Thermometer',
+        itemName = 'thermometer',
+        action = 'check_temperature',
+        description = 'Measure body temperature',
+        consumable = false,                 -- Reusable tool
+        price = 25,                         -- $25 purchase price
+        medicOnly = true
+    },
+    ['field_surgery_kit'] = {
+        label = 'Field Surgery Kit',
+        itemName = 'field_surgery_kit',
+        action = 'emergency_surgery',
+        description = 'Emergency surgical tools for field operations',
+        consumable = true,                  -- Each use consumes supplies
+        price = 100,                        -- $100 per kit
+        medicOnly = true
     }
 }
 

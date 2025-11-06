@@ -27,11 +27,26 @@ All notable changes to QC-AdvancedMedic.
 - Health tracking in wounds (current/max/percentage)
 - Infection immunity system with expiration tracking
 - `active_medical_status` view for NUI integration
+- **Doctor bag inventory validation** - All doctor bag tools now check inventory before use
+- `Config.DoctorsBagTools` - Configuration for diagnostic tools (smelling_salts, stethoscope, thermometer, field_surgery_kit)
+- Proper inventory validation for medicines (laudanum, whiskey) when used from doctor bag
+- NUI notifications for missing items vs successful tool usage
 
 ### Changed
 - Database structure: 4 tables → 5 tables (added `player_fractures`)
 - Enhanced treatment metadata tracking (pain/bleeding reduction, original levels)
 - Improved stored procedures with fracture support
+- NUI `handleMedicalAction` now uses `fetch()` instead of `postMessage` for proper Lua callbacks
+- Thermometer tool now validates inventory (was bypassing check)
+- `/inspect` command now sends medic's inventory to NUI for real-time validation
+
+### Fixed
+- Doctor bag tools showing "administering" without inventory check
+- Laudanum and whiskey showing "invalid tool action" instead of missing item notification
+- Thermometer advancing to temperature screen without item validation
+
+### Removed
+- `/medwounds` command (duplicate/faulty - use `/clearwounds` or inspection system instead)
 
 ## [0.2.8] - 2024-10-07
 
