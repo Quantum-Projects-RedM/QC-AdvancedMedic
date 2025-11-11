@@ -24,6 +24,11 @@ end
 -- Server-side player data cache
 local PlayerMedicalData = {}
 
+RSGCore.Commands.Add('testcache', 'Test cache sync', {}, false, function(source)
+      local Player = RSGCore.Functions.GetPlayer(source)
+      print("=== CACHE DATA ===")
+      print(json.encode(PlayerMedicalData[source] or {}, {indent = true}))
+end, 'admin')
 --=========================================================
 -- LOCAL FUNCTIONS
 --=========================================================
@@ -109,47 +114,59 @@ AddEventHandler('RSGCore:Server:OnPlayerUnload', function(source)
 end)
 
 --=========================================================
--- WOUND DATA SYNCHRONIZATION - REMOVED (Handled in medical_events.lua)
+-- CACHE UPDATE HANDLERS (Internal Events from medical_events.lua)
 --=========================================================
--- Duplicate UpdateWoundData handler removed to prevent double database saves
+-- These handlers update the server-side cache after medical_events.lua saves to database
+-- This ensures /inspect always shows current data without duplicate DB saves
 
---=========================================================  
--- TREATMENT DATA SYNCHRONIZATION - REMOVED (Handled in medical_events.lua)
---=========================================================
--- Duplicate UpdateTreatmentData handler removed to prevent double database saves
+-- Wound cache update (triggered by medical_events.lua after DB save)
+AddEventHandler('QC-AdvancedMedic:internal:UpdateWoundCache', function(source, woundData)
+    if PlayerMedicalData[source] then
+        PlayerMedicalData[source].wounds = woundData or {}
+        PlayerMedicalData[source].lastSync = os.time()
 
---=========================================================
--- INFECTION DATA SYNCHRONIZATION
---=========================================================
-RegisterNetEvent('QC-AdvancedMedic:server:UpdateInfectionData')
-AddEventHandler('QC-AdvancedMedic:server:UpdateInfectionData', function(infectionData)
-    local src = source
-    local Player = RSGCore.Functions.GetPlayer(src)
-    if not Player then return end
-    
-    if not PlayerMedicalData[src] then
-        InitializePlayerMedicalData(src)
-        Wait(500)
+        if Config.WoundSystem and Config.WoundSystem.debugging and Config.WoundSystem.debugging.enabled then
+            local woundCount = 0
+            local scarCount = 0
+            for bodyPart, wound in pairs(woundData or {}) do
+                woundCount = woundCount + 1
+                if wound.isScar then
+                    scarCount = scarCount + 1
+                    print(string.format("^5[CACHE UPDATE] %s is a SCAR (scarTime: %s)^7",
+                        bodyPart, tostring(wound.scarTime)))
+                end
+            end
+            print(string.format("^2[CACHE UPDATE] Player %d cache updated: %d total (%d wounds, %d scars)^7",
+                source, woundCount, woundCount - scarCount, scarCount))
+        end
     end
-    
-    if PlayerMedicalData[src] then
-        PlayerMedicalData[src].infections = infectionData or {}
-        PlayerMedicalData[src].lastSync = os.time()
-        
-        -- Save to database
-        exports['QC-AdvancedMedic']:SaveInfectionData(Player.PlayerData.citizenid, infectionData)
-        
-        -- Log infection changes
-        local infectionCount = 0
-        for _ in pairs(infectionData) do infectionCount = infectionCount + 1 end
-        
-        exports['QC-AdvancedMedic']:LogMedicalEvent(
-            Player.PlayerData.citizenid,
-            'infection_change',
-            string.format("Player now has %d active infections", infectionCount),
-            nil,
-            'system'
-        )
+end)
+
+-- Treatment cache update (triggered by medical_events.lua after DB save)
+AddEventHandler('QC-AdvancedMedic:internal:UpdateTreatmentCache', function(source, treatmentData)
+    if PlayerMedicalData[source] then
+        PlayerMedicalData[source].treatments = treatmentData or {}
+        PlayerMedicalData[source].lastSync = os.time()
+
+        if Config.WoundSystem and Config.WoundSystem.debugging and Config.WoundSystem.debugging.enabled then
+            local treatmentCount = 0
+            for _ in pairs(treatmentData or {}) do treatmentCount = treatmentCount + 1 end
+            print(string.format("^2[CACHE UPDATE] Player %d cache updated: %d treatments^7", source, treatmentCount))
+        end
+    end
+end)
+
+-- Infection cache update (triggered by medical_events.lua after DB save)
+AddEventHandler('QC-AdvancedMedic:internal:UpdateInfectionCache', function(source, infectionData)
+    if PlayerMedicalData[source] then
+        PlayerMedicalData[source].infections = infectionData or {}
+        PlayerMedicalData[source].lastSync = os.time()
+
+        if Config.WoundSystem and Config.WoundSystem.debugging and Config.WoundSystem.debugging.enabled then
+            local infectionCount = 0
+            for _ in pairs(infectionData or {}) do infectionCount = infectionCount + 1 end
+            print(string.format("^2[CACHE UPDATE] Player %d cache updated: %d infections^7", source, infectionCount))
+        end
     end
 end)
 
@@ -1020,11 +1037,6 @@ AddEventHandler('QC-AdvancedMedic:server:RefreshMedicInventory', function()
     -- Send updated inventory to client
     TriggerClientEvent('QC-AdvancedMedic:client:UpdateMedicInventory', src, medicInventory)
 end)
-
---=========================================================
--- ADMIN COMMANDS FOR TESTING
---=========================================================
--- medwounds command removed - use /clearwounds or /inspect instead
 
 --=========================================================
 -- SERVER-SIDE WOUND PROGRESSION SYSTEM

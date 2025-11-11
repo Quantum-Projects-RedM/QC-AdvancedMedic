@@ -2,13 +2,13 @@
 
 Advanced medical roleplay system for RedM with realistic wound mechanics, treatment systems, and infection progression.
 
-![Version](https://img.shields.io/badge/version-0.2.9--beta-blue.svg)
+![Version](https://img.shields.io/badge/version-0.3.0--alpha-blue.svg)
 ![License](https://img.shields.io/badge/license-Custom%20(Free%20for%20CFX)-red.svg)
 ![Framework](https://img.shields.io/badge/framework-RSG--Core-red.svg)
 ![Platform](https://img.shields.io/badge/platform-CFX.re%20(RedM%2FFiveM)-purple.svg)
 ![Status](https://img.shields.io/badge/status-WIP%20Alpha-orange.svg)
 
-> **⚠️ Beta Status**: Core systems are in progress. The bandage maintenance mechanic requires ongoing wound care, making it ideal for roleplay servers. We're seeking feedback and collaboration! Please report issues and suggestions via GitHub Issues.
+> **⚠️ Alpha Status - NOT Production Ready**: This is a work-in-progress release with known issues (see Known Issues below). We're seeking feedback and collaboration! Please report issues and suggestions via GitHub Issues.
 
 ## Features
 
@@ -66,6 +66,7 @@ Advanced medical roleplay system for RedM with realistic wound mechanics, treatm
 6. Monitor bandage expiration to prevent infections
 
 ### For Players
+- Use `/checkhealth` to examine your wounds and apply bandages/tourniquets from inventory
 - Wounds accumulate damage, pain, and bleeding from combat/falls/animals
 - Pain/bleeding progress over time if untreated
 - Seek medic treatment or use basic supplies (bandages, whiskey)
@@ -172,13 +173,14 @@ Optimized 5-table design with stored procedures:
 
 ## Development Roadmap
 
-### Alpha Phase (Current - v0.2.9)
+### Alpha Phase (Current - v0.3.0)
 - [x] Core wound/treatment systems
 - [x] Infection progression
-- [ ] Wound healing to scars (⚠️ Currently bugged and working on fixing this)
+- [x] Wound healing to scars
 - [x] Multi-job support refactor
 - [x] Database optimization (8 tables → 5 tables with fractures)
 - [x] Modern NUI interface
+- [x] Medical inspection cache synchronization
 - [ ] Comprehensive testing across scenarios
 - [ ] Performance optimization
 - [ ] Bug fixes from community feedback
@@ -223,12 +225,8 @@ All contributors will be recognized in [CONTRIBUTORS.md](CONTRIBUTORS.md)! We ap
 
 ## Known Issues
 
-**Important Game Mechanics:**
-- **💡 Bandage Maintenance System**: Wounds require active bandage maintenance to heal into scars (intentional design). Players must replace bandages every 3-12 minutes during the healing period (10-40 min total). This encourages realistic medical roleplay and ongoing patient care rather than "set and forget" healing. *See [Wiki - Known Issues](https://github.com/Quantum-Projects-RedM/QC-AdvancedMedic/wiki/Known-Issues) for detailed workflow.*
-
 **Minor:**
 - Shotgun pellet hit detection may occasionally miss at extreme angles
-- Rare desync of wound data between client/server in high latency (>200ms)
 - NUI body part selection can be finicky on ultrawide monitors
 - Fall damage detection sometimes triggers on steep slopes instead of actual falls
 
@@ -276,5 +274,5 @@ This resource is provided for use on **CFX.re platform servers** (RedM, FiveM, e
 
 ---
 
-**Version**: 0.2.9-beta | **Framework**: RSG-Core | **Status**: WIP Alpha (Not Production Ready)
-**Last Updated**: November 2025
+**Version**: 0.3.0-alpha | **Framework**: RSG-Core | **Status**: WIP Alpha (Not Production Ready)
+**Last Updated**: Nov 2025

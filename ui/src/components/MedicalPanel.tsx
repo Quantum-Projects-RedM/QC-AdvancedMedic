@@ -72,6 +72,11 @@ const MedicalPanel: React.FC<MedicalPanelProps> = ({ wounds, treatments, infecti
   const [selectedBodyPart, setSelectedBodyPart] = useState<string>('');
   const [selectedTourniquetBodyPart, setSelectedTourniquetBodyPart] = useState<string>('');
 
+  // New states for real-time inventory checking
+  const [loadingInventory, setLoadingInventory] = useState(false);
+  const [currentInventory, setCurrentInventory] = useState<any>(null);
+  const [currentWounds, setCurrentWounds] = useState<any>(null);
+
   // ESC key handler to close panel
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -413,34 +418,66 @@ const MedicalPanel: React.FC<MedicalPanelProps> = ({ wounds, treatments, infecti
     }));
   };
 
-  const handleBandageClick = () => {
+  const handleBandageClick = async () => {
     setShowBandagePanel(true);
     setShowTourniquetPanel(false);
     setShowTreatmentsPanel(false);
+    setLoadingInventory(true);
+    setCurrentInventory(null);
+    setCurrentWounds(null);
+
+    try {
+      const response = await fetch(`https://${(window as any).GetParentResourceName?.() || 'qc-advancedmedic'}/get-current-inventory`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+
+      const data = await response.json();
+      setCurrentInventory(data.inventory);
+      setCurrentWounds(data.wounds);
+    } catch (error) {
+      console.error('Failed to get inventory:', error);
+      // Set empty data on error
+      setCurrentInventory({ bandages: [], tourniquets: [], medicines: [], injections: [] });
+      setCurrentWounds({});
+    } finally {
+      setLoadingInventory(false);
+    }
   };
 
-  const handleTourniquetClick = () => {
+  const handleTourniquetClick = async () => {
     setShowTourniquetPanel(true);
     setShowBandagePanel(false);
     setShowTreatmentsPanel(false);
+    setLoadingInventory(true);
+    setCurrentInventory(null);
+    setCurrentWounds(null);
+
+    try {
+      const response = await fetch(`https://${(window as any).GetParentResourceName?.() || 'qc-advancedmedic'}/get-current-inventory`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+
+      const data = await response.json();
+      setCurrentInventory(data.inventory);
+      setCurrentWounds(data.wounds);
+    } catch (error) {
+      console.error('Failed to get inventory:', error);
+      // Set empty data on error
+      setCurrentInventory({ bandages: [], tourniquets: [], medicines: [], injections: [] });
+      setCurrentWounds({});
+    } finally {
+      setLoadingInventory(false);
+    }
   };
 
   const handleTreatmentsClick = () => {
     setShowTreatmentsPanel(true);
     setShowBandagePanel(false);
     setShowTourniquetPanel(false);
-    
-    // Force refresh medical data when opening treatments panel
-    try {
-      fetch(`https://${(window as any).GetParentResourceName()}/refresh-medical-data`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
-      }).catch(() => {});
-    } catch (error) {
-      // Fallback for development
-      console.log('Would refresh medical data');
-    }
   };
 
   const closePanels = () => {
@@ -449,6 +486,9 @@ const MedicalPanel: React.FC<MedicalPanelProps> = ({ wounds, treatments, infecti
     setShowTreatmentsPanel(false);
     setSelectedBodyPart('');
     setSelectedTourniquetBodyPart('');
+    setLoadingInventory(false);
+    setCurrentInventory(null);
+    setCurrentWounds(null);
   };
 
   return (
@@ -456,6 +496,12 @@ const MedicalPanel: React.FC<MedicalPanelProps> = ({ wounds, treatments, infecti
       {/* Custom CSS to fix positioning conflicts */}
       <style>
         {`
+          /* Loading spinner animation */
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+
           /* Position legs to avoid hand overlap and mirror properly */
           .medic-details {
             position: relative !important;
@@ -791,9 +837,9 @@ const MedicalPanel: React.FC<MedicalPanelProps> = ({ wounds, treatments, infecti
               <i className="fas fa-plus-circle"></i>
               <span className="action-tooltip">Bandages</span>
             </div>
-            <div className={`action-button ${showTreatmentsPanel ? 'treatments-active' : ''}`} onClick={handleTreatmentsClick} data-tooltip="View Treatments">
+            <div className={`action-button ${showTreatmentsPanel ? 'treatments-active' : ''}`} onClick={handleTreatmentsClick} data-tooltip="View Active Treatments">
               <i className="fas fa-list-alt"></i>
-              <span className="action-tooltip">Treatments</span>
+              <span className="action-tooltip">Active Treatments</span>
             </div>
             <div className={`action-button ${showTourniquetPanel ? 'tourniquet-active' : ''}`} onClick={handleTourniquetClick} data-tooltip="Apply Tourniquet">
               <i className="fas fa-compress"></i>
@@ -839,118 +885,101 @@ const MedicalPanel: React.FC<MedicalPanelProps> = ({ wounds, treatments, infecti
                 cursor: 'pointer' 
               }}>&times;</div>
             </div>
-            <div className="treatments-detail-content" style={{ 
-              marginTop: '20px', 
-              maxHeight: '70%', 
+            <div className="treatments-detail-content" style={{
+              marginTop: '20px',
+              maxHeight: '70%',
               overflowY: 'auto',
               color: 'white'
             }}>
-              {!selectedBodyPart ? (
-                // Show body parts that can be bandaged
-                Object.entries(getBandageableWounds()).map(([bodyPart, wound]) => (
-                  <div key={bodyPart} className="body-part-option" onClick={() => setSelectedBodyPart(bodyPart)} style={{
-                    padding: '8px 12px',
-                    margin: '6px 0',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                    backgroundImage: `url(${selectionBoxBg})`,
-                    backgroundSize: '100% 100%',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'center',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    transition: 'all 0.2s ease',
-                    color: 'white',
-                    minHeight: '35px'
+              {loadingInventory ? (
+                // STATE 1: LOADING
+                <div style={{ textAlign: 'center', padding: '40px 20px', color: 'white' }}>
+                  <div style={{
+                    border: '4px solid rgba(255,255,255,0.3)',
+                    borderTop: '4px solid white',
+                    borderRadius: '50%',
+                    width: '40px',
+                    height: '40px',
+                    animation: 'spin 1s linear infinite',
+                    margin: '0 auto 20px'
+                  }}></div>
+                  <p style={{ fontStyle: 'italic' }}>Checking your supplies...</p>
+                </div>
+              ) : !currentWounds || Object.keys(currentWounds).length === 0 ? (
+                // STATE 2: NO WOUNDS
+                <div style={{
+                  textAlign: 'center',
+                  padding: '40px 20px',
+                  color: '#90EE90',
+                  fontStyle: 'italic'
                 }}>
-                    <span style={{ fontWeight: 'bold' }}>{bodyPart.toUpperCase()}</span>
-                    <span style={{ 
-                      fontSize: '12px', 
-                      color: wound.bleedingLevel >= 3 ? '#e74c3c' : '#f39c12' 
-                    }}>
-                      Bleeding Level: {wound.bleedingLevel}
-                    </span>
-                  </div>
-                ))
+                  <p style={{ fontSize: '16px', marginBottom: '10px' }}>You're lookin' spick and span here partner!</p>
+                  <p style={{ fontSize: '14px' }}>No bandages needed at this time.</p>
+                </div>
               ) : (
-                // Show available bandages for selected body part
+                // STATE 3: WOUNDS FOUND - SHOW OPTIONS
                 <>
-                  <div style={{ marginBottom: '15px', fontSize: '14px', fontWeight: 'bold', color: 'white' }}>
-                    Body Part: {selectedBodyPart.toUpperCase()}
-                  </div>
-                  <button className="back-to-body-parts-btn" onClick={() => setSelectedBodyPart('')} style={{
-                    marginBottom: '15px',
-                    padding: '8px 12px',
-                    backgroundImage: `url(${selectionBoxBg})`,
-                    backgroundSize: '100% 100%',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'center',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    minHeight: '35px',
-                    width: '100%',
-                    position: 'relative',
-                    zIndex: 1000,
-                    transition: 'all 0.2s ease',
-                    pointerEvents: 'auto',
-                    userSelect: 'none',
-                    display: 'block'
-                  }}>
-                    ← Back to Body Parts
-                  </button>
-                  {getAvailableBandages().length === 0 ? (
-                    <div style={{ 
-                      textAlign: 'center', 
-                      padding: '20px', 
-                      color: 'white',
-                      fontStyle: 'italic'
-                    }}>
-                      No bandages found in inventory
-                    </div>
-                  ) : (
-                    getAvailableBandages().map((bandage, index) => (
-                      <div key={index} className="bandage-option" onClick={() => {
-                        // Send bandage application to server
-                        fetch(`https://${(window as any).GetParentResourceName?.() || 'qc-advancedmedic'}/apply-bandage`, {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ 
-                            bodyPart: selectedBodyPart, 
-                            bandageType: bandage.itemName 
-                          })
-                        }).catch(() => {});
-                        setSelectedBodyPart('');
-                        closePanels();
-                      }} style={{
-                        padding: '10px',
-                        margin: '6px 0',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                        backgroundImage: `url(${selectionBoxBg})`,
-                        backgroundSize: '100% 100%',
-                        backgroundRepeat: 'no-repeat',
-                        backgroundPosition: 'center',
-                        transition: 'all 0.2s ease',
-                        color: 'white',
-                        minHeight: '45px'
-                      }}>
-                        <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
-                          {bandage.label}
-                        </div>
-                        <div style={{ fontSize: '12px', marginBottom: '5px', color: '#90EE90' }}>
-                          Available
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#D3D3D3' }}>
-                          Lasts: {bandage.decayRate} minutes
-                        </div>
+                  {Object.entries(currentWounds).map(([bodyPart, wound]: [string, any]) => {
+                    const hasBandages = currentInventory?.bandages && currentInventory.bandages.length > 0;
+                    const isDisabled = !hasBandages;
+
+                    return (
+                      <div
+                        key={bodyPart}
+                        className={`treatment-item ${isDisabled ? 'disabled' : ''}`}
+                        onClick={() => {
+                          if (hasBandages) {
+                            const bandage = currentInventory.bandages[0];
+                            fetch(`https://${(window as any).GetParentResourceName?.() || 'qc-advancedmedic'}/apply-bandage`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                bodyPart: bodyPart,
+                                bandageType: bandage.itemName
+                              })
+                            }).catch(() => {});
+                            closePanels();
+                          }
+                        }}
+                        style={{
+                          padding: '10px',
+                          margin: '6px 0',
+                          border: 'none',
+                          borderRadius: '5px',
+                          cursor: isDisabled ? 'not-allowed' : 'pointer',
+                          backgroundImage: `url(${selectionBoxBg})`,
+                          backgroundSize: '100% 100%',
+                          backgroundRepeat: 'no-repeat',
+                          backgroundPosition: 'center',
+                          transition: 'all 0.2s ease',
+                          color: isDisabled ? '#666' : 'white',
+                          minHeight: '55px',
+                          opacity: isDisabled ? 0.4 : 1,
+                          filter: isDisabled ? 'grayscale(100%)' : 'none'
+                        }}
+                      >
+                        {hasBandages ? (
+                          <>
+                            <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
+                              🩹 {currentInventory.bandages[0].label} - {bodyPart.toUpperCase()}
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#f39c12' }}>
+                              Bleeding: Level {wound.bleedingLevel || 0}
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div style={{ fontWeight: 'bold', marginBottom: '5px', color: '#666' }}>
+                              🩹 ???? - {bodyPart.toUpperCase()}
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#999', fontStyle: 'italic' }}>
+                              (No bandages in inventory)
+                            </div>
+                          </>
+                        )}
                       </div>
-                    ))
-                  )}
+                    );
+                  })}
                 </>
               )}
             </div>
@@ -994,119 +1023,101 @@ const MedicalPanel: React.FC<MedicalPanelProps> = ({ wounds, treatments, infecti
                 cursor: 'pointer' 
               }}>&times;</div>
             </div>
-            <div className="treatments-detail-content" style={{ 
-              marginTop: '20px', 
-              maxHeight: '70%', 
+            <div className="treatments-detail-content" style={{
+              marginTop: '20px',
+              maxHeight: '70%',
               overflowY: 'auto',
               color: 'white'
             }}>
-              {!selectedTourniquetBodyPart ? (
-                // Show body parts that need tourniquets (bleeding 6+)
-                Object.entries(getTourniquetableWounds()).map(([bodyPart, wound]) => (
-                  <div key={bodyPart} className="body-part-option" onClick={() => setSelectedTourniquetBodyPart(bodyPart)} style={{
-                    padding: '8px 12px',
-                    margin: '6px 0',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                    backgroundImage: `url(${selectionBoxBg})`,
-                    backgroundSize: '100% 100%',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'center',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    transition: 'all 0.2s ease',
-                    color: 'white',
-                    minHeight: '35px'
-                  }}>
-                    <span style={{ fontWeight: 'bold' }}>{bodyPart.toUpperCase()}</span>
-                    <span style={{ 
-                      fontSize: '12px', 
-                      color: '#e74c3c',
-                      fontWeight: 'bold'
-                    }}>
-                      SEVERE BLEEDING: {wound.bleedingLevel}
-                    </span>
-                  </div>
-                ))
+              {loadingInventory ? (
+                // STATE 1: LOADING
+                <div style={{ textAlign: 'center', padding: '40px 20px', color: 'white' }}>
+                  <div style={{
+                    border: '4px solid rgba(255,255,255,0.3)',
+                    borderTop: '4px solid white',
+                    borderRadius: '50%',
+                    width: '40px',
+                    height: '40px',
+                    animation: 'spin 1s linear infinite',
+                    margin: '0 auto 20px'
+                  }}></div>
+                  <p style={{ fontStyle: 'italic' }}>Checking your supplies...</p>
+                </div>
+              ) : !currentWounds || Object.entries(currentWounds).filter(([_, wound]: [string, any]) => (wound.bleedingLevel || 0) >= 6).length === 0 ? (
+                // STATE 2: NO SEVERE BLEEDING
+                <div style={{
+                  textAlign: 'center',
+                  padding: '40px 20px',
+                  color: '#90EE90',
+                  fontStyle: 'italic'
+                }}>
+                  <p style={{ fontSize: '16px', marginBottom: '10px' }}>Ain't no severe bleedin' here!</p>
+                  <p style={{ fontSize: '14px' }}>No tourniquets needed right now.</p>
+                </div>
               ) : (
-                // Show available tourniquets for selected body part
+                // STATE 3: SEVERE BLEEDING FOUND - SHOW OPTIONS
                 <>
-                  <div style={{ marginBottom: '15px', fontSize: '14px', fontWeight: 'bold', color: 'white' }}>
-                    Body Part: {selectedTourniquetBodyPart.toUpperCase()}
-                  </div>
-                  <button className="back-to-body-parts-btn" onClick={() => setSelectedTourniquetBodyPart('')} style={{
-                    marginBottom: '15px',
-                    padding: '8px 12px',
-                    backgroundImage: `url(${selectionBoxBg})`,
-                    backgroundSize: '100% 100%',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'center',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    minHeight: '35px',
-                    width: '100%',
-                    position: 'relative',
-                    zIndex: 1000,
-                    transition: 'all 0.2s ease',
-                    pointerEvents: 'auto',
-                    userSelect: 'none',
-                    display: 'block'
-                  }}>
-                    ← Back to Body Parts
-                  </button>
-                  {getAvailableTourniquets().length === 0 ? (
-                    <div style={{ 
-                      textAlign: 'center', 
-                      padding: '20px', 
-                      color: 'white',
-                      fontStyle: 'italic'
-                    }}>
-                      No tourniquets found in inventory
-                    </div>
-                  ) : (
-                    getAvailableTourniquets().map((tourniquet, index) => (
-                      <div key={index} className="tourniquet-option" onClick={() => {
-                        // Send tourniquet application to server
-                        fetch(`https://${(window as any).GetParentResourceName?.() || 'qc-advancedmedic'}/apply-tourniquet`, {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ 
-                            bodyPart: selectedTourniquetBodyPart, 
-                            tourniquetType: tourniquet.itemName 
-                          })
-                        }).catch(() => {});
-                        setSelectedTourniquetBodyPart('');
-                        closePanels();
-                      }} style={{
-                        padding: '10px',
-                        margin: '6px 0',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                        backgroundImage: `url(${selectionBoxBg})`,
-                        backgroundSize: '100% 100%',
-                        backgroundRepeat: 'no-repeat',
-                        backgroundPosition: 'center',
-                        transition: 'all 0.2s ease',
-                        color: 'white',
-                        minHeight: '45px'
-                      }}>
-                        <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
-                          {tourniquet.label}
-                        </div>
-                        <div style={{ fontSize: '12px', marginBottom: '5px', color: '#f39c12' }}>
-                          Emergency Use
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#D3D3D3' }}>
-                          Stops severe bleeding immediately
-                        </div>
+                  {Object.entries(currentWounds).filter(([_, wound]: [string, any]) => (wound.bleedingLevel || 0) >= 6).map(([bodyPart, wound]: [string, any]) => {
+                    const hasTourniquets = currentInventory?.tourniquets && currentInventory.tourniquets.length > 0;
+                    const isDisabled = !hasTourniquets;
+
+                    return (
+                      <div
+                        key={bodyPart}
+                        className={`treatment-item ${isDisabled ? 'disabled' : ''}`}
+                        onClick={() => {
+                          if (hasTourniquets) {
+                            const tourniquet = currentInventory.tourniquets[0];
+                            fetch(`https://${(window as any).GetParentResourceName?.() || 'qc-advancedmedic'}/apply-tourniquet`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                bodyPart: bodyPart,
+                                tourniquetType: tourniquet.itemName
+                              })
+                            }).catch(() => {});
+                            closePanels();
+                          }
+                        }}
+                        style={{
+                          padding: '10px',
+                          margin: '6px 0',
+                          border: 'none',
+                          borderRadius: '5px',
+                          cursor: isDisabled ? 'not-allowed' : 'pointer',
+                          backgroundImage: `url(${selectionBoxBg})`,
+                          backgroundSize: '100% 100%',
+                          backgroundRepeat: 'no-repeat',
+                          backgroundPosition: 'center',
+                          transition: 'all 0.2s ease',
+                          color: isDisabled ? '#666' : 'white',
+                          minHeight: '55px',
+                          opacity: isDisabled ? 0.4 : 1,
+                          filter: isDisabled ? 'grayscale(100%)' : 'none'
+                        }}
+                      >
+                        {hasTourniquets ? (
+                          <>
+                            <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
+                              🩸 {currentInventory.tourniquets[0].label} - {bodyPart.toUpperCase()}
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#e74c3c', fontWeight: 'bold' }}>
+                              SEVERE BLEEDING: Level {wound.bleedingLevel || 0}
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div style={{ fontWeight: 'bold', marginBottom: '5px', color: '#666' }}>
+                              🩸 ???? - {bodyPart.toUpperCase()}
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#999', fontStyle: 'italic' }}>
+                              (No tourniquets in inventory)
+                            </div>
+                          </>
+                        )}
                       </div>
-                    ))
-                  )}
+                    );
+                  })}
                 </>
               )}
             </div>

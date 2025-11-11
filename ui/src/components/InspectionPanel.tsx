@@ -1045,9 +1045,9 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
     
     // Get wound data for this body part
     const woundData = getWoundData(bodyPart);
-    
-    // Only discover injuries if they're significant enough to notice
-    if (woundData && ((woundData.painLevel || 0) > 3 || (woundData.bleedingLevel || 0) > 2)) {
+
+    // Only discover injuries if they're significant enough to notice AND not a scar
+    if (woundData && !woundData.isScar && ((woundData.painLevel || 0) > 3 || (woundData.bleedingLevel || 0) > 2)) {
       setDiscoveredInjuries(prev => ({ ...prev, [bodyPart]: woundData }));
     }
     
@@ -1070,6 +1070,21 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
           discoloration: data.translations?.ui_normalSkin || 'Normal skin tone',
           woundDescription: data.translations?.ui_noWoundsDetected || 'No wounds detected in this area',
           recommendation: data.translations?.ui_noImmediateTreatment || 'No immediate treatment required'
+        };
+      }
+
+      // Check if this is a scar (healed wound) - display differently
+      if (woundData.isScar) {
+        const woundDesc = woundData.metadata?.description || 'Unknown injury';
+        return {
+          boneIntegrity: 'Healed - Scar tissue formed',
+          softTissue: 'Scar tissue present from previous injury',
+          bloodFlow: 'Normal circulation restored',
+          painResponse: 'No active pain - fully healed',
+          swelling: 'None - injury has healed',
+          discoloration: 'Permanent scar tissue visible',
+          woundDescription: `OLD HEALED INJURY: ${woundDesc}`,
+          recommendation: 'No treatment required - wound has fully healed into scar tissue'
         };
       }
 
@@ -1157,13 +1172,13 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
 
     const detailedReport = generateDetailedReport();
     setDetailedInspectionResults(prev => ({ ...prev, [bodyPart]: detailedReport }));
-    
-    // Add to medical assessment if injuries found
-    if (woundData && ((woundData.painLevel || 0) > 3 || (woundData.bleedingLevel || 0) > 2)) {
+
+    // Add to medical assessment if injuries found (but skip scars - they're healed)
+    if (woundData && !woundData.isScar && ((woundData.painLevel || 0) > 3 || (woundData.bleedingLevel || 0) > 2)) {
       const bodyPartName = getBodyPartName(bodyPart);
       const severity = woundData.severity || 0;
       const bleeding = woundData.bleeding || 0;
-      
+
       if (severity > 70) {
         addAssessmentEntry(`${bodyPartName}: ${data.translations?.ui_criticalInjuryDetected || 'Critical injury detected - immediate attention required'}`);
       } else if (severity > 40) {
@@ -1173,7 +1188,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
       } else {
         addAssessmentEntry(`${bodyPartName}: ${data.translations?.ui_minorInjuryNoted || 'Minor injury noted'}`);
       }
-      
+
       setDiscoveredInjuries(prev => ({ ...prev, [bodyPart]: woundData }));
     }
     

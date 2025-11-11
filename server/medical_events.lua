@@ -31,22 +31,25 @@ AddEventHandler('QC-AdvancedMedic:server:UpdateWoundData', function(woundData)
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
     if not Player then return end
-    
+
     local citizenid = Player.PlayerData.citizenid
     if not citizenid then return end
-    
+
     -- Save wound data to database
     exports['QC-AdvancedMedic']:SaveWoundData(citizenid, woundData)
-    
+
+    -- Update server-side cache (internal event to medical_server.lua)
+    TriggerEvent('QC-AdvancedMedic:internal:UpdateWoundCache', src, woundData)
+
     -- Broadcast wound data to nearby players (for medic inspection)
     local playerCoords = GetEntityCoords(GetPlayerPed(src))
     local players = RSGCore.Functions.GetRSGPlayers()
-    
+
     for _, player in pairs(players) do
         if player.PlayerData.source ~= src then
             local targetCoords = GetEntityCoords(GetPlayerPed(player.PlayerData.source))
             local distance = #(playerCoords - targetCoords)
-            
+
             if distance <= 10.0 then -- Within 10 meters
                 TriggerClientEvent('QC-AdvancedMedic:client:UpdateNearbyPlayerWounds', player.PlayerData.source, src, woundData)
             end
@@ -100,12 +103,15 @@ AddEventHandler('QC-AdvancedMedic:server:UpdateTreatmentData', function(treatmen
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
     if not Player then return end
-    
+
     local citizenid = Player.PlayerData.citizenid
     if not citizenid then return end
-    
+
     -- Save treatment data to database
     exports['QC-AdvancedMedic']:SaveTreatmentData(citizenid, treatmentData)
+
+    -- Update server-side cache (internal event to medical_server.lua)
+    TriggerEvent('QC-AdvancedMedic:internal:UpdateTreatmentCache', src, treatmentData)
 end)
 
 -- Treatment removal event (for NUI and medic interfaces)
@@ -308,12 +314,15 @@ AddEventHandler('QC-AdvancedMedic:server:UpdateInfectionData', function(infectio
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
     if not Player then return end
-    
+
     local citizenid = Player.PlayerData.citizenid
     if not citizenid then return end
-    
+
     -- Save infection data to database
     exports['QC-AdvancedMedic']:SaveInfectionData(citizenid, infectionData)
+
+    -- Update server-side cache (internal event to medical_server.lua)
+    TriggerEvent('QC-AdvancedMedic:internal:UpdateInfectionCache', src, infectionData)
 end)
 
 -- Log infection cure

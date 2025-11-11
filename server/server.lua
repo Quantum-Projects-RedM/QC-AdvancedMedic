@@ -283,8 +283,24 @@ RegisterNetEvent('QC-AdvancedMedic:server:medicAlert', function(text)
     local players = RSGCore.Functions.GetRSGPlayers()
 
     for _, v in pairs(players) do
-        if v.PlayerData.job.name == 'medic' and v.PlayerData.job.onduty then
+        if IsMedicJob(v.PlayerData.job.name) and v.PlayerData.job.onduty then
             TriggerClientEvent('QC-AdvancedMedic:client:medicAlert', v.PlayerData.source, coords, text)
+        end
+    end
+end)
+
+-- Emergency Call (from death screen "Call Medic" button)
+RegisterNetEvent('QC-AdvancedMedic:server:EmergencyCall', function(coords)
+    local src = source
+    local Player = RSGCore.Functions.GetPlayer(src)
+    if not Player then return end
+
+    local playerName = Player.PlayerData.charinfo.firstname .. ' ' .. Player.PlayerData.charinfo.lastname
+    local players = RSGCore.Functions.GetRSGPlayers()
+
+    for _, v in pairs(players) do
+        if IsMedicJob(v.PlayerData.job.name) and v.PlayerData.job.onduty then
+            TriggerClientEvent('QC-AdvancedMedic:client:medicAlert', v.PlayerData.source, coords, playerName .. ' is requesting emergency medical assistance!')
         end
     end
 end)

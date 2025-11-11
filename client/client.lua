@@ -911,6 +911,7 @@ AddEventHandler('QC-AdvancedMedic:client:revive', function()
         NetworkResurrectLocalPlayer(respawnPos, true, false)
         SetEntityInvincible(cache.ped, false)
         ClearPedBloodDamage(cache.ped)
+        PlayPain(cache.ped, 4, 1, true, true)
         SetAttributeCoreValue(cache.ped, 0, 100)
         SetAttributeCoreValue(cache.ped, 1, 100)
         TriggerServerEvent("RSGCore:Server:SetMetaData", "hunger", 100)
@@ -951,7 +952,7 @@ RegisterNetEvent('QC-AdvancedMedic:client:adminRevive', function()
     })
     SetNuiFocus(false, false)
     nuiFocusEnabled = false
-    
+
     local player = PlayerPedId()
     local pos = GetEntityCoords(cache.ped, true)
 
@@ -962,6 +963,7 @@ RegisterNetEvent('QC-AdvancedMedic:client:adminRevive', function()
     NetworkResurrectLocalPlayer(pos.x, pos.y, pos.z, GetEntityHeading(player), true, false)
     SetEntityInvincible(cache.ped, false)
     ClearPedBloodDamage(cache.ped)
+    PlayPain(cache.ped, 4, 1, true, true)
     SetAttributeCoreValue(cache.ped, 0, 100) -- SetAttributeCoreValue
     SetAttributeCoreValue(cache.ped, 1, 100) -- SetAttributeCoreValue
     TriggerServerEvent("RSGCore:Server:SetMetaData", "hunger", 100)
@@ -1007,6 +1009,7 @@ RegisterNetEvent('QC-AdvancedMedic:client:playerRevive', function()
     NetworkResurrectLocalPlayer(pos.x, pos.y, pos.z, GetEntityHeading(cache.ped), true, false)
     SetEntityInvincible(cache.ped, false)
     ClearPedBloodDamage(cache.ped)
+    PlayPain(cache.ped, 4, 1, true, true)
     SetAttributeCoreValue(cache.ped, 0, 100) -- SetAttributeCoreValue
     SetAttributeCoreValue(cache.ped, 1, 100) -- SetAttributeCoreValue
     TriggerServerEvent("RSGCore:Server:SetMetaData", "hunger", 100)
@@ -1747,6 +1750,9 @@ end)
 AddEventHandler("onResourceStop", function(resourceName)
     if GetCurrentResourceName() ~= resourceName then return end
 
+    -- Stop pain sounds when resource stops
+    PlayPain(cache.ped, 4, 1, true, true)
+
     DestroyAllCams(true)
 
     for i = 1, #createdEntries do
@@ -1879,9 +1885,76 @@ end, false)
 RegisterNUICallback('close-medical-panel', function(data, cb)
     SetNuiFocus(false, false)
     cb({status = 'ok'})
-    
+
     if Config.WoundSystem and Config.WoundSystem.debugging and Config.WoundSystem.debugging.enabled then
         print("^3[MEDICAL NUI] Medical panel closed, NUI focus disabled^7")
+    end
+end)
+
+-- NUI Callback to get current inventory and wounds (real-time check)
+RegisterNUICallback('get-current-inventory', function(data, cb)
+    local inventory = {
+        bandages = {},
+        tourniquets = {},
+        medicines = {},
+        injections = {}
+    }
+
+    -- Check all bandage types
+    if Config.BandageTypes then
+        for bandageKey, bandageData in pairs(Config.BandageTypes) do
+            local hasItem = RSGCore.Functions.HasItem(bandageData.itemName, 1)
+            if hasItem then
+                table.insert(inventory.bandages, {
+                    key = bandageKey,
+                    itemName = bandageData.itemName,
+                    label = bandageData.label or bandageKey,
+                    hasItem = true
+                })
+            end
+        end
+    end
+
+    -- Check all tourniquet types
+    if Config.TourniquetTypes then
+        for tourniquetKey, tourniquetData in pairs(Config.TourniquetTypes) do
+            local hasItem = RSGCore.Functions.HasItem(tourniquetData.itemName, 1)
+            if hasItem then
+                table.insert(inventory.tourniquets, {
+                    key = tourniquetKey,
+                    itemName = tourniquetData.itemName,
+                    label = tourniquetData.label or tourniquetKey,
+                    hasItem = true
+                })
+            end
+        end
+    end
+
+    -- Get current active wounds (exclude scars)
+    local wounds = {}
+    if PlayerWounds then
+        for bodyPart, wound in pairs(PlayerWounds) do
+            if not wound.isScar then
+                wounds[bodyPart] = {
+                    painLevel = wound.painLevel or 0,
+                    bleedingLevel = wound.bleedingLevel or 0,
+                    healthPercentage = wound.healthPercentage or 100,
+                    metadata = wound.metadata
+                }
+            end
+        end
+    end
+
+    cb({
+        inventory = inventory,
+        wounds = wounds
+    })
+
+    if Config.WoundSystem and Config.WoundSystem.debugging and Config.WoundSystem.debugging.enabled then
+        local woundCount = 0
+        for _ in pairs(wounds) do woundCount = woundCount + 1 end
+        print(string.format("^2[INVENTORY CHECK] Bandages: %d, Tourniquets: %d, Wounds: %d^7",
+            #inventory.bandages, #inventory.tourniquets, woundCount))
     end
 end)
 
