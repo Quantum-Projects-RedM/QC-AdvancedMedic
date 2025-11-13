@@ -6,7 +6,7 @@
 --=========================================================
 
 local RSGCore = exports['rsg-core']:GetCoreObject()
-
+local AllowedMedicJobs = {}
 -- Helper function to check if player has any medic job
 local function IsMedicJob(jobName)
     if not jobName then return false end
@@ -556,14 +556,24 @@ end)
 --=========================================================
 -- MEDIC INSPECT COMMAND
 --=========================================================
-RSGCore.Commands.Add('inspect', 'Inspect another player\'s medical condition (Medic Only)', {{name = 'id', help = 'Player ID to inspect'}}, true, function(source, args)
-    local src = source
-    print('^3[QC-AdvancedMedic] DEBUG: /inspect command triggered by player ' .. src .. '^7')
+
+CreateThread(function()
+    for _, loc in ipairs(Config.MedicJobLocations or {}) do
+        if loc.job then AllowedMedicJobs[loc.job] = true end
+    end
+end)
+
+local function IsMedicJob(jobName)
+    return jobName and AllowedMedicJobs[jobName] == true
+end
+
+local function PerformInspection(src, targetId)
+    print(('^3[QC-AdvancedMedic] DEBUG: PerformInspection src=%s targetId=%s^7'):format(src, targetId or 'nil'))
+
     local Medic = RSGCore.Functions.GetPlayer(src)
-    
     if not Medic then return end
-    
-    -- Check if source is a medic
+
+    -- job gate
     if not IsMedicJob(Medic.PlayerData.job.name) then
         TriggerClientEvent('ox_lib:notify', src, {
             title = 'Access Denied',
@@ -573,8 +583,8 @@ RSGCore.Commands.Add('inspect', 'Inspect another player\'s medical condition (Me
         })
         return
     end
-    
-    local targetId = tonumber(args[1])
+
+    targetId = tonumber(targetId)
     if not targetId then
         TriggerClientEvent('ox_lib:notify', src, {
             title = 'Invalid Usage',
@@ -584,26 +594,26 @@ RSGCore.Commands.Add('inspect', 'Inspect another player\'s medical condition (Me
         })
         return
     end
-    
+
     local Patient = RSGCore.Functions.GetPlayer(targetId)
     if not Patient then
         TriggerClientEvent('ox_lib:notify', src, {
             title = 'Player Not Found',
-            description = 'Player with ID ' .. targetId .. ' is not online',
+            description = ('Player with ID %s is not online'):format(targetId),
             type = 'error',
             duration = 5000
         })
         return
     end
-    
-    -- Check distance between medic and patient
+
+    -- distance safety (authoritative on server)
     local medicPed = GetPlayerPed(src)
     local patientPed = GetPlayerPed(Patient.PlayerData.source)
     local medicCoords = GetEntityCoords(medicPed)
     local patientCoords = GetEntityCoords(patientPed)
     local distance = #(medicCoords - patientCoords)
-    
-    if distance > 10.0 then -- 10 meter inspection range
+
+    if distance > 10.0 then
         TriggerClientEvent('ox_lib:notify', src, {
             title = 'Too Far Away',
             description = 'You must be closer to the patient to perform an inspection',
@@ -612,28 +622,16 @@ RSGCore.Commands.Add('inspect', 'Inspect another player\'s medical condition (Me
         })
         return
     end
-    
-    -- Get patient medical data
+
     local patientData = PlayerMedicalData[Patient.PlayerData.source]
     if not patientData then
         InitializePlayerMedicalData(Patient.PlayerData.source)
-        -- Check if data was loaded successfully, fallback to empty data if not
         patientData = PlayerMedicalData[Patient.PlayerData.source] or {
-            wounds = {},
-            treatments = {},
-            infections = {},
-            bandages = {}
+            wounds = {}, treatments = {}, infections = {}, bandages = {}
         }
     end
-    
 
-    -- Check medic's inventory for doctor bag tools and medicines
-    local medicInventory = {
-        tools = {},
-        medicines = {}
-    }
-
-    -- Check doctor bag tools
+    local medicInventory = { tools = {}, medicines = {} }
     for toolKey, toolConfig in pairs(Config.DoctorsBagTools or {}) do
         local itemName = toolConfig.itemName
         local hasItem = Medic.Functions.GetItemByName(itemName) ~= nil
@@ -644,8 +642,6 @@ RSGCore.Commands.Add('inspect', 'Inspect another player\'s medical condition (Me
             consumable = toolConfig.consumable
         }
     end
-
-    -- Check medicines (laudanum, whiskey already in MedicineTypes)
     for medKey, medConfig in pairs(Config.MedicineTypes or {}) do
         local itemName = medConfig.itemName
         local hasItem = Medic.Functions.GetItemByName(itemName) ~= nil
@@ -656,9 +652,8 @@ RSGCore.Commands.Add('inspect', 'Inspect another player\'s medical condition (Me
         }
     end
 
-    -- Prepare inspection data for the frontend (lightweight - no configs)
     local inspectionData = {
-        playerName = Patient.PlayerData.charinfo.firstname .. " " .. Patient.PlayerData.charinfo.lastname,
+        playerName = ("%s %s"):format(Patient.PlayerData.charinfo.firstname, Patient.PlayerData.charinfo.lastname),
         playerId = Patient.PlayerData.citizenid,
         playerSource = Patient.PlayerData.source,
         wounds = patientData.wounds or {},
@@ -667,50 +662,58 @@ RSGCore.Commands.Add('inspect', 'Inspect another player\'s medical condition (Me
         bandages = patientData.bandages or {},
         inspectedBy = Medic.PlayerData.citizenid,
         inspectionTime = os.time(),
-        medicInventory = medicInventory  -- Add medic's inventory
+        medicInventory = medicInventory
     }
-    
-    -- Send inspection data to medic's NUI
+
     TriggerClientEvent('QC-AdvancedMedic:client:ShowInspectionPanel', src, inspectionData)
-    
-    -- Log inspection (async to prevent blocking)
+
     CreateThread(function()
         exports['QC-AdvancedMedic']:LogMedicalEvent(
             Patient.PlayerData.citizenid,
             'medical_inspection',
-            nil, -- No specific body part for general inspection
+            nil,
             {
-                description = string.format("Medical inspection performed by %s %s", 
-                    Medic.PlayerData.charinfo.firstname,
-                    Medic.PlayerData.charinfo.lastname
+                description = ("Medical inspection performed by %s %s"):format(
+                    Medic.PlayerData.charinfo.firstname, Medic.PlayerData.charinfo.lastname
                 ),
-                medic_name = Medic.PlayerData.charinfo.firstname .. " " .. Medic.PlayerData.charinfo.lastname
+                medic_name = ("%s %s"):format(
+                    Medic.PlayerData.charinfo.firstname, Medic.PlayerData.charinfo.lastname
+                )
             },
             Medic.PlayerData.citizenid
         )
     end)
-    
-    -- Notify both players
+
     TriggerClientEvent('ox_lib:notify', src, {
         title = 'Medical Inspection',
-        description = string.format('Examining %s %s', 
-            Patient.PlayerData.charinfo.firstname,
-            Patient.PlayerData.charinfo.lastname
+        description = ("Examining %s %s"):format(
+            Patient.PlayerData.charinfo.firstname, Patient.PlayerData.charinfo.lastname
         ),
         type = 'inform',
         duration = 5000
     })
-    
+
     TriggerClientEvent('ox_lib:notify', Patient.PlayerData.source, {
         title = 'Medical Inspection',
-        description = string.format('Dr. %s %s is examining you', 
-            Medic.PlayerData.charinfo.firstname,
-            Medic.PlayerData.charinfo.lastname
+        description = ("Dr. %s %s is examining you"):format(
+            Medic.PlayerData.charinfo.firstname, Medic.PlayerData.charinfo.lastname
         ),
         type = 'inform',
         duration = 5000
     })
+end
+
+RSGCore.Commands.Add('inspect', 'Inspect another player\'s medical condition (Medic Only)', {
+    { name = 'id', help = 'Player ID to inspect' }
+}, true, function(source, args)
+    PerformInspection(source, args[1])
 end)
+
+RegisterNetEvent('QC-AdvancedMedic:server:PerformInspection', function(targetId)
+    local src = source
+    PerformInspection(src, targetId)
+end)
+
 
 --=========================================================
 -- Health/Vitals Check Request Handler
