@@ -3,7 +3,7 @@ Copyright (c) 2024-2026 Artmines and Quantum Projects
 All Rights Reserved
 
 ================================
-1. DEFINITIONS
+#### 1. DEFINITIONS  
 ================================
 
 "Software" refers to the QC-AdvancedMedic resource, including all source code,
@@ -21,7 +21,7 @@ including but not limited to RedM and FiveM servers.
 the Software to third parties.
 
 ================================
-2. COPYRIGHT AND OWNERSHIP
+#### 2. COPYRIGHT AND OWNERSHIP
 ================================
 
 The Software is copyrighted and owned by Artmines and Quantum Projects.
@@ -29,7 +29,7 @@ All intellectual property rights, including but not limited to copyrights, trade
 trade secrets, and patents (if applicable), remain with the Licensors.
 
 ================================
-3. GRANT OF LICENSE
+#### 3. GRANT OF LICENSE
 ================================
 
 Subject to the terms and conditions of this License, the Licensors hereby grant You
@@ -48,7 +48,7 @@ c) Modify the Software's source code for Your own Server use, including porting
 d) Study and learn from the Software's source code for educational purposes.
 
 ================================
-4. REDISTRIBUTION RIGHTS
+#### 4. REDISTRIBUTION RIGHTS
 ================================
 
 You may redistribute the Software in its original or modified form under the
@@ -68,7 +68,7 @@ e) Modified versions must not be presented as the official version;
 f) You must provide a link to the original repository where reasonably possible.
 
 ================================
-5. RESTRICTIONS
+#### 5. RESTRICTIONS
 ================================
 
 You are expressly prohibited from:
@@ -96,7 +96,7 @@ g) MALICIOUS USE: Using the Software in any manner that violates applicable laws
    or regulations.
 
 ================================
-6. SERVER MONETIZATION CLARIFICATION
+#### 6. SERVER MONETIZATION CLARIFICATION
 ================================
 
 This License explicitly permits the use of the Software on CFX.re platform Servers
@@ -111,7 +111,7 @@ The restriction on "commercial use" applies ONLY to the Software itself (i.e.,
 selling the script), NOT to the Server on which it operates.
 
 ================================
-7. ATTRIBUTION REQUIREMENTS
+#### 7. ATTRIBUTION REQUIREMENTS
 ================================
 
 All uses and redistributions of the Software must maintain the following attribution:
@@ -125,7 +125,7 @@ All uses and redistributions of the Software must maintain the following attribu
   License: See LICENSE file
 
 ================================
-8. CONTRIBUTIONS
+#### 8. CONTRIBUTIONS
 ================================
 
 By submitting contributions (pull requests, patches, suggestions) to the official
@@ -138,7 +138,7 @@ credit for their specific contributions but grant the Licensors the right to use
 modify, and distribute those contributions as part of the Software under this License.
 
 ================================
-9. TERMINATION
+#### 9. TERMINATION
 ================================
 
 This License is effective until terminated. Your rights under this License will
@@ -150,7 +150,7 @@ The Licensors reserve the right to terminate this License for any individual or
 entity found to be in violation of its terms.
 
 ================================
-10. DISCLAIMER OF WARRANTY
+#### 10. DISCLAIMER OF WARRANTY
 ================================
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
@@ -165,7 +165,7 @@ LIMITED TO SERVER CRASHES, DATA LOSS, SECURITY VULNERABILITIES, OR INCOMPATIBILI
 WITH OTHER SOFTWARE.
 
 ================================
-11. LIMITATION OF LIABILITY
+#### 11. LIMITATION OF LIABILITY
 ================================
 
 IN NO EVENT SHALL THE LICENSORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -177,7 +177,7 @@ IN ANY WAY OUT OF THE USE OF THE SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
 OF SUCH DAMAGE.
 
 ================================
-12. INDEMNIFICATION
+#### 12. INDEMNIFICATION
 ================================
 
 You agree to indemnify, defend, and hold harmless the Licensors from and against
@@ -186,7 +186,7 @@ any and all claims, liabilities, damages, losses, costs, expenses, or fees
 distribution of the Software, or Your violation of this License.
 
 ================================
-13. GOVERNING LAW
+#### 13. GOVERNING LAW
 ================================
 
 This License shall be governed by and construed in accordance with the laws
@@ -194,7 +194,7 @@ applicable to open-source software licenses, without regard to conflict of law
 principles.
 
 ================================
-14. SEVERABILITY
+#### 14. SEVERABILITY
 ================================
 
 If any provision of this License is held to be unenforceable or invalid, that
@@ -202,7 +202,7 @@ provision shall be enforced to the maximum extent possible, and the other
 provisions shall remain in full force and effect.
 
 ================================
-15. ENTIRE AGREEMENT
+#### 15. ENTIRE AGREEMENT
 ================================
 
 This License constitutes the entire agreement between You and the Licensors
@@ -210,7 +210,7 @@ regarding the Software and supersedes all prior or contemporaneous understanding
 and agreements, whether written or oral, regarding such subject matter.
 
 ================================
-16. CONTACT INFORMATION
+#### 16. CONTACT INFORMATION
 ================================
 
 For licensing questions, permission requests, or other inquiries:
@@ -220,7 +220,7 @@ GitHub: https://github.com/Quantum-Projects-RedM
 Email: [Contact through Discord or GitHub]
 
 ================================
-17. ACKNOWLEDGMENT
+#### 17. ACKNOWLEDGMENT
 ================================
 
 BY USING, COPYING, MODIFYING, OR DISTRIBUTING THE SOFTWARE, YOU ACKNOWLEDGE THAT
@@ -230,4 +230,4 @@ AND CONDITIONS.
 ================================
 
 Version 1.0
-Last Updated: November 3, 2025
+Last Updated: November 14, 2025
