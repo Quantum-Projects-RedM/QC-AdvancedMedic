@@ -2,6 +2,8 @@
 
 Advanced medical roleplay system for RedM with realistic wound mechanics, treatment systems, and infection progression.
 
+[![Buy Me A Coffee](https://img.shields.io/badge/Support%20Us-Buy%20Me%20A%20Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/quantumprojects)
+
 ![Version](https://img.shields.io/badge/version-0.3.1--alpha-blue.svg)
 ![License](https://img.shields.io/badge/license-Custom%20(Free%20for%20CFX)-red.svg)
 ![Framework](https://img.shields.io/badge/framework-RSG--Core-red.svg)
