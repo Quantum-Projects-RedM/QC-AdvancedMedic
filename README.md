@@ -2,7 +2,7 @@
 
 Advanced medical roleplay system for RedM with realistic wound mechanics, treatment systems, and infection progression.
 
-![Version](https://img.shields.io/badge/version-0.3.0--alpha-blue.svg)
+![Version](https://img.shields.io/badge/version-0.3.1--alpha-blue.svg)
 ![License](https://img.shields.io/badge/license-Custom%20(Free%20for%20CFX)-red.svg)
 ![Framework](https://img.shields.io/badge/framework-RSG--Core-red.svg)
 ![Platform](https://img.shields.io/badge/platform-CFX.re%20(RedM%2FFiveM)-purple.svg)
@@ -55,7 +55,11 @@ Advanced medical roleplay system for RedM with realistic wound mechanics, treatm
 3. Adjust treatment effectiveness and wound progression timers
 4. Configure infection rates and cure item effectiveness
 5. Set up training mission locations in `ConfigMissions.lua`
-6. Test with `/heal` and `/revive` admin commands
+6. Set language in `Config.Locale` (en/fr/es)
+7. Test with `/revive` and `/clearwounds` admin commands
+
+> **⚠️ IMPORTANT - `/heal` Command Removed in v0.3.1**
+> The `/heal` command has been removed. Use `/revive` (full heal + clear wounds) or `/clearwounds` (clear wounds only) instead. If you have scripts using `/heal`, update them to use `/revive`.
 
 ### For Medics
 1. Get hired at a medic job location (Valentine, Saint Denis, etc.)
@@ -274,5 +278,5 @@ This resource is provided for use on **CFX.re platform servers** (RedM, FiveM, e
 
 ---
 
-**Version**: 0.3.0-alpha | **Framework**: RSG-Core | **Status**: WIP Alpha (Not Production Ready)
-**Last Updated**: Nov 2025
+**Version**: 0.3.1-alpha | **Framework**: RSG-Core | **Status**: WIP Alpha (Not Production Ready)
+**Last Updated**: Nov 17, 2025

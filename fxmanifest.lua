@@ -5,13 +5,19 @@ author 'Quantum Projects Community'
 description 'QC-AdvancedMedic - Advanced Medical System for RedM | Dev: Artmines'
 quantum_github 'https://github.com/Quantum-Projects-RedM/QC-AdvancedMedic'
 use_experimental_fxv2_oal 'yes'
-version '0.3.0'
+version '0.3.1'
 
 shared_scripts {
     '@ox_lib/init.lua',
     'config.lua',
     'ConfigMissions.lua',
     'client/client_shared.lua',   -- Load shared functions after config
+}
+
+files {
+    'locales/*.json',
+    'ui/build/index.html',
+    'ui/build/static/**/*'
 }
 
 server_scripts {
@@ -39,12 +45,6 @@ dependencies {
     'rsg-core',
     'rsg-bossmenu',
     'ox_lib'
-}
-
-files {
-    'locales/*.json',
-    'ui/build/index.html',
-    'ui/build/static/**/*'
 }
 
 lua54 'yes'

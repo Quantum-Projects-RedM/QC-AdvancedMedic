@@ -10,9 +10,10 @@ interface DeathScreenProps {
   seconds: number;
   canRespawn?: boolean;
   medicsOnDuty?: number;
+  translations?: { [key: string]: string };  // Locale translations from Config.Strings
 }
 
-const DeathScreen: React.FC<DeathScreenProps> = ({ message, seconds, canRespawn = false, medicsOnDuty = 0 }) => {
+const DeathScreen: React.FC<DeathScreenProps> = ({ message, seconds, canRespawn = false, medicsOnDuty = 0, translations }) => {
   const [timeLeft, setTimeLeft] = useState(seconds);
   const [canDisableFocus, setCanDisableFocus] = useState(false);
 
@@ -114,15 +115,17 @@ const DeathScreen: React.FC<DeathScreenProps> = ({ message, seconds, canRespawn 
         
         {/* Status Text */}
         <div style={{ marginBottom: '30px', textAlign: 'center' }}>
-          <h4 style={{ 
-            fontSize: '48px', 
+          <h4 style={{
+            fontSize: '48px',
             color: '#dc3545',
             textShadow: 'none',
-            margin: '0 0 15px 0' 
+            margin: '0 0 15px 0'
           }}>
-            Disabled
+            {translations?.cl_death_disabled || 'Disabled'}
           </h4>
-          <h4 style={{ color: '#52575c', fontSize: '16px', margin: 0 }}>{message}</h4>
+          <h4 style={{ color: '#52575c', fontSize: '16px', margin: 0 }}>
+            {medicsOnDuty > 0 ? (translations?.cl_death_wait_medic || "Wait to call medic") : (translations?.cl_death_no_medics || "No medics on duty")}
+          </h4>
         </div>
 
         {/* Timer Numbers */}
@@ -142,21 +145,21 @@ const DeathScreen: React.FC<DeathScreenProps> = ({ message, seconds, canRespawn 
           justifyContent: 'center',
           marginTop: '10px'
         }}>
-          {medicsOnDuty > 0 && (
+          {medicsOnDuty > 0 && timeLeft === 0 && (
             <button
               onClick={handleCallMedic}
               className="death-button"
             >
-              Call Medic ({medicsOnDuty} Available)
+              {translations?.cl_death_call_medic_btn || 'Call Medic'} ({medicsOnDuty} {translations?.cl_death_available || 'Available'})
             </button>
           )}
-          
+
           {(canRespawn || timeLeft === 0) && (
             <button
               onClick={handleRespawn}
               className="death-button"
             >
-              {timeLeft === 0 ? 'Respawn' : 'Give Up'}
+              {timeLeft === 0 ? (translations?.cl_death_respawn_btn || 'Respawn') : (translations?.cl_death_giveup_btn || 'Give Up')}
             </button>
           )}
         </div>

@@ -6,7 +6,6 @@
 --=========================================================
 
 local RSGCore = exports['rsg-core']:GetCoreObject()
-lib.locale()
 
 -- Infection tracking data
 PlayerInfections = {}

@@ -7,7 +7,6 @@
 --=========================================================
 
 local RSGCore = exports['rsg-core']:GetCoreObject()
-lib.locale()
 
 -- Environmental tracking variables
 local LastVehicleSpeed = 0
@@ -58,7 +57,7 @@ AddEventHandler('QC-AdvancedMedic:client:FractureHealed', function(bodyPart)
         
         lib.notify({
             title = "Fracture Healed",
-            description = string.format("Your %s fracture has fully healed!", 
+            description = string.format(locale('fracture_healed'),
                 Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label:lower() or bodyPart:lower()),
             type = 'success',
             duration = 8000
@@ -188,7 +187,7 @@ function HandleEnvironmentalDamage(damageType, bodyPart, isRagdoll)
                 -- Severe injury notification
                 lib.notify({
                     title = injuryType == "bone_break" and "Bone Break!" or "Fracture!",
-                    description = string.format("The fall may have %s your %s! Seek immediate medical attention.", 
+                    description = string.format(locale('fracture_fall_injury'),
                         injuryType == "bone_break" and "broken" or "fractured",
                         Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label:lower() or bodyPart:lower()
                     ),
@@ -223,7 +222,7 @@ function HandleMountAccident(accidentType, bodyPart, speed)
     local accidentDesc = accidentType == "trampled" and "trampled by your horse" or "thrown from your horse"
     lib.notify({
         title = "Horse Accident",
-        description = string.format("You were %s! Check for injuries.", accidentDesc),
+        description = string.format(locale('accident_injured'), accidentDesc),
         type = 'error',
         duration = 8000
     })
@@ -275,7 +274,7 @@ function HandleAnimalAttackInfection(animalModel, bodyPart)
             if isVenomous then
                 lib.notify({
                     title = "Venomous Bite",
-                    description = "The snake bite may be venomous! Seek treatment immediately.",
+                    description = locale('snake_bite_venomous'),
                     type = 'error',
                     duration = 12000
                 })

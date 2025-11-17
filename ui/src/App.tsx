@@ -10,6 +10,7 @@ interface AppState {
     seconds: number;
     canRespawn?: boolean;
     medicsOnDuty?: number;
+    translations?: { [key: string]: string };
   };
   medicalData: {
     wounds: any;
@@ -23,6 +24,7 @@ interface AppState {
     inventory?: any;
     bandageTypes?: any;
     isSelfExamination?: boolean;
+    translations?: { [key: string]: string };
   };
   inspectionData: {
     playerName: string;
@@ -30,15 +32,17 @@ interface AppState {
     injuries: any[];
     treatments: any[];
     inventory: any;
+    translations?: { [key: string]: string };
+    [key: string]: any; // Allow any additional properties from Lua
   };
 }
 
 function App() {
   const [state, setState] = useState<AppState>({
     currentView: 'hidden',
-    deathScreenData: { message: '', seconds: 0, canRespawn: false, medicsOnDuty: 0 },
-    medicalData: { wounds: {}, treatments: [], infections: {}, bodyPartHealth: {}, injuryStates: {}, infectionStages: {}, bodyParts: {}, uiColors: {}, inventory: {}, bandageTypes: {}, isSelfExamination: false },
-    inspectionData: { playerName: '', vitals: {}, injuries: [], treatments: [], inventory: {} }
+    deathScreenData: { message: '', seconds: 0, canRespawn: false, medicsOnDuty: 0, translations: {} },
+    medicalData: { wounds: {}, treatments: [], infections: {}, bodyPartHealth: {}, injuryStates: {}, infectionStages: {}, bodyParts: {}, uiColors: {}, inventory: {}, bandageTypes: {}, isSelfExamination: false, translations: {} },
+    inspectionData: { playerName: '', vitals: {}, injuries: [], treatments: [], inventory: {}, translations: {} }
   });
 
   useEffect(() => {
@@ -142,16 +146,17 @@ function App() {
       )}
       
       {state.currentView === 'death-screen' && (
-        <DeathScreen 
+        <DeathScreen
           message={state.deathScreenData.message}
           seconds={state.deathScreenData.seconds}
           canRespawn={state.deathScreenData.canRespawn}
           medicsOnDuty={state.deathScreenData.medicsOnDuty}
+          translations={state.deathScreenData.translations}
         />
       )}
       
       {state.currentView === 'medical-panel' && (
-        <MedicalPanel 
+        <MedicalPanel
           wounds={state.medicalData.wounds}
           treatments={state.medicalData.treatments}
           infections={state.medicalData.infections}
@@ -163,13 +168,15 @@ function App() {
           inventory={state.medicalData.inventory}
           bandageTypes={state.medicalData.bandageTypes}
           isSelfExamination={state.medicalData.isSelfExamination}
+          translations={state.medicalData.translations}
           onClose={hideAll}
         />
       )}
       
       {state.currentView === 'inspection-panel' && (
-        <InspectionPanel 
+        <InspectionPanel
           data={state.inspectionData}
+          translations={state.inspectionData.translations}
           onClose={hideAll}
         />
       )}

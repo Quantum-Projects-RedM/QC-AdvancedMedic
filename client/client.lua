@@ -15,7 +15,7 @@ local Dead = false
 local deadcam = nil
 local isBusy = false
 local targetBodyPartOverride = nil  -- Used by /usebandage command to specify exact body part
-local AllowedMedicJobs = {}
+
 
 -- Medical data globals (remove duplicate declaration if exists)
 -- Note: ActiveTreatments is declared in treatment_system.lua
@@ -114,7 +114,7 @@ end)
 ---------------------------------------------------------------------
 local deathTimer = function()
     deathSecondsRemaining = Config.DeathTimer
-    
+
     -- Send death screen data to NUI once instead of heavy loops
     SendNUIMessage({
         type = 'show-death-screen',
@@ -122,7 +122,8 @@ local deathTimer = function()
             message = medicsonduty > 0 and "Medical assistance is available" or "No medics on duty",
             seconds = Config.DeathTimer,
             canRespawn = false,
-            medicsOnDuty = medicsonduty or 0
+            medicsOnDuty = medicsonduty or 0,
+            translations = Config.Strings or {}  -- Send all locale strings to NUI
         }
     })
     
@@ -520,7 +521,7 @@ end
 ---------------------------------------------------------------------
 AddEventHandler('QC-AdvancedMedic:client:mainmenu', function(location, name)
     if not CanAccessLocation(location) then
-        lib.notify({ title = 'Access Denied', description = 'You do not have access to this medical facility', type = 'error', icon = 'fa-solid fa-kit-medical', iconAnimation = 'shake', duration = 7000 })
+        lib.notify({ title = locale('cl_access_denied'), description = locale('cl_no_access_facility'), type = 'error', icon = 'fa-solid fa-kit-medical', iconAnimation = 'shake', duration = 7000 })
         return
     end
 
@@ -734,7 +735,7 @@ end
 
 AddEventHandler('QC-AdvancedMedic:client:OpenMedicSupplies', function()
     if not CanAccessLocation(mediclocation) then 
-        lib.notify({ title = 'Access Denied', description = 'You do not have access to this medical facility', type = 'error', duration = 5000 })
+        lib.notify({ title = locale('cl_access_denied'), description = locale('cl_no_access_facility'), type = 'error', duration = 5000 })
         return 
     end
     TriggerServerEvent('rsg-shops:server:openstore', 'medic', 'medic', locale('cl_medical_supplies'))
@@ -750,12 +751,12 @@ AddEventHandler('QC-AdvancedMedic:client:OpenPharmaceuticalShop', function()
     local isBoss = PlayerData.job.grade.isboss
     
     if not CanAccessLocation(mediclocation) then 
-        lib.notify({ title = 'Access Denied', description = 'You do not have access to this medical facility', type = 'error', duration = 5000 })
+        lib.notify({ title = locale('cl_access_denied'), description = locale('cl_no_access_facility'), type = 'error', duration = 5000 })
         return 
     end
     
     if grade < 2 and not isBoss then
-        lib.notify({ title = 'Access Denied', description = 'Only Pharmacists and above can access pharmaceutical supplies', type = 'error', duration = 5000 })
+        lib.notify({ title = locale('cl_access_denied'), description = locale('cl_pharmacist_only'), type = 'error', duration = 5000 })
         return
     end
     
@@ -908,7 +909,8 @@ AddEventHandler('QC-AdvancedMedic:client:revive', function()
         Wait(1000)
 
         local respawnPos = Config.RespawnLocations[closestRespawn].coords
-        NetworkResurrectLocalPlayer(respawnPos, true, false)
+        -- Fixed: NetworkResurrectLocalPlayer expects x, y, z, heading parameters
+        NetworkResurrectLocalPlayer(respawnPos.x, respawnPos.y, respawnPos.z, Config.RespawnLocations[closestRespawn].coords.w or 0.0, true, false)
         SetEntityInvincible(cache.ped, false)
         ClearPedBloodDamage(cache.ped)
         PlayPain(cache.ped, 4, 1, true, true)
@@ -1808,18 +1810,20 @@ end)
 ---------------------------------------------------------------------
 
 ---------------------------------------------------------------------
--- /checkhealth command - Show self medical NUI
+-- /checkhealth command - Show self medical NUI with scripted camera
 ---------------------------------------------------------------------
+local checkhealthCam = nil
+
 RegisterCommand('checkhealth', function()
     local player = RSGCore.Functions.GetPlayerData()
     if not player then return end
-    
+
     -- Get current medical data including body part health (direct access since same resource)
     local bodyPartHealth = GetBodyPartHealthData()
     local wounds = PlayerWounds or {}
     local treatments = {}
     local infections = PlayerInfections or {}
-    
+
     -- Convert ActiveTreatments object to array for NUI compatibility
     if ActiveTreatments then
         for bodyPart, treatment in pairs(ActiveTreatments) do
@@ -1833,7 +1837,7 @@ RegisterCommand('checkhealth', function()
             })
         end
     end
-    
+
     -- Get player inventory for bandages
     local inventory = {}
     if Config.BandageTypes then
@@ -1844,7 +1848,7 @@ RegisterCommand('checkhealth', function()
             end
         end
     end
-    
+
     -- Prepare data for self-examination NUI
     local selfMedicalData = {
         playerName = player.charinfo.firstname .. " " .. player.charinfo.lastname,
@@ -1862,32 +1866,57 @@ RegisterCommand('checkhealth', function()
         isSelfExamination = true, -- Flag to indicate this is self-examination
         translations = Config.Strings or {}
     }
-    
+
+    -- Create scripted camera positioned in front of player
+    local ped = PlayerPedId()
+    local pedCoords = GetEntityCoords(ped)
+    local pedHeading = GetEntityHeading(ped)
+
+    -- Calculate camera position in front of player (2.5 meters forward, 0.5 meters up, slight offset to the side)
+    local forwardX = pedCoords.x + (math.sin(math.rad(pedHeading)) * -2.5)
+    local forwardY = pedCoords.y + (math.cos(math.rad(pedHeading)) * 2.5)
+    local camCoords = vector3(forwardX, forwardY, pedCoords.z + 0.5)
+
+    -- Create camera
+    checkhealthCam = CreateCam("DEFAULT_SCRIPTED_CAMERA", true)
+    SetCamCoord(checkhealthCam, camCoords.x, camCoords.y, camCoords.z)
+    PointCamAtEntity(checkhealthCam, ped, 0.0, 0.0, 0.0, true)
+    SetCamActive(checkhealthCam, true)
+    RenderScriptCams(true, true, 500, true, true)
+
     -- Show medical panel NUI
     SetNuiFocus(true, true)
     SetCursorLocation(0.5, 0.5)
-    
+
     SendNUIMessage({
         type = 'show-medical-panel',
         data = selfMedicalData
     })
-    
+
     lib.notify({
-        title = 'Self Examination',
-        description = 'Examining your current medical condition...',
+        title = locale('cl_self_examination'),
+        description = locale('cl_examining_condition'),
         type = 'inform',
         duration = 3000
     })
-    
+
 end, false)
 
 -- NUI Callback to close medical panel and disable focus
 RegisterNUICallback('close-medical-panel', function(data, cb)
     SetNuiFocus(false, false)
+
+    -- Destroy checkhealth camera if it exists
+    if checkhealthCam then
+        RenderScriptCams(false, true, 500, true, true)
+        DestroyCam(checkhealthCam, false)
+        checkhealthCam = nil
+    end
+
     cb({status = 'ok'})
 
     if Config.WoundSystem and Config.WoundSystem.debugging and Config.WoundSystem.debugging.enabled then
-        print("^3[MEDICAL NUI] Medical panel closed, NUI focus disabled^7")
+        print("^3[MEDICAL NUI] Medical panel closed, NUI focus disabled, camera destroyed^7")
     end
 end)
 
@@ -2640,46 +2669,3 @@ RegisterCommand('removebandage', function(source, args)
     print(string.format("[BANDAGE] Removed bandage from %s", Config.BodyParts[bodyPart].label))
 end)
 
-
-
-
-CreateThread(function()
-    for _, loc in ipairs(Config.MedicJobLocations or {}) do
-        if loc.job then AllowedMedicJobs[loc.job] = true end
-    end
-end)
-
-local function IsLocalMedic()
-    local pdata = RSGCore.Functions.GetPlayerData()
-    local jobName = pdata and pdata.job and pdata.job.name
-    return jobName and AllowedMedicJobs[jobName] == true
-end
-
-CreateThread(function()
-    while not exports.ox_target do Wait(100) end
-
-    exports.ox_target:addGlobalPlayer({
-        {
-            name = 'qcmedic_inspect_player',
-            icon = 'fa-solid fa-stethoscope',
-            label = 'Inspect Patient',
-            distance = 3.0, -- interaction distance (server will still enforce 10.0m check)
-            canInteract = function(targetPed, distance, coords, name, bone)
-                if distance > 3.0 then return false end
-                if not IsLocalMedic() then return false end
-                if targetPed == PlayerPedId() then return false end
-                return true
-            end,
-            onSelect = function(data)
-                local targetPed = data.entity
-                if not targetPed or targetPed == 0 then return end
-                local targetPlayer = NetworkGetPlayerIndexFromPed(targetPed)
-                if not targetPlayer then return end
-                local targetId = GetPlayerServerId(targetPlayer)
-                if not targetId or targetId == 0 then return end
-
-                TriggerServerEvent('QC-AdvancedMedic:server:PerformInspection', targetId)
-            end
-        }
-    })
-end)

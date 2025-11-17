@@ -24,14 +24,15 @@ Thank you to everyone who has contributed to QC-AdvancedMedic! This project woul
 
 *Contributors who have submitted code, bug fixes, or improvements:*
 
-<!-- Add contributors here as they contribute -->
-<!-- Example format:
-**Username** - Feature/Fix description
-- Contribution details
-- GitHub: [username](https://github.com/username)
--->
+**Suu Yoshida** - 🥉 Bronze Contributor
+- Bug reports and translations early on
+- Community translations and suggestions
+- GitHub: [suu-yoshida](https://github.com/suu-yoshida)
 
-*Be the first to contribute! See [Contributing](#how-to-contribute) below.*
+**QueenlyDObnkey7** - 🥉 Bronze Contributor
+- Bug reports and Target implementation
+- Feature testing and additions
+- GitHub: [QueenlyDObnkey7](https://github.com/QueenlyDObnkey7)
 
 ---
 
@@ -39,7 +40,17 @@ Thank you to everyone who has contributed to QC-AdvancedMedic! This project woul
 
 *Special thanks to those who reported critical bugs:*
 
-<!-- Add bug reporters here -->
+**Old Tyme Gamer** - ⭐ Outstanding Reporter
+- 3 detailed bug reports with reproduction steps
+- Discord: Old Tyme Gamer
+
+**William**
+- First-time bug reporter
+- Discord: William
+
+**Alexander**
+- First-time bug reporter
+- Discord: Alexander
 
 *Help us improve! Report bugs on [GitHub Issues](https://github.com/Quantum-Projects-RedM/QC-AdvancedMedic/issues)*
 
@@ -138,4 +149,4 @@ We welcome all types of contributions! Here's how you can help:
 
 ---
 
-*Last Updated: November 3, 2025*
+*Last Updated: November 17, 2025*

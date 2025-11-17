@@ -6,7 +6,7 @@
 --=========================================================
 
 local RSGCore = exports['rsg-core']:GetCoreObject()
-local AllowedMedicJobs = {}
+
 -- Helper function to check if player has any medic job
 local function IsMedicJob(jobName)
     if not jobName then return false end
@@ -207,8 +207,8 @@ AddEventHandler('QC-AdvancedMedic:server:MedicApplyBandage', function(targetId, 
     -- Check if source is a medic
     if not IsMedicJob(Medic.PlayerData.job.name) then
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Access Denied',
-            description = 'You are not a medical professional',
+            title = locale('sv_access_denied'),
+            description = locale('sv_not_medical_professional'),
             type = 'error',
             duration = 5000
         })
@@ -218,8 +218,8 @@ AddEventHandler('QC-AdvancedMedic:server:MedicApplyBandage', function(targetId, 
     -- Check if medic has the required item
     if not Medic.Functions.GetItemByName(bandageType) then
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Missing Supplies',
-            description = string.format('You do not have %s', bandageType),
+            title = locale('sv_missing_supplies'),
+            description = string.format(locale('sv_you_dont_have_item'), bandageType),
             type = 'error',
             duration = 5000
         })
@@ -244,15 +244,15 @@ AddEventHandler('QC-AdvancedMedic:server:MedicApplyBandage', function(targetId, 
         
         -- Notify both players
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Treatment Applied',
-            description = string.format('Applied %s to patient\'s %s', bandageType, bodyPart),
+            title = locale('sv_treatment_applied'),
+            description = string.format(locale('sv_applied_to_patient_bodypart'), bandageType, bodyPart),
             type = 'success',
             duration = 5000
         })
         
         TriggerClientEvent('ox_lib:notify', Patient.PlayerData.source, {
-            title = 'Medical Treatment',
-            description = string.format('Medic applied %s to your %s', bandageType, bodyPart),
+            title = locale('sv_medical_treatment'),
+            description = string.format(locale('sv_medic_applied_to_your'), bandageType, bodyPart),
             type = 'inform',
             duration = 5000
         })
@@ -270,8 +270,8 @@ AddEventHandler('QC-AdvancedMedic:server:MedicApplyTourniquet', function(targetI
     -- Check if source is a medic
     if not IsMedicJob(Medic.PlayerData.job.name) then
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Access Denied',
-            description = 'You are not a medical professional',
+            title = locale('sv_access_denied'),
+            description = locale('sv_not_medical_professional'),
             type = 'error',
             duration = 5000
         })
@@ -281,8 +281,8 @@ AddEventHandler('QC-AdvancedMedic:server:MedicApplyTourniquet', function(targetI
     -- Check if medic has the required item  
     if not Medic.Functions.GetItemByName(tourniquetType) then
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Missing Supplies',
-            description = string.format('You do not have %s', tourniquetType),
+            title = locale('sv_missing_supplies'),
+            description = string.format(locale('sv_you_dont_have_item'), tourniquetType),
             type = 'error',
             duration = 5000
         })
@@ -307,15 +307,15 @@ AddEventHandler('QC-AdvancedMedic:server:MedicApplyTourniquet', function(targetI
         
         -- Notify both players
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Emergency Treatment',
-            description = string.format('Applied emergency %s to patient\'s %s', tourniquetType, bodyPart),
+            title = locale('sv_emergency_treatment'),
+            description = string.format(locale('sv_applied_emergency_to_patient'), tourniquetType, bodyPart),
             type = 'warning',
             duration = 8000
         })
         
         TriggerClientEvent('ox_lib:notify', Patient.PlayerData.source, {
-            title = 'Emergency Medical Treatment',
-            description = string.format('Medic applied emergency %s to your %s', tourniquetType, bodyPart),
+            title = locale('sv_emergency_medical_treatment'),
+            description = string.format(locale('sv_medic_applied_emergency_to_your'), tourniquetType, bodyPart),
             type = 'warning',
             duration = 8000
         })
@@ -341,8 +341,8 @@ AddEventHandler('QC-AdvancedMedic:server:MedicApplyMedicine', function(targetId,
     
     if not isMedic then
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Access Denied',
-            description = 'You are not a medical professional',
+            title = locale('sv_access_denied'),
+            description = locale('sv_not_medical_professional'),
             type = 'error',
             duration = 5000
         })
@@ -353,8 +353,8 @@ AddEventHandler('QC-AdvancedMedic:server:MedicApplyMedicine', function(targetId,
     local medicineConfig = Config.MedicineTypes[medicineType]
     if not medicineConfig then
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Invalid Medicine',
-            description = 'Unknown medicine type: ' .. tostring(medicineType),
+            title = locale('sv_invalid_medicine'),
+            description = string.format(locale('sv_unknown_medicine_type'), tostring(medicineType)),
             type = 'error',
             duration = 5000
         })
@@ -366,8 +366,8 @@ AddEventHandler('QC-AdvancedMedic:server:MedicApplyMedicine', function(targetId,
     -- Check if medic has the required item  
     if not Medic.Functions.GetItemByName(itemName) then
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Missing Medicine',
-            description = string.format('You do not have %s', medicineConfig.label or itemName),
+            title = locale('sv_missing_medicine'),
+            description = string.format(locale('sv_you_dont_have_item'), medicineConfig.label or itemName),
             type = 'error',
             duration = 5000
         })
@@ -392,15 +392,15 @@ AddEventHandler('QC-AdvancedMedic:server:MedicApplyMedicine', function(targetId,
         
         -- Notify both players
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Medicine Administered',
-            description = string.format('Successfully administered %s to patient', medicineConfig.label or medicineType),
+            title = locale('sv_medicine_administered'),
+            description = string.format(locale('sv_successfully_administered'), medicineConfig.label or medicineType),
             type = 'success',
             duration = 8000
         })
         
         TriggerClientEvent('ox_lib:notify', Patient.PlayerData.source, {
-            title = 'Medical Treatment',
-            description = string.format('Medic administered %s for pain relief', medicineConfig.label or medicineType),
+            title = locale('sv_medical_treatment'),
+            description = string.format(locale('sv_medic_administered_pain_relief'), medicineConfig.label or medicineType),
             type = 'inform',
             duration = 8000
         })
@@ -429,8 +429,8 @@ AddEventHandler('QC-AdvancedMedic:server:RequestMedicalInspection', function(tar
     
     if not isMedic then
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Access Denied',
-            description = 'You are not a medical professional',
+            title = locale('sv_access_denied'),
+            description = locale('sv_not_medical_professional'),
             type = 'error',
             duration = 5000
         })
@@ -475,8 +475,8 @@ AddEventHandler('QC-AdvancedMedic:server:RequestMedicalInspection', function(tar
     
     -- Notify patient
     TriggerClientEvent('ox_lib:notify', Patient.PlayerData.source, {
-        title = 'Medical Inspection',
-        description = 'A medical professional is examining you',
+        title = locale('sv_medical_inspection'),
+        description = locale('sv_medical_professional_examining'),
         type = 'inform',
         duration = 5000
     })
@@ -556,82 +556,84 @@ end)
 --=========================================================
 -- MEDIC INSPECT COMMAND
 --=========================================================
-
-CreateThread(function()
-    for _, loc in ipairs(Config.MedicJobLocations or {}) do
-        if loc.job then AllowedMedicJobs[loc.job] = true end
-    end
-end)
-
-local function IsMedicJob(jobName)
-    return jobName and AllowedMedicJobs[jobName] == true
-end
-
-local function PerformInspection(src, targetId)
-    print(('^3[QC-AdvancedMedic] DEBUG: PerformInspection src=%s targetId=%s^7'):format(src, targetId or 'nil'))
-
+RSGCore.Commands.Add('inspect', 'Inspect another player\'s medical condition (Medic Only)', {{name = 'id', help = 'Player ID to inspect'}}, true, function(source, args)
+    local src = source
+    print('^3[QC-AdvancedMedic] DEBUG: /inspect command triggered by player ' .. src .. '^7')
     local Medic = RSGCore.Functions.GetPlayer(src)
+    
     if not Medic then return end
-
-    -- job gate
+    
+    -- Check if source is a medic
     if not IsMedicJob(Medic.PlayerData.job.name) then
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Access Denied',
-            description = 'You are not a medical professional',
+            title = locale('sv_access_denied'),
+            description = locale('sv_not_medical_professional'),
             type = 'error',
             duration = 5000
         })
         return
     end
-
-    targetId = tonumber(targetId)
+    
+    local targetId = tonumber(args[1])
     if not targetId then
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Invalid Usage',
-            description = 'Usage: /inspect [player_id]',
+            title = locale('sv_invalid_usage'),
+            description = locale('sv_usage_inspect'),
             type = 'error',
             duration = 5000
         })
         return
     end
-
+    
     local Patient = RSGCore.Functions.GetPlayer(targetId)
     if not Patient then
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Player Not Found',
-            description = ('Player with ID %s is not online'):format(targetId),
+            title = locale('sv_player_not_found'),
+            description = string.format(locale('sv_player_id_not_online'), targetId),
             type = 'error',
             duration = 5000
         })
         return
     end
-
-    -- distance safety (authoritative on server)
+    
+    -- Check distance between medic and patient
     local medicPed = GetPlayerPed(src)
     local patientPed = GetPlayerPed(Patient.PlayerData.source)
     local medicCoords = GetEntityCoords(medicPed)
     local patientCoords = GetEntityCoords(patientPed)
     local distance = #(medicCoords - patientCoords)
-
-    if distance > 10.0 then
+    
+    if distance > 10.0 then -- 10 meter inspection range
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Too Far Away',
-            description = 'You must be closer to the patient to perform an inspection',
+            title = locale('sv_too_far_away'),
+            description = locale('sv_must_be_closer_inspection'),
             type = 'error',
             duration = 5000
         })
         return
     end
-
+    
+    -- Get patient medical data
     local patientData = PlayerMedicalData[Patient.PlayerData.source]
     if not patientData then
         InitializePlayerMedicalData(Patient.PlayerData.source)
+        -- Check if data was loaded successfully, fallback to empty data if not
         patientData = PlayerMedicalData[Patient.PlayerData.source] or {
-            wounds = {}, treatments = {}, infections = {}, bandages = {}
+            wounds = {},
+            treatments = {},
+            infections = {},
+            bandages = {}
         }
     end
+    
 
-    local medicInventory = { tools = {}, medicines = {} }
+    -- Check medic's inventory for doctor bag tools and medicines
+    local medicInventory = {
+        tools = {},
+        medicines = {}
+    }
+
+    -- Check doctor bag tools
     for toolKey, toolConfig in pairs(Config.DoctorsBagTools or {}) do
         local itemName = toolConfig.itemName
         local hasItem = Medic.Functions.GetItemByName(itemName) ~= nil
@@ -642,6 +644,8 @@ local function PerformInspection(src, targetId)
             consumable = toolConfig.consumable
         }
     end
+
+    -- Check medicines (laudanum, whiskey already in MedicineTypes)
     for medKey, medConfig in pairs(Config.MedicineTypes or {}) do
         local itemName = medConfig.itemName
         local hasItem = Medic.Functions.GetItemByName(itemName) ~= nil
@@ -652,8 +656,9 @@ local function PerformInspection(src, targetId)
         }
     end
 
+    -- Prepare inspection data for the frontend (lightweight - no configs)
     local inspectionData = {
-        playerName = ("%s %s"):format(Patient.PlayerData.charinfo.firstname, Patient.PlayerData.charinfo.lastname),
+        playerName = Patient.PlayerData.charinfo.firstname .. " " .. Patient.PlayerData.charinfo.lastname,
         playerId = Patient.PlayerData.citizenid,
         playerSource = Patient.PlayerData.source,
         wounds = patientData.wounds or {},
@@ -662,58 +667,50 @@ local function PerformInspection(src, targetId)
         bandages = patientData.bandages or {},
         inspectedBy = Medic.PlayerData.citizenid,
         inspectionTime = os.time(),
-        medicInventory = medicInventory
+        medicInventory = medicInventory  -- Add medic's inventory
     }
-
+    
+    -- Send inspection data to medic's NUI
     TriggerClientEvent('QC-AdvancedMedic:client:ShowInspectionPanel', src, inspectionData)
-
+    
+    -- Log inspection (async to prevent blocking)
     CreateThread(function()
         exports['QC-AdvancedMedic']:LogMedicalEvent(
             Patient.PlayerData.citizenid,
             'medical_inspection',
-            nil,
+            nil, -- No specific body part for general inspection
             {
-                description = ("Medical inspection performed by %s %s"):format(
-                    Medic.PlayerData.charinfo.firstname, Medic.PlayerData.charinfo.lastname
+                description = string.format("Medical inspection performed by %s %s", 
+                    Medic.PlayerData.charinfo.firstname,
+                    Medic.PlayerData.charinfo.lastname
                 ),
-                medic_name = ("%s %s"):format(
-                    Medic.PlayerData.charinfo.firstname, Medic.PlayerData.charinfo.lastname
-                )
+                medic_name = Medic.PlayerData.charinfo.firstname .. " " .. Medic.PlayerData.charinfo.lastname
             },
             Medic.PlayerData.citizenid
         )
     end)
-
+    
+    -- Notify both players
     TriggerClientEvent('ox_lib:notify', src, {
-        title = 'Medical Inspection',
-        description = ("Examining %s %s"):format(
-            Patient.PlayerData.charinfo.firstname, Patient.PlayerData.charinfo.lastname
+        title = locale('sv_medical_inspection'),
+        description = string.format(locale('sv_examining_patient'),
+            Patient.PlayerData.charinfo.firstname,
+            Patient.PlayerData.charinfo.lastname
         ),
         type = 'inform',
         duration = 5000
     })
-
+    
     TriggerClientEvent('ox_lib:notify', Patient.PlayerData.source, {
-        title = 'Medical Inspection',
-        description = ("Dr. %s %s is examining you"):format(
-            Medic.PlayerData.charinfo.firstname, Medic.PlayerData.charinfo.lastname
+        title = locale('sv_medical_inspection'),
+        description = string.format(locale('sv_doctor_examining_you'),
+            Medic.PlayerData.charinfo.firstname,
+            Medic.PlayerData.charinfo.lastname
         ),
         type = 'inform',
         duration = 5000
     })
-end
-
-RSGCore.Commands.Add('inspect', 'Inspect another player\'s medical condition (Medic Only)', {
-    { name = 'id', help = 'Player ID to inspect' }
-}, true, function(source, args)
-    PerformInspection(source, args[1])
 end)
-
-RegisterNetEvent('QC-AdvancedMedic:server:PerformInspection', function(targetId)
-    local src = source
-    PerformInspection(src, targetId)
-end)
-
 
 --=========================================================
 -- Health/Vitals Check Request Handler
@@ -917,12 +914,17 @@ AddEventHandler('QC-AdvancedMedic:server:UseDoctorBagTool', function(toolAction,
 
     -- Perform the tool action
     if toolAction == 'revive_unconscious' then
-        -- Smelling salts - revive unconscious player
+        -- Smelling salts - revive unconscious player (check if dead/unconscious first)
+        if Config.Debug then
+            print(string.format("^2[SMELLING SALTS] Reviving player %s (source: %d)^7",
+                Patient.PlayerData.charinfo.firstname, Patient.PlayerData.source))
+        end
+
         TriggerClientEvent('QC-AdvancedMedic:client:playerRevive', Patient.PlayerData.source)
 
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Smelling Salts',
-            description = string.format('Administered smelling salts to %s %s',
+            title = locale('sv_smelling_salts'),
+            description = string.format(locale('sv_administered_smelling_salts'),
                 Patient.PlayerData.charinfo.firstname,
                 Patient.PlayerData.charinfo.lastname
             ),
@@ -931,8 +933,8 @@ AddEventHandler('QC-AdvancedMedic:server:UseDoctorBagTool', function(toolAction,
         })
 
         TriggerClientEvent('ox_lib:notify', Patient.PlayerData.source, {
-            title = 'Revived',
-            description = 'You have been revived with smelling salts',
+            title = locale('sv_revived'),
+            description = locale('sv_revived_smelling_salts'),
             type = 'success',
             duration = 5000
         })
@@ -952,10 +954,10 @@ AddEventHandler('QC-AdvancedMedic:server:UseDoctorBagTool', function(toolAction,
         end
 
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Temperature Check',
+            title = locale('sv_temperature_check'),
             description = infectionCount > 0 and
-                string.format('Patient has elevated temperature - %d active infection(s)', infectionCount) or
-                'Patient temperature normal',
+                string.format(locale('sv_elevated_temperature'), infectionCount) or
+                locale('sv_temperature_normal'),
             type = infectionCount > 0 and 'warning' or 'success',
             duration = 5000
         })
@@ -965,8 +967,8 @@ AddEventHandler('QC-AdvancedMedic:server:UseDoctorBagTool', function(toolAction,
         TriggerClientEvent('QC-AdvancedMedic:client:ClearAllWounds', Patient.PlayerData.source)
 
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Emergency Surgery',
-            description = 'Field surgery completed successfully',
+            title = locale('sv_emergency_surgery'),
+            description = locale('sv_field_surgery_completed'),
             type = 'success',
             duration = 5000
         })
@@ -979,8 +981,8 @@ AddEventHandler('QC-AdvancedMedic:server:UseDoctorBagTool', function(toolAction,
         TriggerClientEvent('QC-AdvancedMedic:client:AdministreMedicine', Patient.PlayerData.source, medicineType, src)
 
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Medicine Administered',
-            description = string.format('Administered %s to %s %s',
+            title = locale('sv_medicine_administered'),
+            description = string.format(locale('sv_administered_to_patient'),
                 medicineType,
                 Patient.PlayerData.charinfo.firstname,
                 Patient.PlayerData.charinfo.lastname
@@ -1109,7 +1111,7 @@ CreateThread(function()
                                     end
                                     
                                     TriggerClientEvent('ox_lib:notify', src, {
-                                        title = 'Medical Alert',
+                                        title = locale('sv_medical_alert'),
                                         description = notificationMsg,
                                         type = 'error',
                                         duration = 6000

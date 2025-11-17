@@ -7,7 +7,6 @@
 --=========================================================
 
 local RSGCore = exports['rsg-core']:GetCoreObject()
-lib.locale()
 
 -- Healing tracking data
 local HealingTimers = {} -- Tracks active healing processes

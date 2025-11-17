@@ -3,8 +3,8 @@ import React, { useState, useEffect, useRef } from 'react';
 interface InspectionPanelProps {
   data: {
     playerName: string;
-    playerId?: string; // Changed from number to string to match backend
-    playerSource?: number; // Added for backend compatibility
+    playerId?: string;
+    playerSource?: number;
     vitals?: {
       heartRate?: number;
       temperature?: number;
@@ -13,29 +13,27 @@ interface InspectionPanelProps {
       status?: string;
     };
     wounds?: {
-      [bodyPart: string]: any; // Made flexible to accept any wound data from backend
+      [bodyPart: string]: any;
     };
-    treatments?: any; // Made flexible to accept backend treatment structure
-    infections?: any; // Added for backend infection data
-    bandages?: any; // Added for backend bandage data
-    injuryStates?: any; // Added for backend config data
-    infectionStages?: any; // Added for backend config data
-    bodyParts?: any; // Added for backend config data
-    uiColors?: any; // Added for backend config data
-    inspectedBy?: string; // Added for backend data
-    inspectionTime?: number; // Added for backend data
-    injuries?: any[]; // Keep for compatibility
-    inventory?: any; // Keep for compatibility
-    bloodLevel?: number; // Keep for compatibility
-    locale?: string; // Added for locale support
-    translations?: {
-      [key: string]: string; // Flat structure from Config.Strings
-    };
+    treatments?: any;
+    infections?: any;
+    bandages?: any;
+    injuryStates?: any;
+    infectionStages?: any;
+    bodyParts?: any;
+    uiColors?: any;
+    inspectedBy?: string;
+    inspectionTime?: number;
+    injuries?: any[];
+    inventory?: any;
+    bloodLevel?: number;
+    locale?: string;
   };
+  translations?: { [key: string]: string };
   onClose: () => void;
 }
 
-const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
+const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, translations, onClose }) => {
   // Listen for ESC key to close panel
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -64,18 +62,18 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
         const { success, message, action, bodyPart, itemName, updatedConditions } = event.data;
         
         if (success) {
-          showNotification(`${data.translations?.ui_successfullyApplied|| 'Successfully applied'} ${itemName} ${data.translations?.ui_to|| 'to'} ${bodyPart}`, 'fa-check-circle');
+          showNotification(`${translations?.ui_successfullyApplied || 'Successfully applied'} ${itemName} ${translations?.ui_to || 'to'} ${bodyPart}`, 'fa-check-circle');
           
           // Add treatment to assessment log
           const bodyPartName = bodyPart !== 'patient' ? getBodyPartName(bodyPart) : 'patient';
-          addTreatmentEntry(`${data.translations?.ui_applied|| 'Applied'} ${itemName} ${data.translations?.ui_to|| 'to'} ${bodyPartName}`);
+          addTreatmentEntry(`${translations?.ui_applied|| 'Applied'} ${itemName} ${translations?.ui_to|| 'to'} ${bodyPartName}`);
           
           // Update patient conditions if provided by backend
           if (updatedConditions) {
             // This would trigger a re-render with new condition data
             // Backend should send updated wound/health data
             // Note: In production, you'd update the parent component's data state
-            // For now, this shows the structure for condition updates
+            // For now, this shows the structure for 
           }
           
           // Clear selections on success
@@ -92,7 +90,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
           }
         } else {
           // Show inventory error with same notification style as other actions
-          showNotification(message || `${data.translations?.ui_youDontHave || "You don't have"} ${itemName} ${data.translations?.ui_inYourInventory || 'in your inventory'}`, 'fa-times-circle');
+          showNotification(message || `${translations?.ui_youDontHave || "You don't have"} ${itemName} ${translations?.ui_inYourInventory || 'in your inventory'}`, 'fa-times-circle');
         }
       } else if (event.data.type === 'patient-condition-update') {
         // Handle real-time condition updates from backend
@@ -272,37 +270,37 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
 
     if (isDead) {
       heartRate = 0;
-      status = data.translations?.vitals_noPulseDetected || 'No Pulse Detected';
-      description = data.translations?.vitals_noPulse || 'Patient shows no signs of life. No pulse or breathing detected.';
+      status = translations?.vitals_noPulseDetected || 'No Pulse Detected';
+      description = translations?.vitals_noPulse || 'Patient shows no signs of life. No pulse or breathing detected.';
     } else if (isUnconscious) {
       // Unconscious patients have weak pulse
       heartRate = 40 + Math.random() * 20; // 40-60 BPM
-      status = data.translations?.vitals_weakPulseStatus || 'Weak Pulse';
-      description = data.translations?.vitals_unconsciousPulse || 'Patient is unconscious. Weak, irregular pulse detected.';
+      status = translations?.vitals_weakPulseStatus || 'Weak Pulse';
+      description = translations?.vitals_unconsciousPulse || 'Patient is unconscious. Weak, irregular pulse detected.';
     } else {
       // Calculate pulse based on health percentage
       const healthPercent = Math.max(0, Math.min(100, health));
       
       if (healthPercent >= 90) {
         heartRate = 60 + Math.random() * 20; // 60-80 BPM (normal)
-        status = data.translations?.vitals_normalStatus || 'Normal';
-        description = data.translations?.vitals_normalPulse || 'Strong, regular pulse. Patient appears stable.';
+        status = translations?.vitals_normalStatus || 'Normal';
+        description = translations?.vitals_normalPulse || 'Strong, regular pulse. Patient appears stable.';
       } else if (healthPercent >= 75) {
         heartRate = 80 + Math.random() * 20; // 80-100 BPM (elevated)
-        status = data.translations?.vitals_elevatedStatus || 'Elevated';
-        description = data.translations?.vitals_elevatedPulse || 'Pulse slightly elevated. Patient may be in mild distress.';
+        status = translations?.vitals_elevatedStatus || 'Elevated';
+        description = translations?.vitals_elevatedPulse || 'Pulse slightly elevated. Patient may be in mild distress.';
       } else if (healthPercent >= 50) {
         heartRate = 100 + Math.random() * 30; // 100-130 BPM (fast)
-        status = data.translations?.vitals_tachycardia || 'Tachycardia';
-        description = data.translations?.vitals_fastPulse || 'Rapid pulse detected. Patient shows signs of significant distress.';
+        status = translations?.vitals_tachycardia || 'Tachycardia';
+        description = translations?.vitals_fastPulse || 'Rapid pulse detected. Patient shows signs of significant distress.';
       } else if (healthPercent >= 25) {
         heartRate = 120 + Math.random() * 40; // 120-160 BPM (very fast)
-        status = data.translations?.vitals_severeTachycardia || 'Severe Tachycardia';
-        description = data.translations?.vitals_criticalPulse || 'Dangerously fast pulse. Patient in critical condition.';
+        status = translations?.vitals_severeTachycardia || 'Severe Tachycardia';
+        description = translations?.vitals_criticalPulse || 'Dangerously fast pulse. Patient in critical condition.';
       } else if (healthPercent > 0) {
         heartRate = 40 + Math.random() * 30; // 40-70 BPM (weak/irregular)
-        status = data.translations?.vitals_weakIrregular || 'Weak & Irregular';
-        description = data.translations?.vitals_weakPulse || 'Weak, irregular pulse. Patient is barely clinging to life.';
+        status = translations?.vitals_weakIrregular || 'Weak & Irregular';
+        description = translations?.vitals_weakPulse || 'Weak, irregular pulse. Patient is barely clinging to life.';
       }
     }
 
@@ -413,17 +411,17 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
     const heartRate = Math.min(Math.max(baseHeartRate, 40), 180);
 
     // Determine patient status
-    let status = data.translations?.ui_stable || 'Stable';
+    let status = translations?.ui_stable || 'Stable';
     let statusColor = '#27ae60';
 
     if (bloodLevel < 30 || totalSeverity > 400) {
-      status = data.translations?.ui_critical || 'Critical';
+      status = translations?.ui_critical || 'Critical';
       statusColor = '#e74c3c';
     } else if (bloodLevel < 60 || totalSeverity > 200) {
-      status = data.translations?.ui_serious || 'Serious';
+      status = translations?.ui_serious || 'Serious';
       statusColor = '#f39c12';
     } else if (bloodLevel < 80 || totalSeverity > 100) {
-      status = data.translations?.ui_injured || 'Injured';
+      status = translations?.ui_injured || 'Injured';
       statusColor = '#e67e22';
     }
 
@@ -436,7 +434,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
   const bandageTypes = Object.keys(configData.bandageTypes || {}).length > 0 
     ? Object.entries(configData.bandageTypes).map(([key, config]: [string, any]) => ({
         id: key,
-        name: config.label || data.translations?.unknownBandage || 'Unknown Bandage',
+        name: config.label || translations?.unknownBandage || 'Unknown Bandage',
         desc: config.description || '',
         icon: 'fa-band-aid',
         itemname: config.itemName || key,
@@ -452,8 +450,8 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
   const tourniquetTypes = Object.keys(configData.tourniquetTypes || {}).length > 0 
     ? Object.entries(configData.tourniquetTypes).map(([key, config]: [string, any]) => ({
         id: key,
-        name: config.label || data.translations?.unknownTourniquet || 'Unknown Tourniquet',
-        desc: `${data.translations?.effectiveness || 'Effectiveness'}: ${config.effectiveness || 70}% - ${data.translations?.maxDuration || 'Max duration'}: ${Math.floor((config.maxDuration || 1200) / 60)} min`,
+        name: config.label || translations?.unknownTourniquet || 'Unknown Tourniquet',
+        desc: `${translations?.effectiveness || 'Effectiveness'}: ${config.effectiveness || 70}% - ${translations?.maxDuration || 'Max duration'}: ${Math.floor((config.maxDuration || 1200) / 60)} min`,
         icon: 'fa-compress',
         itemname: config.itemName || key,
         effectiveness: config.effectiveness || 70
@@ -468,7 +466,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
   const medicineTypes = Object.keys(configData.medicineTypes || {}).length > 0 
     ? Object.entries(configData.medicineTypes).map(([key, config]: [string, any]) => ({
         id: key,
-        name: config.label || data.translations?.unknownMedicine || 'Unknown Medicine',
+        name: config.label || translations?.unknownMedicine || 'Unknown Medicine',
         desc: config.description || '',
         icon: 'fa-prescription-bottle',
         itemname: config.itemName || key,
@@ -484,7 +482,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
   const injectionTypes = Object.keys(configData.injectionTypes || {}).length > 0 
     ? Object.entries(configData.injectionTypes).map(([key, config]: [string, any]) => ({
         id: key,
-        name: config.label || data.translations?.unknownInjection || 'Unknown Injection',
+        name: config.label || translations?.unknownInjection || 'Unknown Injection',
         desc: config.description || '',
         icon: 'fa-syringe',
         itemname: config.itemName || key,
@@ -885,7 +883,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
     
     const bandage = bandageTypes.find(b => b.id === selectedBandageType);
     
-    showNotification(`${data.translations?.ui_checkingInventoryFor || 'Checking inventory for'} ${bandage?.name}...`, 'fa-clock');
+    showNotification(`${translations?.ui_checkingInventoryFor || 'Checking inventory for'} ${bandage?.name}...`, 'fa-clock');
     
     // Send to backend for inventory check and treatment using proper FiveM NUI method
     try {
@@ -930,7 +928,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
     
     const tourniquet = tourniquetTypes.find(t => t.id === selectedTourniquetType);
     
-    showNotification(`${data.translations?.ui_checkingInventoryFor || 'Checking inventory for'} ${tourniquet?.name}...`, 'fa-clock');
+    showNotification(`${translations?.ui_checkingInventoryFor || 'Checking inventory for'} ${tourniquet?.name}...`, 'fa-clock');
     
     // Send to backend for inventory check and treatment using proper FiveM NUI method
     try {
@@ -975,7 +973,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
     
     const medicine = medicineTypes.find(m => m.id === selectedMedicineType);
     
-    showNotification(`${data.translations?.ui_checkingInventoryFor || 'Checking inventory for'} ${medicine?.name}...`, 'fa-clock');
+    showNotification(`${translations?.ui_checkingInventoryFor || 'Checking inventory for'} ${medicine?.name}...`, 'fa-clock');
     
     // Send to backend for inventory check and treatment using proper FiveM NUI method
     try {
@@ -1032,7 +1030,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
       }
     }, '*');
     
-    showNotification(`${data.translations?.ui_checkingInventoryFor || 'Checking inventory for'} ${injection?.name}...`, 'fa-clock');
+    showNotification(`${translations?.ui_checkingInventoryFor || 'Checking inventory for'} ${injection?.name}...`, 'fa-clock');
     
     // Simulate backend response for testing in web
     simulateBackendResponse('give-injection', injection?.itemname || 'injection', injection?.name || 'Injection', selectedBodyPart);
@@ -1062,14 +1060,14 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
     const generateDetailedReport = () => {
       if (!woundData) {
         return {
-          boneIntegrity: data.translations?.ui_normalBoneIntegrity || 'Normal',
-          softTissue: data.translations?.ui_noVisibleDamage || 'No visible damage',
-          bloodFlow: data.translations?.ui_normalCirculationReport || 'Normal circulation',
-          painResponse: data.translations?.ui_noSignificantPain || 'No significant pain response',
-          swelling: data.translations?.ui_noneDetected || 'None detected',
-          discoloration: data.translations?.ui_normalSkin || 'Normal skin tone',
-          woundDescription: data.translations?.ui_noWoundsDetected || 'No wounds detected in this area',
-          recommendation: data.translations?.ui_noImmediateTreatment || 'No immediate treatment required'
+          boneIntegrity: translations?.ui_normalBoneIntegrity || 'Normal',
+          softTissue: translations?.ui_noVisibleDamage || 'No visible damage',
+          bloodFlow: translations?.ui_normalCirculationReport || 'Normal circulation',
+          painResponse: translations?.ui_noSignificantPain || 'No significant pain response',
+          swelling: translations?.ui_noneDetected || 'None detected',
+          discoloration: translations?.ui_normalSkin || 'Normal skin tone',
+          woundDescription: translations?.ui_noWoundsDetected || 'No wounds detected in this area',
+          recommendation: translations?.ui_noImmediateTreatment || 'No immediate treatment required'
         };
       }
 
@@ -1159,13 +1157,13 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
       const urgency = getUrgencyLevel(painLevel, bleedingLevel);
       
       return {
-        boneIntegrity: painLevel > 8 ? (data.translations?.ui_possibleFracture || 'Possible fracture detected') : painLevel > 5 ? (data.translations?.ui_boneBruising || 'Bone bruising suspected') : (data.translations?.ui_normalBone || 'Normal'),
-        softTissue: bleedingLevel > 0 ? `${getBleedingDescription(bleedingLevel)}` : painLevel > 0 ? `${data.translations?.ui_contusionsPresent || 'Contusions present'} (${getPainDescription(painLevel)})` : (data.translations?.ui_noVisibleDamage || 'No visible damage'),
-        bloodFlow: bleedingLevel > 6 ? `${data.translations?.ui_activeBleeding || 'Active bleeding'}: ${getBleedingDescription(bleedingLevel)}` : bleedingLevel > 0 ? `${getBleedingDescription(bleedingLevel)} ${data.translations?.ui_bleedingObserved || 'observed'}` : (data.translations?.ui_normalCirculation || 'Normal circulation'),
-        painResponse: painLevel > 0 ? `${data.translations?.ui_patientReports || 'Patient reports'}: ${getPainDescription(painLevel)}` : (data.translations?.ui_noSignificantPain || 'No significant pain response'),
-        swelling: totalSeverity > 12 ? (data.translations?.ui_significantSwelling || 'Significant swelling present') : totalSeverity > 6 ? (data.translations?.ui_minorSwelling || 'Minor swelling detected') : (data.translations?.ui_noneDetected || 'None detected'),
-        discoloration: bleedingLevel > 3 ? (data.translations?.ui_bloodPooling || 'Blood pooling visible') : painLevel > 5 ? (data.translations?.ui_bruisingDiscoloration || 'Bruising and discoloration') : (data.translations?.ui_normalSkin || 'Normal skin tone'),
-        woundDescription: woundData.metadata?.description || (data.translations?.ui_noWoundDescription || 'No detailed wound description available'),
+        boneIntegrity: painLevel > 8 ? (translations?.ui_possibleFracture || 'Possible fracture detected') : painLevel > 5 ? (translations?.ui_boneBruising || 'Bone bruising suspected') : (translations?.ui_normalBone || 'Normal'),
+        softTissue: bleedingLevel > 0 ? `${getBleedingDescription(bleedingLevel)}` : painLevel > 0 ? `${translations?.ui_contusionsPresent || 'Contusions present'} (${getPainDescription(painLevel)})` : (translations?.ui_noVisibleDamage || 'No visible damage'),
+        bloodFlow: bleedingLevel > 6 ? `${translations?.ui_activeBleeding || 'Active bleeding'}: ${getBleedingDescription(bleedingLevel)}` : bleedingLevel > 0 ? `${getBleedingDescription(bleedingLevel)} ${translations?.ui_bleedingObserved || 'observed'}` : (translations?.ui_normalCirculation || 'Normal circulation'),
+        painResponse: painLevel > 0 ? `${translations?.ui_patientReports || 'Patient reports'}: ${getPainDescription(painLevel)}` : (translations?.ui_noSignificantPain || 'No significant pain response'),
+        swelling: totalSeverity > 12 ? (translations?.ui_significantSwelling || 'Significant swelling present') : totalSeverity > 6 ? (translations?.ui_minorSwelling || 'Minor swelling detected') : (translations?.ui_noneDetected || 'None detected'),
+        discoloration: bleedingLevel > 3 ? (translations?.ui_bloodPooling || 'Blood pooling visible') : painLevel > 5 ? (translations?.ui_bruisingDiscoloration || 'Bruising and discoloration') : (translations?.ui_normalSkin || 'Normal skin tone'),
+        woundDescription: woundData.metadata?.description || (translations?.ui_noWoundDescription || 'No detailed wound description available'),
         recommendation: getTreatmentRecommendation(painLevel, bleedingLevel)
       };
     };
@@ -1180,13 +1178,13 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
       const bleeding = woundData.bleeding || 0;
 
       if (severity > 70) {
-        addAssessmentEntry(`${bodyPartName}: ${data.translations?.ui_criticalInjuryDetected || 'Critical injury detected - immediate attention required'}`);
+        addAssessmentEntry(`${bodyPartName}: ${translations?.ui_criticalInjuryDetected || 'Critical injury detected - immediate attention required'}`);
       } else if (severity > 40) {
-        addAssessmentEntry(`${bodyPartName}: ${data.translations?.ui_moderateInjuryFound || 'Moderate injury found - treatment recommended'}`);
+        addAssessmentEntry(`${bodyPartName}: ${translations?.ui_moderateInjuryFound || 'Moderate injury found - treatment recommended'}`);
       } else if (bleeding > 15) {
-        addAssessmentEntry(`${bodyPartName}: ${data.translations?.ui_activeBleedingObserved || 'Active bleeding observed'}`);
+        addAssessmentEntry(`${bodyPartName}: ${translations?.ui_activeBleedingObserved || 'Active bleeding observed'}`);
       } else {
-        addAssessmentEntry(`${bodyPartName}: ${data.translations?.ui_minorInjuryNoted || 'Minor injury noted'}`);
+        addAssessmentEntry(`${bodyPartName}: ${translations?.ui_minorInjuryNoted || 'Minor injury noted'}`);
       }
 
       setDiscoveredInjuries(prev => ({ ...prev, [bodyPart]: woundData }));
@@ -1234,21 +1232,21 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
 
   // Render discovered wounds for assessment
   const renderDiscoveredWounds = () => {
-    if (Object.keys(discoveredInjuries).length === 0) return <div className="no-visible-injuries">{data.translations?.ui_noInjuriesDiscovered || 'No injuries discovered yet'}</div>;
+    if (Object.keys(discoveredInjuries).length === 0) return <div className="no-visible-injuries">{translations?.ui_noInjuriesDiscovered || 'No injuries discovered yet'}</div>;
 
     const bodyPartNames = {
-      'head': data.translations?.bodyPart_head || 'Head', 
-      'spine': data.translations?.bodyPart_spine || 'Spine', 
-      'upbody': data.translations?.bodyPart_upbody || 'Upper Body', 
-      'lowbody': data.translations?.bodyPart_lowbody || 'Lower Body',
-      'larm': data.translations?.bodyPart_larm || 'Left Arm', 
-      'rarm': data.translations?.bodyPart_rarm || 'Right Arm', 
-      'lhand': data.translations?.bodyPart_lhand || 'Left Hand', 
-      'rhand': data.translations?.bodyPart_rhand || 'Right Hand',
-      'lleg': data.translations?.bodyPart_lleg || 'Left Leg', 
-      'rleg': data.translations?.bodyPart_rleg || 'Right Leg', 
-      'lfoot': data.translations?.bodyPart_lfoot || 'Left Foot', 
-      'rfoot': data.translations?.bodyPart_rfoot || 'Right Foot'
+      'head': translations?.bodyPart_head || 'Head', 
+      'spine': translations?.bodyPart_spine || 'Spine', 
+      'upbody': translations?.bodyPart_upbody || 'Upper Body', 
+      'lowbody': translations?.bodyPart_lowbody || 'Lower Body',
+      'larm': translations?.bodyPart_larm || 'Left Arm', 
+      'rarm': translations?.bodyPart_rarm || 'Right Arm', 
+      'lhand': translations?.bodyPart_lhand || 'Left Hand', 
+      'rhand': translations?.bodyPart_rhand || 'Right Hand',
+      'lleg': translations?.bodyPart_lleg || 'Left Leg', 
+      'rleg': translations?.bodyPart_rleg || 'Right Leg', 
+      'lfoot': translations?.bodyPart_lfoot || 'Left Foot', 
+      'rfoot': translations?.bodyPart_rfoot || 'Right Foot'
     };
 
     return (
@@ -1266,7 +1264,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
           if (bleeding > 20) condition = 'Heavy Bleeding';
           else if (bleeding > 10) condition = 'Minor Bleeding';
           else if (health < 30) condition = 'Severely Wounded';
-          else if (health < 50) condition = data.translations?.ui_injured || 'Injured';
+          else if (health < 50) condition = translations?.ui_injured || 'Injured';
           else if (health < 70) condition = 'Wounded';
 
           return (
@@ -1323,7 +1321,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
         
         <div className={`medic-action-btn ${currentView === 'doctors-bag' ? 'active' : ''}`} onClick={() => switchView('doctors-bag')}>
           <i className="fas fa-briefcase-medical"></i>
-          <div className="action-tooltip">{data.translations?.ui_doctorsBag || "Doctor's Bag"}</div>
+          <div className="action-tooltip">{translations?.ui_doctorsBag || "Doctor's Bag"}</div>
         </div>
       </div>
 
@@ -1333,9 +1331,9 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
           <div className="panel-close-btn" onClick={onClose}>&times;</div>
           <div className="panel-title">
             <i className="fas fa-stethoscope"></i>
-            {data.translations?.ui_medicalInspection || 'MEDICAL INSPECTION'}
+            {translations?.ui_medicalInspection || 'MEDICAL INSPECTION'}
           </div>
-          <div className="panel-subtitle">{data.translations?.ui_patientMedicalAssessment || 'Patient Medical Assessment'}</div>
+          <div className="panel-subtitle">{translations?.ui_patientMedicalAssessment || 'Patient Medical Assessment'}</div>
         </div>
 
         <div className="medic-inspection-content" ref={contentContainerRef}>
@@ -1344,9 +1342,9 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
             <>
               {/* Medic Info */}
               <div className="quick-patient-info">
-                <div className="patient-name-large">Dr. {data.playerName || data.translations?.ui_unknownMedic || 'Unknown Medic'}</div>
+                <div className="patient-name-large">Dr. {data.playerName || translations?.ui_unknownMedic || 'Unknown Medic'}</div>
                 <div className="patient-id-small">
-                  {data.translations?.ui_fieldPhysician || 'Field Physician - Medical Corps'}
+                  {translations?.ui_fieldPhysician || 'Field Physician - Medical Corps'}
                 </div>
               </div>
 
@@ -1356,12 +1354,12 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
               <div className="blood-level-display">
                 <div className="blood-header">
                   <i className="fas fa-briefcase-medical"></i>
-                  <span>{data.translations?.ui_medicalBag || 'MEDICAL KIT STATUS'}</span>
+                  <span>{translations?.ui_medicalBag || 'MEDICAL KIT STATUS'}</span>
                 </div>
                 <div style={{ padding: '1vw', textAlign: 'center' }}>
                   <div style={{ fontSize: '0.8vw', color: '#27ae60', marginBottom: '0.5vw' }}>
                     <i className="fas fa-check-circle" style={{ marginRight: '0.5vw' }}></i>
-                    {data.translations?.tool_fieldSurgeryKit || 'Field Kit Ready'}
+                    {translations?.tool_fieldSurgeryKit || 'Field Kit Ready'}
                   </div>
                   <div style={{ fontSize: '0.6vw', color: 'white' }}>
                     All medical instruments operational
@@ -1375,7 +1373,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
               <div className="medical-details-section">
                 <div className="section-title">
                   <i className="fas fa-clipboard-list"></i>
-                  <span>{data.translations?.ui_patientAssessment || 'PATIENT ASSESSMENT'}</span>
+                  <span>{translations?.ui_patientAssessment || 'PATIENT ASSESSMENT'}</span>
                 </div>
                 <div className="details-content">
                   {medicalAssessment.length === 0 ? (
@@ -1410,7 +1408,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
                       {treatmentsApplied.length > 0 && (
                         <>
                           <div style={{ fontSize: '0.6vw', color: 'white', marginBottom: '0.5vw', fontStyle: 'italic' }}>
-                            {data.translations?.treatmentsApplied || 'Treatments Applied'}:
+                            {translations?.treatmentsApplied || 'Treatments Applied'}:
                           </div>
                           <div style={{ maxHeight: '8vw', overflowY: 'auto' }}>
                             {treatmentsApplied.map((treatment, index) => (
@@ -1439,18 +1437,18 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
             <div className="vitals-checking-view">
               <div className="section-title">
                 <i className="fas fa-heartbeat"></i>
-                <span>{data.translations?.vitalSignsChecking || 'VITAL SIGNS CHECKING'}</span>
+                <span>{translations?.vitalSignsChecking || 'VITAL SIGNS CHECKING'}</span>
               </div>
               
               {!ui_vitalsChecked ? (
                 <div className="vitals-panel" style={{ textAlign: 'center', padding: '2vw' }}>
                   <div style={{ fontSize: '0.8vw', color: 'white', marginBottom: '1vw' }}>
                     <i className="fas fa-stethoscope" style={{ fontSize: '2vw', marginBottom: '0.5vw' }}></i>
-                    <div>{data.translations?.placeStethoscope || "Place stethoscope on patient's chest"}</div>
+                    <div>{translations?.placeStethoscope || "Place stethoscope on patient's chest"}</div>
                   </div>
                   
                   <div style={{ fontSize: '0.6vw', color: 'white', marginBottom: '1.5vw' }}>
-                    {checkingVitals ? (data.translations?.listeningHeartbeat || 'Listening for heartbeat... Keep holding!') : (data.translations?.holdToCheckVitals || 'Hold the button below for 3 seconds to check vitals')}
+                    {checkingVitals ? (translations?.listeningHeartbeat || 'Listening for heartbeat... Keep holding!') : (translations?.holdToCheckVitals || 'Hold the button below for 3 seconds to check vitals')}
                   </div>
                   
                   <div className="vitals-controls" style={{ display: 'flex', gap: '1vw', justifyContent: 'center' }}>
@@ -1472,7 +1470,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
                       }}
                     >
                       <i className="fas fa-hand-paper" style={{ marginRight: '0.5vw' }}></i>
-                      {checkingVitals ? (data.translations?.checking || 'CHECKING...') : (data.translations?.holdToCheck || 'HOLD TO CHECK')}
+                      {checkingVitals ? (translations?.checking || 'CHECKING...') : (translations?.holdToCheck || 'HOLD TO CHECK')}
                       {checkingVitals && (
                         <div style={{
                           position: 'absolute',
@@ -1499,7 +1497,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
                       }}
                     >
                       <i className="fas fa-times" style={{ marginRight: '0.5vw' }}></i>
-                      {data.translations?.cancel || 'CANCEL'}
+                      {translations?.cancel || 'CANCEL'}
                     </button>
                   </div>
                 </div>
@@ -1545,7 +1543,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
             <div className="body-inspection-view">
               <div className="section-title">
                 <i className="fas fa-search-plus"></i>
-                <span>{data.translations?.ui_bodyInspectionTitle || 'BODY INSPECTION MODE'}</span>
+                <span>{translations?.ui_bodyInspectionTitle || 'BODY INSPECTION MODE'}</span>
               </div>
               
               <div style={{ fontSize: '0.6vw', color: 'white', marginBottom: '0.8vw', fontStyle: 'italic' }}>
@@ -1628,14 +1626,14 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
             <div className="bandage-view">
               <div className="section-title">
                 <i className="fas fa-plus-circle"></i>
-                <span>{data.translations?.ui_applyBandageTitle || 'APPLY BANDAGE'}</span>
+                <span>{translations?.ui_applyBandageTitle || 'APPLY BANDAGE'}</span>
               </div>
 
               {/* Bandage Safety Information - TOP PRIORITY */}
               <div className="medical-details-section" style={{ marginBottom: '1vw' }}>
                 <div className="section-title" style={{ fontSize: '0.7vw', marginBottom: '0.5vw' }}>
                   <i className="fas fa-exclamation-triangle"></i>
-                  <span>{data.translations?.ui_infectionControl || 'INFECTION CONTROL'}</span>
+                  <span>{translations?.ui_infectionControl || 'INFECTION CONTROL'}</span>
                 </div>
                 <div className="infection-warning-section" style={{
                   background: 'rgba(139, 169, 85, 0.25)',
@@ -1645,13 +1643,13 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
                   boxShadow: '0 0 0.8vw rgba(139, 169, 85, 0.3)'
                 }}>
                   <div style={{ fontSize: '0.6vw', color: 'white', marginBottom: '0.5vw' }}>
-                    • {data.translations?.ui_cleanWound || 'Clean wound thoroughly before applying any bandage'}
+                    • {translations?.ui_cleanWound || 'Clean wound thoroughly before applying any bandage'}
                   </div>
                   <div style={{ fontSize: '0.6vw', color: 'white', marginBottom: '0.5vw' }}>
-                    • {data.translations?.ui_changeBandages || 'Change bandages regularly to prevent infection'}
+                    • {translations?.ui_changeBandages || 'Change bandages regularly to prevent infection'}
                   </div>
                   <div style={{ fontSize: '0.6vw', color: 'white' }}>
-                    • {data.translations?.ui_watchInfection || 'Watch for signs of infection: swelling, pus, unusual odor'}
+                    • {translations?.ui_watchInfection || 'Watch for signs of infection: swelling, pus, unusual odor'}
                   </div>
                 </div>
               </div>
@@ -1660,7 +1658,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
               <div className="medical-details-section" style={{ marginBottom: '1vw' }}>
                 <div className="section-title" style={{ fontSize: '0.7vw', marginBottom: '0.5vw' }}>
                   <i className="fas fa-user-injured"></i>
-                  <span>{data.translations?.ui_bleedingConditions || 'BLEEDING CONDITIONS (Light/Moderate)'}</span>
+                  <span>{translations?.ui_bleedingConditions || 'BLEEDING CONDITIONS (Light/Moderate)'}</span>
                 </div>
                 <div className="treatment-grid">
                   {Object.entries(discoveredInjuries).filter(([bodyPart, _]) => needsBandage(bodyPart)).map(([bodyPart, discoveredWound]) => {
@@ -1695,7 +1693,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
                           color: isBandaged(bodyPart) ? '#27ae60' : bleedingLevel >= 6 ? '#e74c3c' : totalSeverity > 6 ? '#f39c12' : '#e67e22',
                           fontSize: '0.6vw'
                         }}>
-                          {isBandaged(bodyPart) ? (data.translations?.ui_bandaged || 'Bandaged') : bleedingLevel >= 6 ? (data.translations?.ui_critical || 'Critical') : totalSeverity > 6 ? (data.translations?.ui_injured || 'Injured') : (data.translations?.ui_bleeding || 'Bleeding')}
+                          {isBandaged(bodyPart) ? (translations?.ui_bandaged || 'Bandaged') : bleedingLevel >= 6 ? (translations?.ui_critical || 'Critical') : totalSeverity > 6 ? (translations?.ui_injured || 'Injured') : (translations?.ui_bleeding || 'Bleeding')}
                         </span>
                       </div>
                     );
@@ -1703,8 +1701,8 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
                   {Object.entries(discoveredInjuries).filter(([bodyPart, _]) => needsBandage(bodyPart)).length === 0 && (
                     <div style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.6vw', fontStyle: 'italic', textAlign: 'center', padding: '1vw' }}>
                       {Object.keys(discoveredInjuries).length === 0 
-                        ? (data.translations?.ui_noWoundsDiscovered || 'No wounds discovered yet. Perform body inspection to identify bleeding wounds.') 
-                        : (data.translations?.ui_noLightBleedingWounds || 'No light/moderate bleeding wounds discovered (requires bleeding level 1-6).')}
+                        ? (translations?.ui_noWoundsDiscovered || 'No wounds discovered yet. Perform body inspection to identify bleeding wounds.') 
+                        : (translations?.ui_noLightBleedingWounds || 'No light/moderate bleeding wounds discovered (requires bleeding level 1-6).')}
                     </div>
                   )}
                 </div>
@@ -1714,7 +1712,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
               <div className="medical-details-section" style={{ marginBottom: '1vw' }}>
                 <div className="section-title" style={{ fontSize: '0.7vw', marginBottom: '0.5vw' }}>
                   <i className="fas fa-briefcase"></i>
-                  <span>{data.translations?.ui_availiableBandages || 'AVAILABLE BANDAGES'}</span>
+                  <span>{translations?.ui_availiableBandages || 'AVAILABLE BANDAGES'}</span>
                 </div>
                 <div className="bandage-selection-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4vw' }}>
                   {bandageTypes.map((bandage) => (
@@ -1780,24 +1778,24 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
             <div className="tourniquet-view">
               <div className="section-title">
                 <i className="fas fa-compress"></i>
-                <span>{data.translations?.ui_applyTourniquetTitle || 'APPLY TOURNIQUET'}</span>
+                <span>{translations?.ui_applyTourniquetTitle || 'APPLY TOURNIQUET'}</span>
               </div>
 
               {/* Tourniquet Safety Information - TOP PRIORITY */}
               <div className="medical-details-section" style={{ marginBottom: '1vw' }}>
                 <div className="section-title" style={{ fontSize: '0.7vw', marginBottom: '0.5vw' }}>
                   <i className="fas fa-exclamation-triangle"></i>
-                  <span>{data.translations?.ui_tourniquetSafety || 'TOURNIQUET SAFETY'}</span>
+                  <span>{translations?.ui_tourniquetSafety || 'TOURNIQUET SAFETY'}</span>
                 </div>
                 <div className="warning-notes-section">
                   <div style={{ fontSize: '0.6vw', color: 'white', marginBottom: '0.5vw' }}>
-                    • {data.translations?.ui_applyProximal || 'Apply proximal to bleeding source, never over joints'}
+                    • {translations?.ui_applyProximal || 'Apply proximal to bleeding source, never over joints'}
                   </div>
                   <div style={{ fontSize: '0.6vw', color: 'white', marginBottom: '0.5vw' }}>
-                    • {data.translations?.ui_tightenUntilStop || 'Tighten until bleeding stops - document application time'}
+                    • {translations?.ui_tightenUntilStop || 'Tighten until bleeding stops - document application time'}
                   </div>
                   <div style={{ fontSize: '0.6vw', color: 'white' }}>
-                    • {data.translations?.ui_riskLimbLoss || 'Risk of limb loss if left on too long - monitor closely'}
+                    • {translations?.ui_riskLimbLoss || 'Risk of limb loss if left on too long - monitor closely'}
                   </div>
                 </div>
               </div>
@@ -1806,7 +1804,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
               <div className="medical-details-section" style={{ marginBottom: '1vw' }}>
                 <div className="section-title" style={{ fontSize: '0.7vw', marginBottom: '0.5vw' }}>
                   <i className="fas fa-user-injured"></i>
-                  <span>{data.translations?.ui_severeBleedingConditions || 'SEVERE BLEEDING CONDITIONS'}</span>
+                  <span>{translations?.ui_severeBleedingConditions || 'SEVERE BLEEDING CONDITIONS'}</span>
                 </div>
                 <div className="treatment-grid">
                   {Object.entries(discoveredInjuries).filter(([bodyPart, _]) => needsTourniquet(bodyPart)).map(([bodyPart, discoveredWound]) => {
@@ -1839,7 +1837,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
                           color: isTourniqueted(bodyPart) ? '#27ae60' : bleedingLevel > 8 ? '#e74c3c' : '#f39c12',
                           fontSize: '0.6vw'
                         }}>
-                          {isTourniqueted(bodyPart) ? (data.translations?.ui_tourniqueted || 'Tourniqueted') : bleedingLevel > 8 ? (data.translations?.ui_severeBleeding || 'Severe Bleeding') : (data.translations?.ui_heavyBleeding || 'Heavy Bleeding')}
+                          {isTourniqueted(bodyPart) ? (translations?.ui_tourniqueted || 'Tourniqueted') : bleedingLevel > 8 ? (translations?.ui_severeBleeding || 'Severe Bleeding') : (translations?.ui_heavyBleeding || 'Heavy Bleeding')}
                         </span>
                       </div>
                     );
@@ -1847,8 +1845,8 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
                   {Object.entries(discoveredInjuries).filter(([bodyPart, _]) => needsTourniquet(bodyPart)).length === 0 && (
                     <div style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.6vw', fontStyle: 'italic', textAlign: 'center', padding: '1vw' }}>
                       {Object.keys(discoveredInjuries).length === 0 
-                        ? (data.translations?.ui_noSevereBleedingDiscovered || 'No wounds discovered yet. Perform body inspection to identify severe bleeding.') 
-                        : (data.translations?.ui_noSevereBleedingWounds || 'No severe bleeding wounds discovered (requires bleeding level 7+).')}
+                        ? (translations?.ui_noSevereBleedingDiscovered || 'No wounds discovered yet. Perform body inspection to identify severe bleeding.') 
+                        : (translations?.ui_noSevereBleedingWounds || 'No severe bleeding wounds discovered (requires bleeding level 7+).')}
                     </div>
                   )}
                 </div>
@@ -1858,7 +1856,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
               <div className="medical-details-section" style={{ marginBottom: '1vw' }}>
                 <div className="section-title" style={{ fontSize: '0.7vw', marginBottom: '0.5vw' }}>
                   <i className="fas fa-briefcase"></i>
-                  <span>{data.translations?.ui_availableTourniquets || 'AVAILABLE TOURNIQUETS'}</span>
+                  <span>{translations?.ui_availableTourniquets || 'AVAILABLE TOURNIQUETS'}</span>
                 </div>
                 <div className="tourniquet-selection-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4vw' }}>
                   {tourniquetTypes.map((tourniquet) => (
@@ -1924,19 +1922,19 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
             <div className="doctors-bag-view">
               <div className="section-title" style={{ fontSize: '1.2vw', padding: '1.2vw', marginBottom: '1vw' }}>
                 <i className="fas fa-briefcase-medical" style={{ fontSize: '1.4vw', marginRight: '0.5vw' }}></i>
-                <span>{data.translations?.ui_medicalBag || 'MEDICAL BAG'}</span>
+                <span>{translations?.ui_medicalBag || 'MEDICAL BAG'}</span>
               </div>
               <div style={{ fontSize: '0.6vw', color: 'white', marginBottom: '1vw', fontStyle: 'italic' }}>
-                {data.translations?.ui_wildWestMedical || 'Wild West medical tools and supplies'}
+                {translations?.ui_wildWestMedical || 'Wild West medical tools and supplies'}
               </div>
               <div className="medical-tools-grid">
                 {[
-                  { name: data.translations?.stethoscope || 'Stethoscope', icon: 'fa-stethoscope', action: 'stethoscope', desc: data.translations?.stethoscopeDesc || 'Check heart and lung sounds' },
-                  { name: data.translations?.thermometer || 'Thermometer', icon: 'fa-thermometer-half', action: 'thermometer', desc: data.translations?.thermometerDesc || 'Measure body temperature' },
-                  { name: data.translations?.laudanum || 'Laudanum', icon: 'fa-prescription-bottle', action: 'laudanum', desc: data.translations?.laudanumDesc || 'Opium-based painkiller' },
-                  { name: data.translations?.whiskey || 'Whiskey', icon: 'fa-wine-bottle', action: 'whiskey', desc: data.translations?.whiskeyDesc || 'Antiseptic and anesthetic' },
-                  { name: data.translations?.fieldSurgeryKit || 'Field Surgery Kit', icon: 'fa-first-aid', action: 'field-kit', desc: data.translations?.fieldSurgeryKitDesc || 'Emergency surgical tools' },
-                  { name: data.translations?.smellingSalts || 'Smelling Salts', icon: 'fa-vial', action: 'smelling-salts', desc: data.translations?.smellingSaltsDesc || 'Revive unconscious patients' }
+                  { name: translations?.stethoscope || 'Stethoscope', icon: 'fa-stethoscope', action: 'stethoscope', desc: translations?.stethoscopeDesc || 'Check heart and lung sounds' },
+                  { name: translations?.thermometer || 'Thermometer', icon: 'fa-thermometer-half', action: 'thermometer', desc: translations?.thermometerDesc || 'Measure body temperature' },
+                  { name: translations?.laudanum || 'Laudanum', icon: 'fa-prescription-bottle', action: 'laudanum', desc: translations?.laudanumDesc || 'Opium-based painkiller' },
+                  { name: translations?.whiskey || 'Whiskey', icon: 'fa-wine-bottle', action: 'whiskey', desc: translations?.whiskeyDesc || 'Antiseptic and anesthetic' },
+                  { name: translations?.fieldSurgeryKit || 'Field Surgery Kit', icon: 'fa-first-aid', action: 'field-kit', desc: translations?.fieldSurgeryKitDesc || 'Emergency surgical tools' },
+                  { name: translations?.smellingSalts || 'Smelling Salts', icon: 'fa-vial', action: 'smelling-salts', desc: translations?.smellingSaltsDesc || 'Revive unconscious patients' }
                 ].map((tool, index) => (
                   <div 
                     key={index}
@@ -1971,24 +1969,24 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
             <div className="medicine-view">
               <div className="section-title">
                 <i className="fas fa-pills"></i>
-                <span>{data.translations?.ui_administerMedicine || 'ADMINISTER MEDICINE'}</span>
+                <span>{translations?.ui_administerMedicine || 'ADMINISTER MEDICINE'}</span>
               </div>
 
               {/* Medicine Safety Information - TOP PRIORITY */}
               <div className="medical-details-section" style={{ marginBottom: '1vw' }}>
                 <div className="section-title" style={{ fontSize: '0.7vw', marginBottom: '0.5vw' }}>
                   <i className="fas fa-exclamation-triangle"></i>
-                  <span>{data.translations?.ui_administrationNotes || 'ADMINISTRATION NOTES'}</span>
+                  <span>{translations?.ui_administrationNotes || 'ADMINISTRATION NOTES'}</span>
                 </div>
                 <div className="warning-notes-section">
                   <div style={{ fontSize: '0.6vw', color: 'white', marginBottom: '0.5vw' }}>
-                    • {data.translations?.ui_ensureSwallow || 'Ensure patient can swallow before administering oral medications'}
+                    • {translations?.ui_ensureSwallow || 'Ensure patient can swallow before administering oral medications'}
                   </div>
                   <div style={{ fontSize: '0.6vw', color: 'white', marginBottom: '0.5vw' }}>
-                    • {data.translations?.ui_monitorReactions || 'Monitor patient for adverse reactions after administration'}
+                    • {translations?.ui_monitorReactions || 'Monitor patient for adverse reactions after administration'}
                   </div>
                   <div style={{ fontSize: '0.6vw', color: 'white' }}>
-                    • {data.translations?.ui_drowsinessWarning || 'Some medicines may cause drowsiness or altered consciousness'}
+                    • {translations?.ui_drowsinessWarning || 'Some medicines may cause drowsiness or altered consciousness'}
                   </div>
                 </div>
               </div>
@@ -1997,7 +1995,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
               <div className="medical-details-section" style={{ marginBottom: '1vw' }}>
                 <div className="section-title" style={{ fontSize: '0.7vw', marginBottom: '0.5vw' }}>
                   <i className="fas fa-user-injured"></i>
-                  <span>{data.translations?.ui_painConditions || 'PAIN CONDITIONS'}</span>
+                  <span>{translations?.ui_painConditions || 'PAIN CONDITIONS'}</span>
                 </div>
                 <div className="treatment-grid">
                   {Object.entries(discoveredInjuries).filter(([bodyPart, _]) => needsMedicine(bodyPart)).map(([bodyPart, discoveredWound]) => {
@@ -2032,7 +2030,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
                           color: painLevel >= 8 ? '#e74c3c' : painLevel >= 5 ? '#f39c12' : '#27ae60',
                           fontSize: '0.6vw'
                         }}>
-                          {painLevel >= 8 ? (data.translations?.ui_severePain || 'Severe Pain') : painLevel >= 5 ? (data.translations?.ui_moderatePain || 'Moderate Pain') : (data.translations?.ui_mildPain || 'Mild Pain')}
+                          {painLevel >= 8 ? (translations?.ui_severePain || 'Severe Pain') : painLevel >= 5 ? (translations?.ui_moderatePain || 'Moderate Pain') : (translations?.ui_mildPain || 'Mild Pain')}
                         </span>
                         {bleedingLevel > 0 && (
                           <span style={{ color: '#f39c12', fontSize: '0.5vw' }}>
@@ -2045,8 +2043,8 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
                   {Object.entries(discoveredInjuries).filter(([bodyPart, _]) => needsMedicine(bodyPart)).length === 0 && (
                     <div style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.6vw', fontStyle: 'italic', textAlign: 'center', padding: '1vw' }}>
                       {Object.keys(discoveredInjuries).length === 0 
-                        ? (data.translations?.ui_noWoundsDiscovered || 'No wounds discovered yet. Perform body inspection to identify pain conditions.') 
-                        : (data.translations?.ui_noPainConditions || 'No pain conditions discovered (requires pain level 1+).')}
+                        ? (translations?.ui_noWoundsDiscovered || 'No wounds discovered yet. Perform body inspection to identify pain conditions.') 
+                        : (translations?.ui_noPainConditions || 'No pain conditions discovered (requires pain level 1+).')}
                     </div>
                   )}
                 </div>
@@ -2056,7 +2054,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
               <div className="medical-details-section" style={{ marginBottom: '1vw' }}>
                 <div className="section-title" style={{ fontSize: '0.7vw', marginBottom: '0.5vw' }}>
                   <i className="fas fa-briefcase"></i>
-                  <span>{data.translations?.ui_availableMedicine || 'AVAILABLE MEDICINES'}</span>
+                  <span>{translations?.ui_availableMedicine || 'AVAILABLE MEDICINES'}</span>
                 </div>
                 <div className="medicine-selection-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4vw' }}>
                   {medicineTypes.map((medicine) => (
@@ -2112,7 +2110,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
                     }}
                   >
                     <i className="fas fa-pills" style={{ marginRight: '0.5vw' }}></i>
-                    {data.translations?.ui_administerMedicine || 'ADMINISTER MEDICINE'}
+                    {translations?.ui_administerMedicine || 'ADMINISTER MEDICINE'}
                   </button>
                 </div>
               )}
@@ -2123,24 +2121,24 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
             <div className="injection-view">
               <div className="section-title">
                 <i className="fas fa-syringe"></i>
-                <span>{data.translations?.ui_giveInjectionTitle || 'GIVE INJECTION'}</span>
+                <span>{translations?.ui_giveInjectionTitle || 'GIVE INJECTION'}</span>
               </div>
 
               {/* Injection Safety Information - TOP PRIORITY */}
               <div className="medical-details-section" style={{ marginBottom: '1vw' }}>
                 <div className="section-title" style={{ fontSize: '0.7vw', marginBottom: '0.5vw' }}>
                   <i className="fas fa-exclamation-triangle"></i>
-                  <span>{data.translations?.ui_injectionSafety || 'INJECTION SAFETY'}</span>
+                  <span>{translations?.ui_injectionSafety || 'INJECTION SAFETY'}</span>
                 </div>
                 <div className="warning-notes-section">
                   <div style={{ fontSize: '0.6vw', color: 'white', marginBottom: '0.5vw' }}>
-                    • {data.translations?.ui_sterilizeSite || 'Sterilize injection site before administration'}
+                    • {translations?.ui_sterilizeSite || 'Sterilize injection site before administration'}
                   </div>
                   <div style={{ fontSize: '0.6vw', color: 'white', marginBottom: '0.5vw' }}>
-                    • {data.translations?.ui_properTechnique || 'Use proper injection technique to avoid nerve damage'}
+                    • {translations?.ui_properTechnique || 'Use proper injection technique to avoid nerve damage'}
                   </div>
                   <div style={{ fontSize: '0.6vw', color: 'white' }}>
-                    • {data.translations?.ui_monitorAllergic || 'Monitor for immediate allergic reactions'}
+                    • {translations?.ui_monitorAllergic || 'Monitor for immediate allergic reactions'}
                   </div>
                 </div>
               </div>
@@ -2149,7 +2147,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
               <div className="medical-details-section" style={{ marginBottom: '1vw' }}>
                 <div className="section-title" style={{ fontSize: '0.7vw', marginBottom: '0.5vw' }}>
                   <i className="fas fa-user-injured"></i>
-                  <span>{data.translations?.ui_emergengyConditions || 'EMERGENCY/SEVERE CONDITIONS'}</span>
+                  <span>{translations?.ui_emergengyConditions || 'EMERGENCY/SEVERE CONDITIONS'}</span>
                 </div>
                 <div className="treatment-grid">
                   {Object.entries(discoveredInjuries).filter(([bodyPart, discoveredWound]) => {
@@ -2188,8 +2186,8 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
                           color: (painLevel >= 8 || bleedingLevel >= 7) ? '#e74c3c' : '#f39c12',
                           fontSize: '0.6vw'
                         }}>
-                          {painLevel >= 8 && bleedingLevel >= 7 ? (data.translations?.ui_criticalEmergency || 'Critical Emergency') : 
-                           painLevel >= 8 ? (data.translations?.ui_severePain || 'Severe Pain') : (data.translations?.ui_severeBleeding || 'Severe Bleeding')}
+                          {painLevel >= 8 && bleedingLevel >= 7 ? (translations?.ui_criticalEmergency || 'Critical Emergency') : 
+                           painLevel >= 8 ? (translations?.ui_severePain || 'Severe Pain') : (translations?.ui_severeBleeding || 'Severe Bleeding')}
                         </span>
                       </div>
                     );
@@ -2200,8 +2198,8 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
                   }).length === 0 && (
                     <div style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.6vw', fontStyle: 'italic', textAlign: 'center', padding: '1vw' }}>
                       {Object.keys(discoveredInjuries).length === 0 
-                        ? (data.translations?.ui_noWoundsDiscovered || 'No wounds discovered yet. Perform body inspection to identify critical conditions.') 
-                        : (data.translations?.ui_noEmergencyConditions || 'No emergency conditions found (requires severe pain 8+ or critical bleeding 7+).')}
+                        ? (translations?.ui_noWoundsDiscovered || 'No wounds discovered yet. Perform body inspection to identify critical conditions.') 
+                        : (translations?.ui_noEmergencyConditions || 'No emergency conditions found (requires severe pain 8+ or critical bleeding 7+).')}
                     </div>
                   )}
                 </div>
@@ -2211,7 +2209,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
               <div className="medical-details-section" style={{ marginBottom: '1vw' }}>
                 <div className="section-title" style={{ fontSize: '0.7vw', marginBottom: '0.5vw' }}>
                   <i className="fas fa-briefcase"></i>
-                  <span>{data.translations?.ui_availableInjuctions || 'AVAILABLE INJECTIONS'}</span>
+                  <span>{translations?.ui_availableInjuctions || 'AVAILABLE INJECTIONS'}</span>
                 </div>
                 <div className="injection-selection-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4vw' }}>
                   {injectionTypes.map((injection) => (
@@ -2299,7 +2297,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
             marginBottom: '1vw',
           }}>
             <i className="fas fa-heartbeat" style={{ marginRight: '0.5vw' }}></i>
-            {data.translations?.ui_vitalSignsChecking || 'VITAL SIGNS CHECK'}
+            {translations?.ui_vitalSignsChecking || 'VITAL SIGNS CHECK'}
           </div>
           
           {!ui_vitalsChecked ? (
@@ -2327,7 +2325,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
               </div>
               
               <div style={{ fontSize: '0.6vw', color: 'white', marginBottom: '1vw' }}>
-                {checkingVitals ? (data.translations?.ui_listeningHeartbeat || 'Listening for heartbeat... Keep holding!') : (data.translations?.ui_holdToCheckVitals || 'Hold the button below for 3 seconds')}
+                {checkingVitals ? (translations?.ui_listeningHeartbeat || 'Listening for heartbeat... Keep holding!') : (translations?.ui_holdToCheckVitals || 'Hold the button below for 3 seconds')}
               </div>
               
               <div style={{ display: 'flex', gap: '1vw', justifyContent: 'center' }}>
@@ -2352,7 +2350,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
                   }}
                 >
                   <i className="fas fa-hand-paper" style={{ marginRight: '0.5vw' }}></i>
-                  {checkingVitals ? (data.translations?.ui_checking || 'CHECKING...') : (data.translations?.ui_holdToCheck || 'HOLD TO CHECK')}
+                  {checkingVitals ? (translations?.ui_checking || 'CHECKING...') : (translations?.ui_holdToCheck || 'HOLD TO CHECK')}
                   {checkingVitals && (
                     <div style={{
                       position: 'absolute',
@@ -2382,7 +2380,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
                     fontWeight: 'bold'
                   }}
                 >
-                  {data.translations?.ui_cancel || 'CANCEL'}
+                  {translations?.ui_cancel || 'CANCEL'}
                 </button>
               </div>
             </div>
@@ -2447,7 +2445,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
             marginBottom: '1vw',
           }}>
             <i className="fas fa-briefcase-medical" style={{ marginRight: '0.5vw' }}></i>
-            {data.translations?.ui_doctorsBag || 'DOCTORS BAG'}
+            {translations?.ui_doctorsBag || 'DOCTORS BAG'}
           </div>
           
           <div className="medical-tools-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5vw' }}>
@@ -2592,7 +2590,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
               </div>
               
               <div style={{ fontSize: '0.6vw', color: 'white', marginBottom: '1vw' }}>
-                {checkingTemperature ? (data.translations?.ui_readingTemperature || 'Reading temperature... Keep holding!') : (data.translations?.ui_holdToCheckTemperature || 'Hold the button below for 3 seconds')}
+                {checkingTemperature ? (translations?.ui_readingTemperature || 'Reading temperature... Keep holding!') : (translations?.ui_holdToCheckTemperature || 'Hold the button below for 3 seconds')}
               </div>
               
               <div style={{ display: 'flex', gap: '1vw', justifyContent: 'center' }}>
@@ -2615,7 +2613,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
                   }}
                 >
                   <i className="fas fa-thermometer-half" style={{ marginRight: '0.5vw' }}></i>
-                  {checkingTemperature ? (data.translations?.ui_reading || 'READING...') : (data.translations?.ui_holdToCheck || 'HOLD TO CHECK')}
+                  {checkingTemperature ? (translations?.ui_reading || 'READING...') : (translations?.ui_holdToCheck || 'HOLD TO CHECK')}
                 </button>
                 
                 <button 
@@ -2634,7 +2632,7 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
                     fontWeight: 'bold'
                   }}
                 >
-                  {data.translations?.ui_cancel || 'CANCEL'}
+                  {translations?.ui_cancel || 'CANCEL'}
                 </button>
               </div>
             </div>
@@ -2644,13 +2642,13 @@ const InspectionPanel: React.FC<InspectionPanelProps> = ({ data, onClose }) => {
                 {calculateTemperature()}°F
               </div>
               <div style={{ fontSize: '0.6vw', color: '#8B4513', marginBottom: '1vw' }}>
-                {calculateTemperature() > 100.4 ? (data.translations?.ui_feverDetected || 'Fever detected') : calculateTemperature() < 97 ? (data.translations?.ui_hypothermiaRisk || 'Hypothermia risk') : (data.translations?.ui_normalTemperature || 'Normal temperature')}
+                {calculateTemperature() > 100.4 ? (translations?.ui_feverDetected || 'Fever detected') : calculateTemperature() < 97 ? (translations?.ui_hypothermiaRisk || 'Hypothermia risk') : (translations?.ui_normalTemperature || 'Normal temperature')}
               </div>
               <button 
                 onClick={() => {
                   setShowThermometerSubMenu(false); 
                   setTemperatureChecked(false);
-                  showNotification(`${data.translations?.ui_patientTemperature || 'Patient temperature'}: ${calculateTemperature()}°F`, 'fa-thermometer-half');
+                  showNotification(`${translations?.ui_patientTemperature || 'Patient temperature'}: ${calculateTemperature()}°F`, 'fa-thermometer-half');
                 }}
                 style={{
                   backgroundImage: 'url("./static/media/selection_box_bg_1d.db795b7cbe6db75cb337.png")',

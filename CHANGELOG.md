@@ -17,6 +17,39 @@ All notable changes to QC-AdvancedMedic.
 - Field surgery with success/failure
 - Medical journal item
 
+## [0.3.1] - 2025-11-17 MAJOR UPDATE
+
+### Fixed
+- Smelling salts showing "no patient found" error
+- Injections, tourniquets, and medicine not removing items or fixing injuries
+- Doctor's bag items showing "player not found" error
+- Medic emergency notifications not reaching doctors (fixed event name mismatch)
+- Respawn spawning players under map (NetworkResurrectLocalPlayer parameter fix)
+- Medicine usage server-side error (GetPlayerServerId on server)
+- Tourniquet/injection items missing useable item registration
+- Locale loader showing "0 strings loaded" (fixed object key counting)
+- NUI translations not displaying (fixed props passing in App.tsx)
+- All hardcoded notification strings replaced with locale() calls (59+ server-side strings)
+
+### Changed
+- `/heal` command removed - use `/revive` and `/clearwounds` instead
+- `/revive` command now fully clears all wounds, fractures, treatments, and infections
+- Death screen text shows medic availability status dynamically
+- Scripted camera added to `/checkhealth` for better character viewing
+- Complete locale system unification - single JSON source for both Lua and NUI
+- All three NUI panels (DeathScreen, InspectionPanel, MedicalPanel) use consistent translation pattern
+
+### Added
+- Complete French translation (376 keys)
+- Complete Spanish translation (376 keys)
+- English locale expansion (376 keys total)
+- 67 new server-side locale keys for medical notifications
+- NUI translation system documentation
+- Global `locale()` function using Config.Strings for unified translation system
+
+### Breaking Changes
+- **`/heal` command removed**: Server owners using `/heal` in scripts must switch to `/revive`
+
 ## [0.3.0] - 2025-11-10
 
 ### Fixed
@@ -164,7 +197,7 @@ All notable changes to QC-AdvancedMedic.
 - **MINOR**: New features (backward-compatible)
 - **PATCH**: Bug fixes
 
-**Current**: `0.2.9-alpha` (approaching v0.3.0)
+**Current**: `0.3.0-alpha`
 
 **Issues**: [GitHub Issues](https://github.com/YOUR_ORG/QC-AdvancedMedic/issues)
-**Last Updated**: November 3, 2025
+**Last Updated**: November 10, 2025

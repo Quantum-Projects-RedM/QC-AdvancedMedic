@@ -6,7 +6,6 @@
 --=========================================================
 
 local RSGCore = exports['rsg-core']:GetCoreObject()
-lib.locale()
 
 -- Treatment tracking data
 ActiveTreatments = {}
@@ -782,6 +781,86 @@ end)
 RegisterNetEvent('QC-AdvancedMedic:client:SyncTreatmentData')
 AddEventHandler('QC-AdvancedMedic:client:SyncTreatmentData', function(treatmentData)
     ActiveTreatments = treatmentData or {}
+end)
+
+---------------------------------------------------------------------
+-- Self-use tourniquet and injection events
+---------------------------------------------------------------------
+RegisterNetEvent('QC-AdvancedMedic:client:usetourniquet')
+AddEventHandler('QC-AdvancedMedic:client:usetourniquet', function(tourniquetType)
+    local PlayerData = RSGCore.Functions.GetPlayerData()
+
+    if PlayerData.metadata['isdead'] or PlayerData.metadata['ishandcuffed'] then
+        lib.notify({ title = locale('cl_error'), description = locale('cl_error_c'), type = 'error', duration = 5000 })
+        return
+    end
+
+    -- Check for wounds
+    local wounds = PlayerWounds or {}
+    if not next(wounds) then
+        lib.notify({
+            title = locale('cl_error'),
+            description = locale('treatment_no_wounds_tourniquet'),
+            type = 'error',
+            duration = 5000
+        })
+        return
+    end
+
+    -- Find most severe bleeding wound
+    local targetBodyPart = nil
+    local highestBleeding = 0
+
+    for bodyPart, wound in pairs(wounds) do
+        if wound.bleedingLevel and wound.bleedingLevel > highestBleeding then
+            highestBleeding = wound.bleedingLevel
+            targetBodyPart = bodyPart
+        end
+    end
+
+    if not targetBodyPart then
+        lib.notify({
+            title = locale('cl_error'),
+            description = locale('treatment_no_bleeding_tourniquet'),
+            type = 'error',
+            duration = 5000
+        })
+        return
+    end
+
+    -- Apply tourniquet
+    local tourniquetConfig = Config.TourniquetTypes[tourniquetType]
+    if not tourniquetConfig then
+        lib.notify({ title = locale('cl_error'), description = locale('treatment_tourniquet_invalid'), type = 'error', duration = 5000 })
+        return
+    end
+
+    ApplyTourniquet(targetBodyPart, tourniquetType, GetPlayerServerId(PlayerId()))
+
+    -- Remove item on server
+    TriggerServerEvent('QC-AdvancedMedic:server:removeitem', tourniquetConfig.itemName, 1)
+end)
+
+RegisterNetEvent('QC-AdvancedMedic:client:useinjection')
+AddEventHandler('QC-AdvancedMedic:client:useinjection', function(injectionType)
+    local PlayerData = RSGCore.Functions.GetPlayerData()
+
+    if PlayerData.metadata['isdead'] or PlayerData.metadata['ishandcuffed'] then
+        lib.notify({ title = locale('cl_error'), description = locale('cl_error_c'), type = 'error', duration = 5000 })
+        return
+    end
+
+    -- Apply injection
+    local injectionConfig = Config.InjectionTypes[injectionType]
+    if not injectionConfig then
+        lib.notify({ title = locale('cl_error'), description = locale('treatment_injection_invalid'), type = 'error', duration = 5000 })
+        return
+    end
+
+    GiveInjection(injectionType, GetPlayerServerId(PlayerId()))
+
+    -- Remove item on server
+    TriggerServerEvent('QC-AdvancedMedic:server:removeitem', injectionConfig.itemName, 1)
 end)
 
 -- Functions are now globally accessible - no initialization needed

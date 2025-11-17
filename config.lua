@@ -3,7 +3,7 @@
 --=========================================================
 -- IMPORTANT: This is a production-ready configuration file
 -- Please read the documentation before making changes
--- Support: 
+-- Support:
 --=========================================================
 
 Config = {}
@@ -15,8 +15,8 @@ Config = {}
 -- Debug mode (DISABLE for production)
 Config.Debug = false
 
--- Language/Locale Settings  
-Config.Locale = 'en'
+-- Language/Locale Settings (change to 'en', 'fr', or 'es')
+Config.Locale = 'fr'
 
 --=========================================================
 -- DEBUGGING CONFIGURATION
@@ -38,7 +38,7 @@ Config.WoundSystem = {
 
 -- Core System Settings
 Config.MaxHealth = 600                          -- Maximum player health
-Config.DeathTimer = 300                         -- Death timer in seconds (5 minutes)
+Config.DeathTimer = 70                         -- Death timer in seconds 300 (5 minutes)
 Config.UseScreenEffects = true                  -- Enable bleeding/injury screen effects
 
 -- Inventory Integration
@@ -1131,7 +1131,10 @@ local function LoadLocaleStrings()
         local success, localeData = pcall(json.decode, localeFile)
         if success and localeData then
             Config.Strings = localeData
-            print(string.format('^2[QC-AdvancedMedic] Loaded %s locale with %d strings^7', Config.Locale, #localeData))
+            -- Count keys in the object (not array length)
+            local count = 0
+            for _ in pairs(localeData) do count = count + 1 end
+            print(string.format('^2[QC-AdvancedMedic] Loaded %s locale with %d strings^7', Config.Locale, count))
         else
             print(string.format('^1[QC-AdvancedMedic] Failed to parse locale file: %s^7', Config.Locale))
             -- Fallback to English
@@ -1160,5 +1163,10 @@ Citizen.CreateThread(function()
 end)
 
 function GetString(key, fallback)
+    return Config.Strings[key] or fallback or key
+end
+
+-- Global locale function for compatibility (uses Config.Strings)
+function locale(key, fallback)
     return Config.Strings[key] or fallback or key
 end

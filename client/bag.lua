@@ -2,7 +2,6 @@ local RSGCore = exports['rsg-core']:GetCoreObject()
 local medicbag = 0
 local deployedtable = nil
 local MedicMenus = {}
-lib.locale()
 exports['rsg-target']:AddTargetModel(1259819729, {
     options = {
         {

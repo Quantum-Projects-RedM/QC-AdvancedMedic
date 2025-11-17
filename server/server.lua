@@ -1,6 +1,5 @@
 local RSGCore = exports['rsg-core']:GetCoreObject()
 local playerInjury = {}
-lib.locale()
 
 -----------------------
 -- Helper Functions
@@ -62,6 +61,34 @@ for cureType, cureConfig in pairs(Config.InfectionSystem.cureItems) do
     end
 end
 
+-- Create useable items for all tourniquet types
+for tourniquetType, tourniquetConfig in pairs(Config.TourniquetTypes or {}) do
+    local itemName = tourniquetConfig.itemName or tourniquetType
+
+    RSGCore.Functions.CreateUseableItem(itemName, function(source, item)
+        local src = source
+        TriggerClientEvent('QC-AdvancedMedic:client:usetourniquet', src, tourniquetType)
+    end)
+
+    if Config.WoundSystem.debugging.enabled then
+        print(string.format("[TOURNIQUET SYSTEM] Registered useable item: %s -> %s", itemName, tourniquetType))
+    end
+end
+
+-- Create useable items for all injection types
+for injectionType, injectionConfig in pairs(Config.InjectionTypes or {}) do
+    local itemName = injectionConfig.itemName or injectionType
+
+    RSGCore.Functions.CreateUseableItem(itemName, function(source, item)
+        local src = source
+        TriggerClientEvent('QC-AdvancedMedic:client:useinjection', src, injectionType)
+    end)
+
+    if Config.WoundSystem.debugging.enabled then
+        print(string.format("[INJECTION SYSTEM] Registered useable item: %s -> %s", itemName, injectionType))
+    end
+end
+
 ---------------------------------
 -- medic storage
 ---------------------------------
@@ -81,17 +108,42 @@ RSGCore.Commands.Add('revive', locale('sv_revive'), {{name = 'id', help = locale
     local src = source
 
     if not args[1] then
-        TriggerClientEvent('QC-AdvancedMedic:client:playerRevive', src)
+        -- Revive self and clear all wounds
+        local Player = RSGCore.Functions.GetPlayer(src)
+        if Player then
+            TriggerClientEvent('QC-AdvancedMedic:client:adminRevive', src)
+            TriggerClientEvent('QC-AdvancedMedic:client:ClearAllWounds', src)
+
+            -- Clear from database
+            local citizenid = Player.PlayerData.citizenid
+            if citizenid then
+                MySQL.Async.execute('DELETE FROM player_wounds WHERE citizenid = ?', {citizenid})
+                MySQL.Async.execute('DELETE FROM player_fractures WHERE citizenid = ?', {citizenid})
+                MySQL.Async.execute('UPDATE medical_treatments SET is_active = 0 WHERE citizenid = ?', {citizenid})
+                MySQL.Async.execute('UPDATE player_infections SET is_active = 0, cured_at = NOW(), cured_by = ? WHERE citizenid = ?', {'admin_' .. src, citizenid})
+            end
+        end
         return
     end
 
     local Player = RSGCore.Functions.GetPlayer(tonumber(args[1]))
     if not Player then
-        TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_no_online'), type = 'error', duration = 7000 })
+        TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_error'), description = locale('sv_player_not_online'), type = 'error', duration = 7000 })
         return
     end
 
+    -- Revive target player and clear all wounds
     TriggerClientEvent('QC-AdvancedMedic:client:adminRevive', Player.PlayerData.source)
+    TriggerClientEvent('QC-AdvancedMedic:client:ClearAllWounds', Player.PlayerData.source)
+
+    -- Clear from database
+    local citizenid = Player.PlayerData.citizenid
+    if citizenid then
+        MySQL.Async.execute('DELETE FROM player_wounds WHERE citizenid = ?', {citizenid})
+        MySQL.Async.execute('DELETE FROM player_fractures WHERE citizenid = ?', {citizenid})
+        MySQL.Async.execute('UPDATE medical_treatments SET is_active = 0 WHERE citizenid = ?', {citizenid})
+        MySQL.Async.execute('UPDATE player_infections SET is_active = 0, cured_at = NOW(), cured_by = ? WHERE citizenid = ?', {'admin_' .. src, citizenid})
+    end
 end, 'admin')
 
 -- Admin Clear Wounds
@@ -121,9 +173,9 @@ RSGCore.Commands.Add('clearwounds', 'Clear all wounds and fractures from a playe
                 ]], {citizenid, 'admin_' .. src})
             end
             
-            TriggerClientEvent('ox_lib:notify', src, {title = 'Medical System', description = 'Your wounds and fractures have been cleared', type = 'success'})
+            TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_medical_system'), description = locale('sv_wounds_cleared'), type = 'success'})
         else
-            TriggerClientEvent('ox_lib:notify', src, {title = 'Error', description = 'Could not find player data', type = 'error'})
+            TriggerClientEvent('ox_lib:notify', src, {title = locale('cl_error'), description = locale('sv_error_no_player'), type = 'error'})
         end
         return
     end
@@ -132,7 +184,7 @@ RSGCore.Commands.Add('clearwounds', 'Clear all wounds and fractures from a playe
     local Player = RSGCore.Functions.GetPlayer(targetId)
     
     if not Player then
-        TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_no_online'), type = 'error'})
+        TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_error'), description = locale('sv_player_not_online'), type = 'error'})
         return
     end
     
@@ -156,8 +208,8 @@ RSGCore.Commands.Add('clearwounds', 'Clear all wounds and fractures from a playe
         ]], {citizenid, targetId, 'admin_' .. src})
     end
     
-    TriggerClientEvent('ox_lib:notify', src, {title = 'Medical System', description = 'Wounds and fractures cleared for player ' .. targetId, type = 'success'})
-    TriggerClientEvent('ox_lib:notify', Player.PlayerData.source, {title = 'Medical System', description = 'Your wounds and fractures have been cleared by an admin', type = 'inform'})
+    TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_medical_system'), description = string.format(locale('sv_wounds_cleared_player'), targetId), type = 'success'})
+    TriggerClientEvent('ox_lib:notify', Player.PlayerData.source, {title = locale('sv_medical_system'), description = locale('sv_wounds_cleared_admin'), type = 'inform'})
     
 end, 'admin')
 
@@ -168,26 +220,14 @@ RSGCore.Commands.Add('kill', locale('sv_kill'), {{name = 'id', help = locale('sv
 
     local Player = RSGCore.Functions.GetPlayer(target)
     if not Player then
-        TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_no_online'), type = 'error', duration = 7000 })
+        TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_error'), description = locale('sv_player_not_online'), type = 'error', duration = 7000 })
         return
     end
 
     TriggerClientEvent('QC-AdvancedMedic:client:KillPlayer', Player.PlayerData.source)
 end, 'admin')
 
-RSGCore.Commands.Add('heal', locale('sv_heal'), {{name = 'id', help = locale('sv_heal_2')}}, false, function(source, args)
-    local src = source
-    if not args[1] then
-        TriggerClientEvent('QC-AdvancedMedic:client:playerHeal', src)
-        return
-    end
-    local Player = RSGCore.Functions.GetPlayer(tonumber(args[1]))
-    if not Player then
-        TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_no_online'), type = 'error', duration = 7000 })
-        return
-    end
-    TriggerClientEvent('QC-AdvancedMedic:client:adminHeal', Player.PlayerData.source)
-end, 'admin')
+-- /heal command removed - use /clearwounds and /revive instead
 
 ----------------------
 -- EVENTS 
@@ -200,16 +240,16 @@ RegisterNetEvent('QC-AdvancedMedic:server:deathactions', function()
     if Config.WipeInventoryOnRespawn then
         Player.Functions.ClearInventory()
         MySQL.Async.execute('UPDATE players SET inventory = ? WHERE citizenid = ?', { json.encode({}), Player.PlayerData.citizenid })
-        TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_lost_all'), type = 'info', duration = 7000 })
+        TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_death'), description = locale('sv_lost_all_items'), type = 'info', duration = 7000 })
     end
 
     if Config.WipeCashOnRespawn then
         Player.Functions.SetMoney('cash', 0)
-        TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_lost_cash'), type = 'info', duration = 7000 })
+        TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_death'), description = locale('sv_lost_cash'), type = 'info', duration = 7000 })
     end
     if Config.WipeBloodmoneyOnRespawn then
         Player.Functions.SetMoney('bloodmoney', 0)
-        TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_lost_bloodmoney'), type = 'info', duration = 7000 })
+        TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_death'), description = locale('sv_lost_bloodmoney'), type = 'info', duration = 7000 })
     end
 end)
 
@@ -246,7 +286,7 @@ RegisterNetEvent('QC-AdvancedMedic:server:RevivePlayer', function(playerId)
     if not Patient then return end
 
     if not IsMedicJob(Player.PlayerData.job.name) then
-        TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_not_medic'), type = 'error', duration = 7000 })
+        TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_error'), description = locale('sv_not_medic'), type = 'error', duration = 7000 })
         return
     end
 
@@ -265,7 +305,7 @@ RegisterNetEvent('QC-AdvancedMedic:server:TreatWounds', function(playerId)
     if not Patient then return end
 
     if not IsMedicJob(Player.PlayerData.job.name) then
-        TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_not_medic'), type = 'error', duration = 7000 })
+        TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_error'), description = locale('sv_not_medic'), type = 'error', duration = 7000 })
         return
     end
 
@@ -300,7 +340,11 @@ RegisterNetEvent('QC-AdvancedMedic:server:EmergencyCall', function(coords)
 
     for _, v in pairs(players) do
         if IsMedicJob(v.PlayerData.job.name) and v.PlayerData.job.onduty then
-            TriggerClientEvent('QC-AdvancedMedic:client:medicAlert', v.PlayerData.source, coords, playerName .. ' is requesting emergency medical assistance!')
+            -- Fixed: Changed to EmergencyAlert to match client handler
+            TriggerClientEvent('QC-AdvancedMedic:client:EmergencyAlert', v.PlayerData.source, {
+                caller = playerName,
+                location = coords
+            })
         end
     end
 end)
@@ -404,8 +448,8 @@ AddEventHandler('QC-AdvancedMedic:server:StartDutyPayTimer', function()
             CurrentPlayer.Functions.AddMoney('cash', payAmount, 'medic-duty-pay-interval')
             
             TriggerClientEvent('ox_lib:notify', src, {
-                title = 'Duty Pay',
-                description = string.format('Earned $%d (10 min service)', payAmount),
+                title = locale('sv_duty_pay'),
+                description = string.format(locale('sv_duty_pay_earned'), payAmount),
                 type = 'success',
                 duration = 5000
             })
@@ -456,8 +500,8 @@ AddEventHandler('QC-AdvancedMedic:server:ProcessDutyPay', function(sessionTimeSe
             Player.Functions.AddMoney('cash', partialPay, 'medic-duty-pay-final')
             
             TriggerClientEvent('ox_lib:notify', src, {
-                title = 'Final Duty Pay',
-                description = string.format('Earned $%d for %.1f minutes', partialPay, remainingMinutes),
+                title = locale('sv_final_duty_pay'),
+                description = string.format(locale('sv_final_duty_pay_earned'), partialPay, remainingMinutes),
                 type = 'success',
                 duration = 5000
             })
@@ -494,8 +538,8 @@ AddEventHandler('QC-AdvancedMedic:server:PurchasePharmaceutical', function(data)
     local job = Player.PlayerData.job
     if not IsMedicJob(job.name) then
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Access Denied',
-            description = 'You must be a medic to purchase pharmaceutical items',
+            title = locale('sv_access_denied'),
+            description = locale('sv_must_be_medic_pharma'),
             type = 'error',
             duration = 5000
         })
@@ -505,8 +549,8 @@ AddEventHandler('QC-AdvancedMedic:server:PurchasePharmaceutical', function(data)
     -- Check if player is pharmacist or boss
     if job.grade.level < 2 and not job.grade.isboss then
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Access Denied', 
-            description = 'Only Pharmacists and above can purchase pharmaceutical supplies',
+            title = locale('sv_access_denied'),
+            description = locale('sv_pharmacist_only'),
             type = 'error',
             duration = 5000
         })
@@ -517,8 +561,8 @@ AddEventHandler('QC-AdvancedMedic:server:PurchasePharmaceutical', function(data)
     local playerMoney = Player.PlayerData.money['cash'] or 0
     if playerMoney < data.totalCost then
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Insufficient Funds',
-            description = string.format('You need $%d but only have $%d', data.totalCost, playerMoney),
+            title = locale('sv_insufficient_funds'),
+            description = string.format(locale('sv_need_money'), data.totalCost, playerMoney),
             type = 'error',
             duration = 5000
         })
@@ -529,8 +573,8 @@ AddEventHandler('QC-AdvancedMedic:server:PurchasePharmaceutical', function(data)
     local hasSpace = Player.Functions.AddItem(data.item, data.quantity, false, nil, true) -- dry run
     if not hasSpace then
         TriggerClientEvent('ox_lib:notify', src, {
-            title = 'Inventory Full',
-            description = 'You do not have enough inventory space',
+            title = locale('sv_inventory_full'),
+            description = locale('sv_not_enough_space'),
             type = 'error',
             duration = 5000
         })
@@ -544,8 +588,8 @@ AddEventHandler('QC-AdvancedMedic:server:PurchasePharmaceutical', function(data)
     TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[data.item], "add", data.quantity)
     
     TriggerClientEvent('ox_lib:notify', src, {
-        title = 'Purchase Successful',
-        description = string.format('Purchased %dx %s for $%d', data.quantity, data.label, data.totalCost),
+        title = locale('sv_purchase_successful'),
+        description = string.format(locale('sv_purchased_items'), data.quantity, data.label, data.totalCost),
         type = 'success',
         duration = 5000
     })

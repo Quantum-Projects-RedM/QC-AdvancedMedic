@@ -62,10 +62,11 @@ interface MedicalPanelProps {
     };
   };
   isSelfExamination?: boolean;
+  translations?: { [key: string]: string };
   onClose: () => void;
 }
 
-const MedicalPanel: React.FC<MedicalPanelProps> = ({ wounds, treatments, infections, bodyPartHealth, injuryStates, infectionStages, bodyParts, uiColors, inventory, bandageTypes, isSelfExamination, onClose }) => {
+const MedicalPanel: React.FC<MedicalPanelProps> = ({ wounds, treatments, infections, bodyPartHealth, injuryStates, infectionStages, bodyParts, uiColors, inventory, bandageTypes, isSelfExamination, translations, onClose }) => {
   const [showBandagePanel, setShowBandagePanel] = useState(false);
   const [showTourniquetPanel, setShowTourniquetPanel] = useState(false);
   const [showTreatmentsPanel, setShowTreatmentsPanel] = useState(false);

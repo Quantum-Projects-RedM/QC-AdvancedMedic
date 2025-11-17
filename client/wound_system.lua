@@ -6,7 +6,6 @@
 --=========================================================
 
 local RSGCore = exports['rsg-core']:GetCoreObject()
-lib.locale()
 
 -- Core wound tracking variables
 PlayerWounds = {}
@@ -442,7 +441,7 @@ local function CalculateBulletPenetration(weaponData, shooterInfo)
             weaponType = "Unknown",
             penetrationType = "through",
             requiresSurgery = false,
-            description = "Bullet passed through cleanly"
+            description = locale('wound_bullet_passthrough')
         }
     }
     
@@ -506,14 +505,14 @@ local function CalculateBulletPenetration(weaponData, shooterInfo)
         else
             status = "through"
             requiresSurgery = false
-            description = "Pellets passed through cleanly"
+            description = locale('wound_pellets_passthrough')
         end
     else
         -- Regular bullet system
         if isLodged then
-            description = "Bullet lodged in tissue - surgical removal required"
+            description = locale('wound_bullet_lodged')
         else
-            description = "Entry and exit wound - bullet passed through cleanly"
+            description = locale('wound_entry_exit')
         end
     end
     
@@ -570,7 +569,7 @@ local function CheckAndConvertToScars()
             if bodyPartConfig then
                 lib.notify({
                     title = "Medical Recovery",
-                    description = string.format("Your %s injury has healed and left a scar", 
+                    description = string.format(locale('wound_healed_scar'),
                         bodyPartConfig.label:lower()),
                     type = 'inform',
                     duration = 4000
@@ -954,7 +953,7 @@ function CreateWound(bodyPart, weaponData, weaponHash, shooterInfo)
                 weaponType = weaponData.data or "Animal",
                 penetrationType = "surface_trauma",
                 requiresSurgery = false,
-                description = "Animal attack caused tissue trauma"
+                description = locale('wound_animal_attack')
             }
         }
     elseif weaponData.ballisticType == "environmental" and (weaponData.status == "fracture" or weaponData.status == "bone_break") then
@@ -967,7 +966,7 @@ function CreateWound(bodyPart, weaponData, weaponHash, shooterInfo)
                 weaponType = weaponData.data or "Fall",
                 penetrationType = "structural_damage",
                 requiresSurgery = weaponData.status == "bone_break", -- Bone breaks may need surgery
-                description = weaponData.status == "bone_break" and "Severe bone break from impact" or "Bone fracture from impact"
+                description = weaponData.status == "bone_break" and locale('wound_bone_break_severe') or locale('wound_bone_fracture')
             }
         }
     else
@@ -1082,8 +1081,8 @@ function CreateWound(bodyPart, weaponData, weaponHash, shooterInfo)
     if injuryState then
         lib.notify({
             title = locale('qc_health'),
-            description = string.format("You suffered %s to your %s", 
-                injuryState.pain, 
+            description = string.format(locale('wound_suffered'),
+                injuryState.pain,
                 bodyPartConfig.label
             ),
             type = 'error',
@@ -1169,7 +1168,7 @@ local function ProcessUnifiedMedicalProgression()
                 -- Notify player of bandage expiration
                 lib.notify({
                     title = "Bandage Expired",
-                    description = string.format("Your %s bandage has expired - blood may seep through", 
+                    description = string.format(locale('wound_bandage_expired'),
                         Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label or bodyPart),
                     type = 'warning',
                     duration = 8000
@@ -1262,7 +1261,7 @@ local function ProcessUnifiedMedicalProgression()
                 -- Notify player of wound worsening
                 lib.notify({
                     title = "Wound Worsening",
-                    description = string.format("Your untreated %s wound is getting worse - seek medical attention!", 
+                    description = string.format(locale('wound_getting_worse'),
                         Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label:lower() or bodyPart),
                     type = 'error',
                     duration = 8000
@@ -1687,7 +1686,7 @@ CreateThread(function()
                 if #bleedingWounds > 1 then
                     lib.notify({
                         title = locale('qc_health'),
-                        description = string.format("Multiple bleeding wounds are weakening you (%d total damage) - consider bandaging", totalBleedingDamage),
+                        description = string.format(locale('wound_multiple_bleeding'), totalBleedingDamage),
                         type = 'error',
                         duration = 5000
                     })
@@ -1697,7 +1696,7 @@ CreateThread(function()
                     if bodyPartConfig then
                         lib.notify({
                             title = locale('qc_health'),
-                            description = string.format("Bleeding from %s wound is weakening you - consider bandaging", 
+                            description = string.format(locale('wound_bleeding_weakening'),
                                 bodyPartConfig.label:lower()),
                             type = 'error',
                             duration = 4000
@@ -1880,7 +1879,7 @@ AddEventHandler('QC-AdvancedMedic:client:ResetLimbs', function()
     
     lib.notify({
         title = locale('qc_health'),
-        description = "All injuries have been healed",
+        description = locale('wound_all_healed'),
         type = 'success'
     })
 end)
@@ -1949,7 +1948,7 @@ local function RemoveLodgedBullet(bodyPart)
         local bodyPartConfig = Config.BodyParts[bodyPart]
         lib.notify({
             title = "Surgical Error",
-            description = string.format("No lodged bullet found in %s", bodyPartConfig and bodyPartConfig.label or bodyPart),
+            description = string.format(locale('wound_no_bullet'), bodyPartConfig and bodyPartConfig.label or bodyPart),
             type = 'error',
             duration = 5000
         })
@@ -2005,7 +2004,7 @@ local function RemoveLodgedBullet(bodyPart)
     local bodyPartConfig = Config.BodyParts[bodyPart]
     lib.notify({
         title = "Surgical Procedure",
-        description = string.format("Bullet successfully removed from %s - bleeding has increased", 
+        description = string.format(locale('wound_bullet_removed'),
             bodyPartConfig and bodyPartConfig.label or bodyPart),
         type = 'inform',
         duration = 8000
