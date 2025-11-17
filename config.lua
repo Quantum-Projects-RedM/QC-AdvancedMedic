@@ -16,7 +16,7 @@ Config = {}
 Config.Debug = false
 
 -- Language/Locale Settings (change to 'en', 'fr', or 'es')
-Config.Locale = 'fr'
+Config.Locale = 'en'
 
 --=========================================================
 -- DEBUGGING CONFIGURATION
