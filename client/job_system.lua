@@ -402,7 +402,7 @@ RegisterNetEvent('QC-AdvancedMedic:client:startMission', function()
             end
         }
     })
-    lib.notify({ title = locale('mission_title'), description = string.format(locale('cl_mission_gps_set'), tostring(missionId)), type = 'inform', duration = 9000 })
+    lib.notify({ title = locale('mission_title'), description = string.format(locale('cl_desc_fmt_mission_gps_set'), tostring(missionId)), type = 'inform', duration = 9000 })
 end)
 
 -- New mission inspection system that shows medical data
@@ -507,8 +507,8 @@ RegisterNetEvent('QC-AdvancedMedic:client:ApplyMissionMedicine', function(medici
     -- Show notifications
     if #treatedParts > 0 then
         lib.notify({
-            title = 'Medicine Administered',
-            description = string.format(locale('treatment_applied_medicine'), medicineConfig.label, #treatedParts),
+            title = locale('cl_menu_medicine_administered'),
+            description = string.format(locale('cl_desc_fmt_treatment_applied_medicine'), medicineConfig.label, #treatedParts),
             type = 'success',
             duration = 8000
         })
@@ -522,7 +522,7 @@ RegisterNetEvent('QC-AdvancedMedic:client:ApplyMissionMedicine', function(medici
         checkMissionTreatmentProgress()
     else
         lib.notify({
-            title = 'No Treatment Needed',
+            title = locale('cl_menu_no_treatment_needed'),
             description = locale('treatment_no_pain_conditions'),
             type = 'inform',
             duration = 5000
@@ -544,8 +544,8 @@ RegisterNetEvent('QC-AdvancedMedic:client:ApplyMissionBandage', function(bodyPar
     local woundData = medicMissionData.patientData.wounds[bodyPart]
     if not woundData then
         lib.notify({
-            title = 'No Wound Found',
-            description = string.format(locale('treatment_no_wound_bandage'), bodyPart),
+            title = locale('cl_menu_no_wound_found'),
+            description = string.format(locale('cl_desc_fmt_treatment_no_wound_bandage'), bodyPart),
             type = 'error',
             duration = 5000
         })
@@ -556,8 +556,8 @@ RegisterNetEvent('QC-AdvancedMedic:client:ApplyMissionBandage', function(bodyPar
     local bleedingLevel = woundData.bleedingLevel or 0
     if bleedingLevel < 1 or bleedingLevel > 6 then
         lib.notify({
-            title = 'Inappropriate Treatment',
-            description = string.format(locale('treatment_different_treatment'), bleedingLevel),
+            title = locale('cl_menu_inappropriate_treatment'),
+            description = string.format(locale('cl_desc_fmt_treatment_different_treatment'), bleedingLevel),
             type = 'warning',
             duration = 5000
         })
@@ -578,10 +578,10 @@ RegisterNetEvent('QC-AdvancedMedic:client:ApplyMissionBandage', function(bodyPar
         status = "active",
         treatsCondition = "bleeding" -- Treats bleeding, not pain
     }
-    
+
     lib.notify({
-        title = 'Bandage Applied',
-        description = string.format(locale('treatment_bandage_applied'), bandageConfig.label or bandageType, bodyPart),
+        title = locale('cl_menu_bandage_applied'),
+        description = string.format(locale('cl_desc_fmt_treatment_bandage_applied'), bandageConfig.label or bandageType, bodyPart),
         type = 'success',
         duration = 8000
     })
@@ -607,8 +607,8 @@ RegisterNetEvent('QC-AdvancedMedic:client:ApplyMissionTourniquet', function(body
     local woundData = medicMissionData.patientData.wounds[bodyPart]
     if not woundData then
         lib.notify({
-            title = 'No Wound Found',
-            description = string.format(locale('treatment_no_wound_tourniquet'), bodyPart),
+            title = locale('cl_menu_no_wound_found'),
+            description = string.format(locale('cl_desc_fmt_treatment_no_wound_tourniquet'), bodyPart),
             type = 'error',
             duration = 5000
         })
@@ -619,8 +619,8 @@ RegisterNetEvent('QC-AdvancedMedic:client:ApplyMissionTourniquet', function(body
     local bleedingLevel = woundData.bleedingLevel or 0
     if bleedingLevel < 7 then
         lib.notify({
-            title = 'Inappropriate Treatment',
-            description = string.format(locale('treatment_use_bandage'), bleedingLevel),
+            title = locale('cl_menu_inappropriate_treatment'),
+            description = string.format(locale('cl_desc_fmt_treatment_use_bandage'), bleedingLevel),
             type = 'warning',
             duration = 5000
         })
@@ -641,10 +641,10 @@ RegisterNetEvent('QC-AdvancedMedic:client:ApplyMissionTourniquet', function(body
         status = "active",
         treatsCondition = "severe_bleeding" -- Treats severe bleeding only
     }
-    
+
     lib.notify({
-        title = 'Tourniquet Applied',
-        description = string.format(locale('treatment_tourniquet_applied'), tourniquetConfig.label or tourniquetType, bodyPart),
+        title = locale('cl_menu_tourniquet_applied'),
+        description = string.format(locale('cl_desc_fmt_treatment_tourniquet_applied'), tourniquetConfig.label or tourniquetType, bodyPart),
         type = 'success',
         duration = 8000
     })
@@ -739,10 +739,10 @@ function checkMissionTreatmentProgress()
     if treatedConditions >= totalConditions and totalConditions > 0 then
         CreateThread(function()
             Wait(2000) -- Give player time to see the treatment applied
-            
+
             lib.notify({
-                title = 'Mission Complete!',
-                description = string.format(locale('mission_all_treated'), totalConditions),
+                title = locale('cl_menu_mission_complete'),
+                description = string.format(locale('cl_desc_fmt_mission_all_treated'), totalConditions),
                 type = 'success',
                 duration = 10000
             })
@@ -753,8 +753,8 @@ function checkMissionTreatmentProgress()
     else
         -- Show progress feedback
         lib.notify({
-            title = 'Treatment Progress',
-            description = string.format(locale('mission_progress'), treatedConditions, totalConditions),
+            title = locale('cl_menu_treatment_progress'),
+            description = string.format(locale('cl_desc_fmt_mission_progress'), treatedConditions, totalConditions),
             type = 'inform',
             duration = 5000
         })
@@ -770,9 +770,9 @@ end
 -- Start patient transport for surgery missions (RedM follow system)
 function startPatientTransport()
     if not medicMissionData or medicMissionData.missionType ~= 'surgery' then return end
-    
+
     lib.notify({
-        title = 'Transport Required',
+        title = locale('cl_menu_transport_required'),
         description = locale('mission_ready_transport'),
         type = 'inform',
         duration = 5000
@@ -780,9 +780,9 @@ function startPatientTransport()
     
     -- Make patient follow the medic
     startPatientFollow()
-    
+
     lib.notify({
-        title = 'Patient Following',
+        title = locale('cl_menu_patient_following'),
         description = locale('mission_following'),
         type = 'success',
         duration = 7000
@@ -838,9 +838,9 @@ function startPatientFollow()
     
     -- Set relationship to companion so they follow properly
     SetPedRelationshipGroupHash(medicMissionPed, GetHashKey('COMPANION'))
-    
+
     lib.notify({
-        title = 'Patient Stabilized',
+        title = locale('cl_menu_patient_stabilized'),
         description = locale('mission_following_station'),
         type = 'success',
         duration = 5000
@@ -859,9 +859,9 @@ function mountPatientOnHorse(playerMount)
         
         -- Mount patient on horse behind player
         TaskMountAnimal(medicMissionPed, playerMount, -1, -1, 1.0, 1)
-        
+
         lib.notify({
-            title = 'Patient Mounted',
+            title = locale('cl_menu_patient_mounted'),
             description = locale('mission_mounted_horse'),
             type = 'inform',
             duration = 3000
@@ -883,9 +883,9 @@ function dismountPatientFromHorse()
             startPatientFollow()
         end
     end)
-    
+
     lib.notify({
-        title = 'Patient Dismounted',
+        title = locale('cl_menu_patient_dismounted'),
         description = locale('mission_dismounted'),
         type = 'inform',
         duration = 3000
@@ -900,17 +900,17 @@ function handlePatientArrival()
     
     -- Clear patient tasks
     ClearPedTasks(medicMissionPed)
-    
+
     lib.notify({
-        title = 'Arrived at Medical Station',
+        title = locale('cl_menu_arrived_medical_station'),
         description = locale('mission_delivered'),
         type = 'success',
         duration = 5000
     })
-    
+
     -- Don't auto-complete - let the player access surgery menu through inspection
     lib.notify({
-        title = 'Surgery Available',
+        title = locale('cl_menu_surgery_available'),
         description = locale('mission_inspect_patient'),
         type = 'inform',
         duration = 7000
@@ -927,7 +927,7 @@ function loadPatientIntoAmbulance()
     
     if distance > ConfigMissions.Settings.transportRange then
         lib.notify({
-            title = 'Too Far',
+            title = locale('cl_menu_too_far'),
             description = locale('mission_closer_patient'),
             type = 'error',
             duration = 3000
@@ -957,9 +957,9 @@ function loadPatientIntoAmbulance()
         -- "Load" patient (make them invisible and attach to vehicle)
         SetEntityVisible(medicMissionPed, false)
         FreezeEntityPosition(medicMissionPed, true)
-        
+
         lib.notify({
-            title = 'Patient Loaded',
+            title = locale('cl_menu_patient_loaded'),
             description = locale('mission_loaded_vehicle'),
             type = 'success',
             duration = 5000
@@ -1003,7 +1003,7 @@ function loadPatientIntoAmbulance()
     else
         ClearPedTasks(cache.ped)
         lib.notify({
-            title = 'Cancelled',
+            title = locale('cl_menu_cancelled'),
             description = locale('mission_loading_cancelled'),
             type = 'error',
             duration = 3000
@@ -1021,7 +1021,7 @@ function unloadPatientAtStation()
     
     if distance > ConfigMissions.Settings.transportRange then
         lib.notify({
-            title = 'Wrong Location',
+            title = locale('cl_menu_wrong_location'),
             description = locale('mission_at_station'),
             type = 'error',
             duration = 5000
@@ -1054,9 +1054,9 @@ function unloadPatientAtStation()
         transportVehicle = nil
         
         missionPatientTransported = true
-        
+
         lib.notify({
-            title = 'Patient at Medical Station',
+            title = locale('cl_menu_patient_at_medical_station'),
             description = locale('mission_moved_surgery'),
             type = 'success',
             duration = 7000
@@ -1078,7 +1078,7 @@ function unloadPatientAtStation()
     else
         ClearPedTasks(cache.ped)
         lib.notify({
-            title = 'Cancelled',
+            title = locale('cl_menu_cancelled'),
             description = locale('mission_unload_cancelled'),
             type = 'error',
             duration = 3000
@@ -1102,9 +1102,9 @@ end
 -- Show surgery procedure menu
 function showSurgeryMenu(procedures)
     local options = {}
-    
+
     table.insert(options, {
-        title = '⚕️ Surgical Procedures Required',
+        title = locale('cl_menu_surgical_procedures_required'),
         description = locale('mission_select_procedures'),
         disabled = true
     })
@@ -1136,16 +1136,16 @@ function showSurgeryMenu(procedures)
     
     if allComplete then
         table.insert(options, {
-            title = '🎯 Complete Surgery',
+            title = locale('cl_menu_complete_surgery'),
             description = locale('mission_procedures_complete'),
             onSelect = function()
                 completeSurgicalMission()
             end
         })
     end
-    
+
     table.insert(options, {
-        title = 'Close',
+        title = locale('cl_menu_close'),
         description = locale('mission_close_surgery'),
         onSelect = function()
         end
@@ -1153,7 +1153,7 @@ function showSurgeryMenu(procedures)
     
     lib.registerContext({
         id = 'surgery_procedures',
-        title = '🏥 Surgical Procedures - ' .. medicMissionData.medicalCondition.name,
+        title = locale('cl_menu_surgical_procedures') .. ' - ' .. medicMissionData.medicalCondition.name,
         options = options
     })
     
@@ -1169,8 +1169,8 @@ function performSurgicalProcedure(procedure, procedureIndex)
     for _, item in ipairs(procedureData.requiredItems) do
         if not RSGCore.Functions.HasItem(item, 1) then
             lib.notify({
-                title = 'Missing Equipment',
-                description = string.format(locale('mission_need_item'), item),
+                title = locale('cl_menu_missing_equipment'),
+                description = string.format(locale('cl_desc_fmt_mission_need_item'), item),
                 type = 'error',
                 duration = 5000
             })
@@ -1209,9 +1209,9 @@ function performSurgicalProcedure(procedure, procedureIndex)
             completed = true,
             completedAt = GetGameTimer()
         }
-        
+
         lib.notify({
-            title = 'Procedure Complete',
+            title = locale('cl_menu_procedure_complete'),
             description = procedureData.name .. ' completed successfully.',
             type = 'success',
             duration = 5000
@@ -1224,7 +1224,7 @@ function performSurgicalProcedure(procedure, procedureIndex)
     else
         ClearPedTasks(cache.ped)
         lib.notify({
-            title = 'Procedure Cancelled',
+            title = locale('cl_menu_procedure_cancelled'),
             description = locale('mission_procedure_cancelled'),
             type = 'error',
             duration = 3000
@@ -1235,14 +1235,14 @@ end
 -- Complete surgical mission
 function completeSurgicalMission()
     surgeryInProgress = false
-    
+
     lib.notify({
-        title = 'Surgery Successful!',
+        title = locale('cl_menu_surgery_successful'),
         description = locale('mission_patient_stable'),
         type = 'success',
         duration = 10000
     })
-    
+
     completeMissionTreatment()
 end
 

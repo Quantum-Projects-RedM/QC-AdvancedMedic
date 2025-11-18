@@ -98,7 +98,7 @@ local function StartHealing(bodyPart, wound)
     -- Notify player
     lib.notify({
         title = Config.WoundHealing.notifications.healingStarted.title,
-        description = string.format("Your %s wound is beginning to heal - keep it bandaged and bleeding at minimum", 
+        description = string.format(locale('cl_desc_fmt_wound_beginning_heal'),
             Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label:lower() or bodyPart),
         type = Config.WoundHealing.notifications.healingStarted.type,
         duration = Config.WoundHealing.notifications.healingStarted.duration
@@ -118,7 +118,7 @@ local function StopHealing(bodyPart, reason)
     -- Notify player
     lib.notify({
         title = Config.WoundHealing.notifications.healingInterrupted.title,
-        description = string.format("Your %s wound healing was interrupted - %s", 
+        description = string.format(locale('cl_desc_fmt_wound_healing_interrupted'),
             Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label:lower() or bodyPart, reason),
         type = Config.WoundHealing.notifications.healingInterrupted.type,
         duration = Config.WoundHealing.notifications.healingInterrupted.duration
@@ -148,7 +148,7 @@ local function CompleteHealing(bodyPart, wound)
     -- Notify player
     lib.notify({
         title = Config.WoundHealing.notifications.healingComplete.title,
-        description = string.format("Your %s wound has healed into a scar and stopped bleeding completely", 
+        description = string.format(locale('cl_desc_fmt_wound_healed_scar'),
             Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label:lower() or bodyPart),
         type = Config.WoundHealing.notifications.healingComplete.type,
         duration = Config.WoundHealing.notifications.healingComplete.duration

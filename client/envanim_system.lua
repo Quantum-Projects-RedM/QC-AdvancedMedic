@@ -56,8 +56,8 @@ AddEventHandler('QC-AdvancedMedic:client:FractureHealed', function(bodyPart)
         PlayerFractures[bodyPart] = nil
         
         lib.notify({
-            title = "Fracture Healed",
-            description = string.format(locale('fracture_healed'),
+            title = locale('cl_menu_fracture_healed'),
+            description = string.format(locale('cl_desc_fmt_fracture_healed'),
                 Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label:lower() or bodyPart:lower()),
             type = 'success',
             duration = 8000
@@ -187,7 +187,7 @@ function HandleEnvironmentalDamage(damageType, bodyPart, isRagdoll)
                 -- Severe injury notification
                 lib.notify({
                     title = injuryType == "bone_break" and "Bone Break!" or "Fracture!",
-                    description = string.format(locale('fracture_fall_injury'),
+                    description = string.format(locale('cl_desc_fmt_fracture_fall_injury'),
                         injuryType == "bone_break" and "broken" or "fractured",
                         Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label:lower() or bodyPart:lower()
                     ),
@@ -221,8 +221,8 @@ function HandleMountAccident(accidentType, bodyPart, speed)
     -- Notification and effects
     local accidentDesc = accidentType == "trampled" and "trampled by your horse" or "thrown from your horse"
     lib.notify({
-        title = "Horse Accident",
-        description = string.format(locale('accident_injured'), accidentDesc),
+        title = locale('cl_menu_horse_accident'),
+        description = string.format(locale('cl_desc_fmt_accident_injured'), accidentDesc),
         type = 'error',
         duration = 8000
     })
@@ -273,7 +273,7 @@ function HandleAnimalAttackInfection(animalModel, bodyPart)
             
             if isVenomous then
                 lib.notify({
-                    title = "Venomous Bite",
+                    title = locale('cl_menu_venomous_bite'),
                     description = locale('snake_bite_venomous'),
                     type = 'error',
                     duration = 12000
@@ -284,8 +284,8 @@ function HandleAnimalAttackInfection(animalModel, bodyPart)
     
     -- Attack notification
     lib.notify({
-        title = "Animal Attack",
-        description = string.format("You were attacked by a %s! Check for injuries.", animalName),
+        title = locale('cl_menu_animal_attack'),
+        description = string.format(locale('cl_desc_fmt_animal_attack'), animalName),
         type = 'error',
         duration = 8000
     })

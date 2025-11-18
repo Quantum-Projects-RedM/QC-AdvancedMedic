@@ -48,8 +48,8 @@ function ApplyBandage(bodyPart, bandageType, appliedBy)
     
     if not wound then
         lib.notify({
-            title = "Treatment",
-            description = string.format("No injury detected on %s", bodyPartConfig.label),
+            title = locale('cl_menu_treatment'),
+            description = string.format(locale('cl_desc_fmt_no_injury_detected'), bodyPartConfig.label),
             type = 'error',
             duration = 5000
         })
@@ -59,8 +59,8 @@ function ApplyBandage(bodyPart, bandageType, appliedBy)
     -- Check if wound is bleeding (bandages only work on bleeding wounds)
     if not wound.bleedingLevel or wound.bleedingLevel <= 0 then
         lib.notify({
-            title = "Treatment",
-            description = string.format("No bleeding detected on %s - bandage not needed", bodyPartConfig.label),
+            title = locale('cl_menu_treatment'),
+            description = string.format(locale('cl_desc_fmt_no_bleeding_detected'), bodyPartConfig.label),
             type = 'error',
             duration = 5000
         })
@@ -70,8 +70,8 @@ function ApplyBandage(bodyPart, bandageType, appliedBy)
     -- Check if bandage already applied to this body part
     if ActiveTreatments[bodyPart] and ActiveTreatments[bodyPart].treatmentType == "bandage" then
         lib.notify({
-            title = "Treatment Error",
-            description = string.format("Bandage already applied to %s", bodyPartConfig.label),
+            title = locale('cl_menu_treatment_error'),
+            description = string.format(locale('cl_desc_fmt_bandage_already_applied'), bodyPartConfig.label),
             type = 'error',
             duration = 5000
         })
@@ -158,9 +158,9 @@ function ApplyBandage(bodyPart, bandageType, appliedBy)
     
     -- Success notification with detailed info
     lib.notify({
-        title = "Bandage Applied",
-        description = string.format("%s applied to %s\n• Healed: +%d HP\n• Bleeding: -%d points\n• Duration: %.1f min", 
-            bandageConfig.label, 
+        title = locale('cl_menu_bandage_applied'),
+        description = string.format(locale('cl_desc_fmt_bandage_applied_stats'),
+            bandageConfig.label,
             bodyPartConfig.label,
             bandageConfig.oneTimeHeal,
             bandageConfig.bleedingReduction,
@@ -199,8 +199,8 @@ local function StartTourniquetTimer(bodyPart, tourniquetType)
             if elapsed >= warningTime and not treatment.metadata.warningGiven then
                 treatment.metadata.warningGiven = true
                 lib.notify({
-                    title = "MEDICAL EMERGENCY",
-                    description = string.format("Tourniquet on %s must be removed soon to prevent tissue damage!", 
+                    title = locale('cl_menu_medical_emergency'),
+                    description = string.format(locale('cl_desc_fmt_tourniquet_warning'),
                         Config.BodyParts[bodyPart].label),
                     type = 'error',
                     duration = 10000
@@ -214,10 +214,10 @@ local function StartTourniquetTimer(bodyPart, tourniquetType)
                 local damageAmount = tourniquetConfig.damageAmount or Config.Tourniquet.damageAmount
                 
                 SetEntityHealth(ped, math.max(currentHealth - damageAmount, 1))
-                
+
                 lib.notify({
-                    title = "TISSUE DAMAGE",
-                    description = string.format("Tourniquet is causing damage to %s!", 
+                    title = locale('cl_menu_tissue_damage'),
+                    description = string.format(locale('cl_desc_fmt_tourniquet_damage'),
                         Config.BodyParts[bodyPart].label),
                     type = 'error',
                     duration = 5000
@@ -260,8 +260,8 @@ local function ApplyTourniquet(bodyPart, tourniquetType, appliedBy)
     
     if not canApply then
         lib.notify({
-            title = "Treatment Error",
-            description = string.format("Cannot apply tourniquet to %s", bodyPartConfig.label),
+            title = locale('cl_menu_treatment_error'),
+            description = string.format(locale('cl_desc_fmt_cannot_apply_tourniquet'), bodyPartConfig.label),
             type = 'error',
             duration = 5000
         })
@@ -271,8 +271,8 @@ local function ApplyTourniquet(bodyPart, tourniquetType, appliedBy)
     -- Check for existing tourniquet
     if ActiveTreatments[bodyPart] and ActiveTreatments[bodyPart].treatmentType == "tourniquet" then
         lib.notify({
-            title = "Treatment Error",
-            description = string.format("Tourniquet already applied to %s", bodyPartConfig.label),
+            title = locale('cl_menu_treatment_error'),
+            description = string.format(locale('cl_desc_fmt_tourniquet_already_applied'), bodyPartConfig.label),
             type = 'error',
             duration = 5000
         })
@@ -288,17 +288,17 @@ local function ApplyTourniquet(bodyPart, tourniquetType, appliedBy)
         if math.random() <= tourniquetConfig.bleedingStopChance then
             wound.bleedingLevel = 0
             TriggerServerEvent('QC-AdvancedMedic:server:UpdateWoundData', wounds)
-            
+
             lib.notify({
-                title = "Emergency Treatment",
-                description = string.format("Tourniquet stopped bleeding on %s", bodyPartConfig.label),
+                title = locale('cl_menu_emergency_treatment'),
+                description = string.format(locale('cl_desc_fmt_tourniquet_stopped_bleeding'), bodyPartConfig.label),
                 type = 'success',
                 duration = 8000
             })
         else
             lib.notify({
-                title = "Emergency Treatment",
-                description = string.format("Tourniquet applied but bleeding continues on %s", bodyPartConfig.label),
+                title = locale('cl_menu_emergency_treatment'),
+                description = string.format(locale('cl_desc_fmt_tourniquet_bleeding_continues'), bodyPartConfig.label),
                 type = 'warning',
                 duration = 8000
             })
@@ -341,11 +341,11 @@ local function ApplyTourniquet(bodyPart, tourniquetType, appliedBy)
     
     -- Update server
     TriggerServerEvent('QC-AdvancedMedic:server:UpdateTreatmentData', ActiveTreatments)
-    
+
     lib.notify({
-        title = "Emergency Treatment",
-        description = string.format("%s applied to %s - REMOVE WITHIN %d MINUTES!", 
-            tourniquetConfig.label, 
+        title = locale('cl_menu_emergency_treatment'),
+        description = string.format(locale('cl_desc_fmt_tourniquet_applied_warning'),
+            tourniquetConfig.label,
             bodyPartConfig.label,
             math.floor(duration / 60)
         ),
@@ -420,8 +420,8 @@ local function AdministreMedicine(medicineType, appliedBy)
     -- Check for existing medicine effects
     if MedicineEffects[medicineType] and MedicineEffects[medicineType].endTime > GetGameTimer() then
         lib.notify({
-            title = "Medicine Error",
-            description = string.format("Already under the effects of %s", medicineConfig.label),
+            title = locale('cl_menu_medicine_error'),
+            description = string.format(locale('cl_desc_fmt_already_under_effects'), medicineConfig.label),
             type = 'error',
             duration = 5000
         })
@@ -485,8 +485,8 @@ local function AdministreMedicine(medicineType, appliedBy)
         if math.random(100) <= medicineConfig.addictionRisk then
             -- TODO: Implement addiction system
             lib.notify({
-                title = "Medical Warning",
-                description = string.format("You may be developing a dependency on %s", medicineConfig.label),
+                title = locale('cl_menu_medical_warning'),
+                description = string.format(locale('cl_desc_fmt_developing_dependency'), medicineConfig.label),
                 type = 'warning',
                 duration = 8000
             })
@@ -494,8 +494,8 @@ local function AdministreMedicine(medicineType, appliedBy)
     end
     
     lib.notify({
-        title = "Medicine Administered",
-        description = string.format("%s administered - Effects will last %d minutes", 
+        title = locale('cl_menu_medicine_administered'),
+        description = string.format(locale('cl_desc_fmt_medicine_administered'),
             medicineConfig.label,
             math.floor(medicineConfig.duration / 60)
         ),
@@ -521,8 +521,8 @@ local function AdministreMedicine(medicineType, appliedBy)
         end
         
         lib.notify({
-            title = "Medicine Effects",
-            description = string.format("Effects of %s have worn off", medicineConfig.label),
+            title = locale('cl_menu_medicine_effects'),
+            description = string.format(locale('cl_desc_fmt_effects_worn_off'), medicineConfig.label),
             type = 'inform',
             duration = 5000
         })
@@ -544,8 +544,8 @@ local function GiveInjection(injectionType, appliedBy)
     -- Check for existing injection effects
     if InjectionEffects[injectionType] and InjectionEffects[injectionType].endTime > GetGameTimer() then
         lib.notify({
-            title = "Injection Error",
-            description = string.format("Still under the effects of %s", injectionConfig.label),
+            title = locale('cl_menu_injection_error'),
+            description = string.format(locale('cl_desc_fmt_still_under_effects'), injectionConfig.label),
             type = 'error',
             duration = 5000
         })
@@ -561,10 +561,10 @@ local function GiveInjection(injectionType, appliedBy)
             local overdoseDamage = injectionConfig.healAmount or 20 -- Reverse healing as damage
             
             SetEntityHealth(ped, math.max(currentHealth - overdoseDamage, 1))
-            
+
             lib.notify({
-                title = "MEDICAL EMERGENCY",
-                description = string.format("OVERDOSE from %s! Seek immediate medical attention!", injectionConfig.label),
+                title = locale('cl_menu_medical_emergency'),
+                description = string.format(locale('cl_desc_fmt_overdose_warning'), injectionConfig.label),
                 type = 'error',
                 duration = 15000
             })
@@ -602,8 +602,8 @@ local function GiveInjection(injectionType, appliedBy)
     end
     
     lib.notify({
-        title = "Injection Administered",
-        description = string.format("%s injected - Effects will last %d minutes", 
+        title = locale('cl_menu_injection_administered'),
+        description = string.format(locale('cl_desc_fmt_injection_administered'),
             injectionConfig.label,
             math.floor(injectionConfig.duration / 60)
         ),
@@ -617,8 +617,8 @@ local function GiveInjection(injectionType, appliedBy)
         InjectionEffects[injectionType] = nil
         
         lib.notify({
-            title = "Injection Effects",
-            description = string.format("Effects of %s have worn off", injectionConfig.label),
+            title = locale('cl_menu_injection_effects'),
+            description = string.format(locale('cl_desc_fmt_effects_worn_off'), injectionConfig.label),
             type = 'inform',
             duration = 5000
         })
@@ -645,8 +645,8 @@ function RemoveTreatment(bodyPart, treatmentType)
         end
         
         lib.notify({
-            title = "Treatment Removal",
-            description = string.format("Tourniquet removed from %s", 
+            title = locale('cl_menu_treatment_removal'),
+            description = string.format(locale('cl_desc_fmt_tourniquet_removed'),
                 Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label or bodyPart),
             type = 'success',
             duration = 5000

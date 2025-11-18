@@ -52,7 +52,7 @@ local function ShowInfectionSymptom(bodyPart, stage)
     
     if stageConfig and stageConfig.symptom then
         lib.notify({
-            title = "Medical Condition",
+            title = locale('cl_menu_medical_condition'),
             description = stageConfig.symptom,
             type = 'inform',
             duration = 6000
@@ -121,7 +121,7 @@ local function CheckForBandageInfection(bodyPart, bandageData, timeSinceExpirati
         -- Notify player
         lib.notify({
             title = Config.InfectionSystem.notifications.infectionStart.title,
-            description = string.format("Your expired %s bandage has caused an infection!", 
+            description = string.format(locale('cl_desc_fmt_expired_bandage_infection'),
                 Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label or bodyPart),
             type = Config.InfectionSystem.notifications.infectionStart.type,
             duration = Config.InfectionSystem.notifications.infectionStart.duration
@@ -272,8 +272,8 @@ local function TreatInfection(bodyPart, treatmentItem)
     
     if not treatmentConfig then
         lib.notify({
-            title = "Treatment Failed",
-            description = string.format("Unknown treatment item: %s", treatmentItem),
+            title = locale('cl_menu_treatment_failed'),
+            description = string.format(locale('cl_desc_fmt_unknown_treatment_item'), treatmentItem),
             type = 'error',
             duration = 5000
         })
@@ -322,7 +322,7 @@ local function TreatInfection(bodyPart, treatmentItem)
         -- Notify success
         lib.notify({
             title = Config.InfectionSystem.notifications.infectionCured.title,
-            description = string.format("The infection in your %s has been cured!", 
+            description = string.format(locale('cl_desc_fmt_infection_cured'),
                 Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label or bodyPart),
             type = Config.InfectionSystem.notifications.infectionCured.type,
             duration = Config.InfectionSystem.notifications.infectionCured.duration
@@ -339,15 +339,15 @@ local function TreatInfection(bodyPart, treatmentItem)
         -- Treatment applied but not fully cured yet
         local remainingProgress = 100.0 - InfectionCureProgress[bodyPart]
         local estimatedTreatments = math.ceil(remainingProgress / treatmentConfig.cureProgress)
-        
+
         lib.notify({
-            title = "Treatment Applied",
-            description = string.format("Infection cure progress: %.1f%% (estimated %d more treatments needed)", 
+            title = locale('cl_menu_treatment_applied'),
+            description = string.format(locale('cl_desc_fmt_infection_cure_progress'),
                 InfectionCureProgress[bodyPart], estimatedTreatments),
             type = 'inform',
             duration = 6000
         })
-        
+
         return true
     end
 end
@@ -546,8 +546,8 @@ AddEventHandler('QC-AdvancedMedic:client:UseCureItem', function(cureType)
     
     if not cureConfig then
         lib.notify({
-            title = "Treatment Error",
-            description = "Unknown cure item",
+            title = locale('cl_menu_treatment_error'),
+            description = locale('cl_desc_unknown_cure_item'),
             type = 'error',
             duration = 5000
         })
@@ -563,8 +563,8 @@ AddEventHandler('QC-AdvancedMedic:client:UseCureItem', function(cureType)
     
     if not hasInfection then
         lib.notify({
-            title = "No Infections",
-            description = "You don't have any infections to treat",
+            title = locale('cl_menu_no_infections'),
+            description = locale('cl_desc_no_infections'),
             type = 'inform',
             duration = 5000
         })
@@ -604,8 +604,8 @@ AddEventHandler('QC-AdvancedMedic:client:UseCureItem', function(cureType)
     else
         -- Treatment cancelled
         lib.notify({
-            title = "Treatment Cancelled",
-            description = "Treatment was interrupted",
+            title = locale('cl_menu_treatment_cancelled'),
+            description = locale('cl_desc_treatment_interrupted'),
             type = 'error',
             duration = 3000
         })

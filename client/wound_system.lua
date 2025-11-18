@@ -501,7 +501,7 @@ local function CalculateBulletPenetration(weaponData, shooterInfo)
             status = "fragmented"
             bulletCount = embedCount
             requiresSurgery = true
-            description = string.format("%d pellets embedded - individual extraction required", embedCount)
+            description = string.format(locale('cl_desc_fmt_pellets_embedded'), embedCount)
         else
             status = "through"
             requiresSurgery = false
@@ -568,8 +568,8 @@ local function CheckAndConvertToScars()
             local bodyPartConfig = Config.BodyParts[bodyPart]
             if bodyPartConfig then
                 lib.notify({
-                    title = "Medical Recovery",
-                    description = string.format(locale('wound_healed_scar'),
+                    title = locale('cl_menu_medical_recovery'),
+                    description = string.format(locale('cl_desc_fmt_wound_healed_scar_notify'),
                         bodyPartConfig.label:lower()),
                     type = 'inform',
                     duration = 4000
@@ -1081,7 +1081,7 @@ function CreateWound(bodyPart, weaponData, weaponHash, shooterInfo)
     if injuryState then
         lib.notify({
             title = locale('qc_health'),
-            description = string.format(locale('wound_suffered'),
+            description = string.format(locale('cl_desc_fmt_wound_suffered'),
                 injuryState.pain,
                 bodyPartConfig.label
             ),
@@ -1167,8 +1167,8 @@ local function ProcessUnifiedMedicalProgression()
                 
                 -- Notify player of bandage expiration
                 lib.notify({
-                    title = "Bandage Expired",
-                    description = string.format(locale('wound_bandage_expired'),
+                    title = locale('cl_menu_bandage_expired'),
+                    description = string.format(locale('cl_desc_fmt_wound_bandage_expired'),
                         Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label or bodyPart),
                     type = 'warning',
                     duration = 8000
@@ -1260,8 +1260,8 @@ local function ProcessUnifiedMedicalProgression()
                 
                 -- Notify player of wound worsening
                 lib.notify({
-                    title = "Wound Worsening",
-                    description = string.format(locale('wound_getting_worse'),
+                    title = locale('cl_menu_wound_worsening'),
+                    description = string.format(locale('cl_desc_fmt_wound_getting_worse'),
                         Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label:lower() or bodyPart),
                     type = 'error',
                     duration = 8000
@@ -1686,7 +1686,7 @@ CreateThread(function()
                 if #bleedingWounds > 1 then
                     lib.notify({
                         title = locale('qc_health'),
-                        description = string.format(locale('wound_multiple_bleeding'), totalBleedingDamage),
+                        description = string.format(locale('cl_desc_fmt_wound_multiple_bleeding'), totalBleedingDamage),
                         type = 'error',
                         duration = 5000
                     })
@@ -1696,7 +1696,7 @@ CreateThread(function()
                     if bodyPartConfig then
                         lib.notify({
                             title = locale('qc_health'),
-                            description = string.format(locale('wound_bleeding_weakening'),
+                            description = string.format(locale('cl_desc_fmt_wound_bleeding_weakening'),
                                 bodyPartConfig.label:lower()),
                             type = 'error',
                             duration = 4000
@@ -1947,8 +1947,8 @@ local function RemoveLodgedBullet(bodyPart)
     if not wound.metadata or not wound.metadata.penetration or wound.metadata.penetration.status ~= "stuck" then
         local bodyPartConfig = Config.BodyParts[bodyPart]
         lib.notify({
-            title = "Surgical Error",
-            description = string.format(locale('wound_no_bullet'), bodyPartConfig and bodyPartConfig.label or bodyPart),
+            title = locale('cl_menu_surgical_error'),
+            description = string.format(locale('cl_desc_fmt_wound_no_bullet'), bodyPartConfig and bodyPartConfig.label or bodyPart),
             type = 'error',
             duration = 5000
         })
@@ -2003,8 +2003,8 @@ local function RemoveLodgedBullet(bodyPart)
     -- Notify player
     local bodyPartConfig = Config.BodyParts[bodyPart]
     lib.notify({
-        title = "Surgical Procedure",
-        description = string.format(locale('wound_bullet_removed'),
+        title = locale('cl_menu_surgical_procedure'),
+        description = string.format(locale('cl_desc_fmt_wound_bullet_removed'),
             bodyPartConfig and bodyPartConfig.label or bodyPart),
         type = 'inform',
         duration = 8000

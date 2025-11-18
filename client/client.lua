@@ -183,8 +183,8 @@ local StartDeathCam = function()
     if Config.DeadMoveCam then
         -- Performance warning for free-look camera
         lib.notify({
-            title = 'Performance Warning',
-            description = 'Free-look death camera enabled - may impact performance.',
+            title = locale('cl_menu_performance_warning'),
+            description = locale('cl_desc_freelook_camera'),
             type = 'warning',
             duration = 5000
         })
@@ -480,8 +480,8 @@ CreateThread(function()
                 SetNuiFocus(nuiFocusEnabled, nuiFocusEnabled)
                 
                 lib.notify({
-                    title = 'NUI Focus',
-                    description = 'Mouse enabled for UI interaction. Right-click again to disable.',
+                    title = locale('cl_menu_nui_focus'),
+                    description = locale('cl_desc_mouse_enabled'),
                     type = 'inform',
                     duration = 3000
                 })
@@ -538,7 +538,7 @@ AddEventHandler('QC-AdvancedMedic:client:mainmenu', function(location, name)
         -- 1. Toggle Duty (always first)
         {   title = locale('cl_duty'),
             icon = 'fa-solid fa-shield-heart',
-            description = 'Manage your duty status and view session info',
+            description = locale('cl_desc_duty_management'),
             event = 'QC-AdvancedMedic:client:OpenDutyMenu',
             arrow = true
         },
@@ -552,12 +552,12 @@ AddEventHandler('QC-AdvancedMedic:client:mainmenu', function(location, name)
         -- 3. Medical Supplies (always available)
         {   title = locale('cl_medical_supplies'),
             icon = 'fa-solid fa-pills',
-            description = 'Purchase basic medical supplies',
+            description = locale('cl_desc_purchase_supplies'),
             event = 'QC-AdvancedMedic:client:OpenMedicSupplies',
             arrow = true
         },
         {
-            title = 'Start Medical Mission',
+            title = locale('cl_menu_start_medical_mission'),
             icon = 'fa-solid fa-briefcase-medical',
             event = 'QC-AdvancedMedic:client:startMission',
             arrow = true
@@ -569,7 +569,7 @@ AddEventHandler('QC-AdvancedMedic:client:mainmenu', function(location, name)
         table.insert(menuOptions, {
             title = locale('cl_pharmaceutical_supplies') or 'Pharmaceutical Supplies',
             icon = 'fa-solid fa-flask',
-            description = '1890s medicines and experimental treatments',
+            description = locale('cl_desc_experimental_medicine'),
             event = 'QC-AdvancedMedic:client:OpenPharmaceuticalShop',
             arrow = true
         })
@@ -635,16 +635,16 @@ AddEventHandler('QC-AdvancedMedic:client:OpenDutyMenu', function()
     
     lib.registerContext({
         id = "medic_duty_menu",
-        title = "Medical Duty Management",
+        title = locale('cl_menu_duty_management'),
         options = {
-            {   title = "Current Status: " .. dutyStatusText,
+            {   title = locale('cl_menu_current_status') .. dutyStatusText,
                 icon = onDuty and 'fa-solid fa-user-check' or 'fa-solid fa-user-times',
-                description = "Your current duty status",
+                description = locale('cl_desc_current_duty_status'),
                 readOnly = true
             },
-            {   title = "Session Time: " .. sessionTimeFormatted,
+            {   title = locale('cl_menu_session_time') .. sessionTimeFormatted,
                 icon = 'fa-solid fa-clock',
-                description = "Time on duty this session",
+                description = locale('cl_desc_duty_time'),
                 readOnly = true
             },
             {   title = onDuty and "Go Off Duty" or "Go On Duty",
@@ -653,9 +653,9 @@ AddEventHandler('QC-AdvancedMedic:client:OpenDutyMenu', function()
                 event = 'QC-AdvancedMedic:client:ToggleDutyStatus',
                 arrow = true
             },
-            {   title = "Back to Main Menu",
+            {   title = locale('cl_menu_back_main'),
                 icon = 'fa-solid fa-arrow-left',
-                description = "Return to main medical menu",
+                description = locale('cl_desc_return_menu'),
                 event = 'QC-AdvancedMedic:client:medicmenu',
                 args = { location = mediclocation }
             }
@@ -680,11 +680,11 @@ AddEventHandler('QC-AdvancedMedic:client:ToggleDutyStatus', function()
         local totalSessionTimeSeconds = math.floor(sessionTime / 1000)
         TriggerServerEvent('QC-AdvancedMedic:server:ProcessDutyPay', totalSessionTimeSeconds)
         
-        lib.notify({ 
-            title = 'Clocked Out', 
-            description = string.format('Session time: %s', FormatTime(totalSessionTimeSeconds)),
-            type = 'success', 
-            duration = 5000 
+        lib.notify({
+            title = locale('cl_menu_clocked_out'),
+            description = string.format(locale('cl_desc_fmt_session_time'), FormatTime(totalSessionTimeSeconds)),
+            type = 'success',
+            duration = 5000
         })
         
         -- Reset for next session
@@ -693,11 +693,11 @@ AddEventHandler('QC-AdvancedMedic:client:ToggleDutyStatus', function()
         -- Going on duty - start timer and automatic pay system
         dutyStartTime = GetGameTimer()
         TriggerServerEvent('QC-AdvancedMedic:server:StartDutyPayTimer')
-        lib.notify({ 
-            title = 'Clocked In', 
-            description = 'You are now on duty', 
-            type = 'success', 
-            duration = 3000 
+        lib.notify({
+            title = locale('cl_menu_clocked_in'),
+            description = locale('cl_desc_now_on_duty'),
+            type = 'success',
+            duration = 3000
         })
     end
     
@@ -765,15 +765,15 @@ AddEventHandler('QC-AdvancedMedic:client:OpenPharmaceuticalShop', function()
     
     -- Add header
     table.insert(pharmaceuticalOptions, {
-        title = "🏥 1890s Pharmaceutical Dispensary",
-        description = "Medical compounds and experimental treatments",
+        title = locale('cl_menu_pharmaceutical_dispensary'),
+        description = locale('cl_desc_medical_compounds'),
         readOnly = true,
         icon = 'fa-solid fa-mortar-pestle'
     })
     
     -- Medicines Section
     table.insert(pharmaceuticalOptions, {
-        title = "--- MEDICINES ---",
+        title = locale('cl_menu_medicines_header'),
         readOnly = true,
         icon = 'fa-solid fa-pills'
     })
@@ -788,9 +788,9 @@ AddEventHandler('QC-AdvancedMedic:client:OpenPharmaceuticalShop', function()
         })
     end
     
-    -- Injections Section  
+    -- Injections Section
     table.insert(pharmaceuticalOptions, {
-        title = "--- INJECTIONS ---",
+        title = locale('cl_menu_injections_header'),
         readOnly = true,
         icon = 'fa-solid fa-syringe'
     })
@@ -807,7 +807,7 @@ AddEventHandler('QC-AdvancedMedic:client:OpenPharmaceuticalShop', function()
     
     -- Back option
     table.insert(pharmaceuticalOptions, {
-        title = "Back to Main Menu",
+        title = locale('cl_menu_back_main'),
         icon = 'fa-solid fa-arrow-left',
         event = 'QC-AdvancedMedic:client:medicmenu',
         args = { location = mediclocation }
@@ -815,7 +815,7 @@ AddEventHandler('QC-AdvancedMedic:client:OpenPharmaceuticalShop', function()
     
     lib.registerContext({
         id = "pharmaceutical_shop",
-        title = "Pharmaceutical Dispensary",
+        title = locale('cl_menu_pharma_title'),
         options = pharmaceuticalOptions
     })
     lib.showContext("pharmaceutical_shop")
@@ -824,7 +824,7 @@ end)
 -- Purchase pharmaceutical item
 AddEventHandler('QC-AdvancedMedic:client:PurchasePharmaceutical', function(data)
     local input = lib.inputDialog('Purchase ' .. data.label, {
-        {type = 'number', label = 'Quantity', description = 'How many do you want to buy?', default = 1, min = 1, max = 10}
+        {type = 'number', label = 'Quantity', description = locale('cl_desc_quantity_purchase'), default = 1, min = 1, max = 10}
     })
     
     if input and input[1] then
@@ -1207,8 +1207,8 @@ RegisterNetEvent('QC-AdvancedMedic:client:ShowInspectionPanel')
 AddEventHandler('QC-AdvancedMedic:client:ShowInspectionPanel', function(inspectionData)
     if not inspectionData then
         lib.notify({
-            title = "Inspection Error",
-            description = "No medical data received",
+            title = locale('cl_menu_inspection_error'),
+            description = locale('cl_desc_no_medical_data'),
             type = 'error',
             duration = 5000
         })
@@ -1321,13 +1321,13 @@ RegisterNetEvent('QC-AdvancedMedic:client:MedicCall', function()
         medicCalled = true
         
         if medicsonduty == 0 then
-            lib.notify({ 
-                title = 'No Medics Available', 
-                description = 'No medical professionals are currently on duty',
-                type = 'error', 
-                icon = 'fa-solid fa-kit-medical', 
-                iconAnimation = 'shake', 
-                duration = 5000 
+            lib.notify({
+                title = locale('cl_menu_no_medics_available'),
+                description = locale('cl_desc_no_medics_on_duty'),
+                type = 'error',
+                icon = 'fa-solid fa-kit-medical',
+                iconAnimation = 'shake',
+                duration = 5000
             })
             MedicCalled() -- Reset the cooldown
             return
@@ -1337,22 +1337,22 @@ RegisterNetEvent('QC-AdvancedMedic:client:MedicCall', function()
         local pos = GetEntityCoords(cache.ped)
         TriggerServerEvent('QC-AdvancedMedic:server:EmergencyCall', pos)
         
-        lib.notify({ 
-            title = 'Emergency Call Sent', 
-            description = 'Medical assistance has been requested. Help is on the way!',
-            type = 'success', 
-            icon = 'fa-solid fa-kit-medical', 
-            iconAnimation = 'shake', 
-            duration = 7000 
+        lib.notify({
+            title = locale('cl_menu_emergency_call_sent'),
+            description = locale('cl_desc_assistance_requested'),
+            type = 'success',
+            icon = 'fa-solid fa-kit-medical',
+            iconAnimation = 'shake',
+            duration = 7000
         })
         
         MedicCalled() -- Start cooldown
     else
-        lib.notify({ 
-            title = 'Please Wait', 
-            description = 'You have already called for medical assistance',
-            type = 'inform', 
-            duration = 3000 
+        lib.notify({
+            title = locale('cl_menu_please_wait'),
+            description = locale('cl_desc_already_called_assistance'),
+            type = 'inform',
+            duration = 3000
         })
     end
 end)
@@ -1407,8 +1407,8 @@ end)
 -- Emergency alert for medics
 RegisterNetEvent('QC-AdvancedMedic:client:EmergencyAlert', function(data)
     lib.notify({
-        title = 'Emergency Medical Call',
-        description = string.format('%s needs immediate medical assistance!', data.caller),
+        title = locale('cl_menu_emergency_medical_call'),
+        description = string.format(locale('cl_desc_fmt_needs_medical_assistance'), data.caller),
         type = 'error',
         icon = 'fa-solid fa-ambulance',
         iconAnimation = 'bounce',
@@ -1428,8 +1428,8 @@ RegisterNUICallback('disable-nui-focus', function(data, cb)
     nuiFocusEnabled = false
     
     lib.notify({
-        title = 'NUI Focus',
-        description = 'Mouse disabled. Camera controls restored.',
+        title = locale('cl_menu_nui_focus'),
+        description = locale('cl_desc_mouse_disabled'),
         type = 'inform',
         duration = 3000
     })
@@ -1610,11 +1610,11 @@ RegisterNetEvent('QC-AdvancedMedic:client:usebandage', function(bandageType)
     -- Get bandage config and item name from config
     local bandageConfig = Config.BandageTypes[bandageType]
     if not bandageConfig then
-        lib.notify({ 
-            title = "Configuration Error", 
-            description = string.format("Unknown bandage type: %s", bandageType), 
-            type = 'error', 
-            duration = 5000 
+        lib.notify({
+            title = locale('cl_menu_configuration_error'),
+            description = string.format(locale('cl_desc_fmt_unknown_bandage_type'), bandageType),
+            type = 'error',
+            duration = 5000
         })
         return
     end
@@ -1630,11 +1630,11 @@ RegisterNetEvent('QC-AdvancedMedic:client:usebandage', function(bandageType)
             -- Check if player has any wounds to treat
             local wounds = PlayerWounds or {}
             if not next(wounds) then
-                lib.notify({ 
-                    title = locale('cl_error'), 
-                    description = "No wounds detected that require bandaging", 
-                    type = 'error', 
-                    duration = 5000 
+                lib.notify({
+                    title = locale('cl_error'),
+                    description = locale('cl_desc_no_wounds_bandaging'),
+                    type = 'error',
+                    duration = 5000
                 })
                 return
             end
@@ -1647,12 +1647,12 @@ RegisterNetEvent('QC-AdvancedMedic:client:usebandage', function(bandageType)
                 if wounds[targetBodyPartOverride] then
                     targetBodyPart = targetBodyPartOverride
                 else
-                    lib.notify({ 
-                        title = "Treatment Error", 
-                        description = string.format("No wound detected on %s", 
-                            Config.BodyParts[targetBodyPartOverride] and Config.BodyParts[targetBodyPartOverride].label or targetBodyPartOverride), 
-                        type = 'error', 
-                        duration = 5000 
+                    lib.notify({
+                        title = locale('cl_menu_treatment_error'),
+                        description = string.format(locale('cl_desc_fmt_no_wound_detected'),
+                            Config.BodyParts[targetBodyPartOverride] and Config.BodyParts[targetBodyPartOverride].label or targetBodyPartOverride),
+                        type = 'error',
+                        duration = 5000
                     })
                     targetBodyPartOverride = nil  -- Reset override
                     return
@@ -1672,11 +1672,11 @@ RegisterNetEvent('QC-AdvancedMedic:client:usebandage', function(bandageType)
                 end
                 
                 if not targetBodyPart then
-                    lib.notify({ 
-                        title = locale('cl_error'), 
-                        description = "No suitable wound found for bandaging", 
-                        type = 'error', 
-                        duration = 5000 
+                    lib.notify({
+                        title = locale('cl_error'),
+                        description = locale('cl_desc_no_suitable_wound'),
+                        type = 'error',
+                        duration = 5000
                     })
                     return
                 end
@@ -1685,12 +1685,12 @@ RegisterNetEvent('QC-AdvancedMedic:client:usebandage', function(bandageType)
             -- Check if this body part already has a bandage
             local activeTreatments = ActiveTreatments or {}
             if activeTreatments[targetBodyPart] and activeTreatments[targetBodyPart].treatmentType == "bandage" then
-                lib.notify({ 
-                    title = "Treatment Error", 
-                    description = string.format("Bandage already applied to %s", 
-                        Config.BodyParts[targetBodyPart] and Config.BodyParts[targetBodyPart].label or targetBodyPart), 
-                    type = 'error', 
-                    duration = 5000 
+                lib.notify({
+                    title = locale('cl_menu_treatment_error'),
+                    description = string.format(locale('cl_desc_fmt_bandage_already_applied'),
+                        Config.BodyParts[targetBodyPart] and Config.BodyParts[targetBodyPart].label or targetBodyPart),
+                    type = 'error',
+                    duration = 5000
                 })
                 return
             end
@@ -1723,22 +1723,22 @@ RegisterNetEvent('QC-AdvancedMedic:client:usebandage', function(bandageType)
             if success then
                 TriggerServerEvent('QC-AdvancedMedic:server:removeitem', itemName, 1)
             else
-                lib.notify({ 
-                    title = "Treatment Failed", 
-                    description = "Failed to apply bandage", 
-                    type = 'error', 
-                    duration = 5000 
+                lib.notify({
+                    title = locale('cl_menu_treatment_failed'),
+                    description = locale('cl_desc_bandage_failed'),
+                    type = 'error',
+                    duration = 5000
                 })
             end
 
             LocalPlayer.state:set('inv_busy', false, true)
             isBusy = false
         else
-            lib.notify({ 
-                title = locale('cl_error'), 
-                description = string.format("No %s available", bandageConfig.label), 
-                type = 'error', 
-                duration = 5000 
+            lib.notify({
+                title = locale('cl_error'),
+                description = string.format(locale('cl_desc_fmt_no_item_available'), bandageConfig.label),
+                type = 'error',
+                duration = 5000
             })
         end
     else
@@ -2017,8 +2017,8 @@ RegisterNUICallback('apply-bandage', function(data, cb)
     local hasItem = RSGCore.Functions.HasItem(bandageType, 1)
     if not hasItem then
         lib.notify({
-            title = 'Medical Error',
-            description = 'You do not have this bandage type in your inventory',
+            title = locale('cl_menu_medical_error'),
+            description = locale('cl_desc_no_bandage_inventory'),
             type = 'error',
             duration = 3000
         })
@@ -2102,8 +2102,8 @@ RegisterNUICallback('apply-bandage', function(data, cb)
         cb({status = 'ok', treatments = updatedTreatments}) -- Respond with updated data
     else
         lib.notify({
-            title = 'Application Failed',
-            description = 'Could not apply bandage to ' .. bodyPart:lower(),
+            title = locale('cl_menu_application_failed'),
+            description = string.format(locale('cl_desc_fmt_bandage_apply_failed'), bodyPart:lower()),
             type = 'error',
             duration = 3000
         })
@@ -2133,8 +2133,8 @@ RegisterNUICallback('apply-tourniquet', function(data, cb)
     local hasItem = RSGCore.Functions.HasItem(tourniquetType, 1)
     if not hasItem then
         lib.notify({
-            title = 'Medical Error',
-            description = 'You do not have this tourniquet type in your inventory',
+            title = locale('cl_menu_medical_error'),
+            description = locale('cl_desc_no_tourniquet_inventory'),
             type = 'error',
             duration = 3000
         })
@@ -2218,8 +2218,8 @@ RegisterNUICallback('apply-tourniquet', function(data, cb)
         cb({status = 'ok', treatments = updatedTreatments})
     else
         lib.notify({
-            title = 'Application Failed',
-            description = 'Could not apply tourniquet to ' .. bodyPart:lower(),
+            title = locale('cl_menu_application_failed'),
+            description = string.format(locale('cl_desc_fmt_tourniquet_apply_failed'), bodyPart:lower()),
             type = 'error',
             duration = 3000
         })
@@ -2249,10 +2249,10 @@ RegisterNUICallback('remove-treatment', function(data, cb)
     -- Use the existing removebandage command flow
     if treatmentType == 'bandage' then
         TriggerServerEvent('QC-AdvancedMedic:server:removebandage', bodyPart:upper())
-        
+
         lib.notify({
-            title = 'Treatment Removed',
-            description = 'Bandage removed from ' .. bodyPart:lower(),
+            title = locale('cl_menu_treatment_removed'),
+            description = string.format(locale('cl_desc_fmt_bandage_removed'), bodyPart:lower()),
             type = 'success',
             duration = 3000
         })
@@ -2338,15 +2338,15 @@ RegisterNUICallback('replace-treatment', function(data, cb)
             
             if hasAnyBandage then
                 lib.notify({
-                    title = 'Bandage Removed',
-                    description = 'Old bandage removed. Use the bandage panel to apply a new one to ' .. bodyPart:lower(),
+                    title = locale('cl_menu_bandage_removed'),
+                    description = string.format(locale('cl_desc_fmt_bandage_old_removed'), bodyPart:lower()),
                     type = 'inform',
                     duration = 5000
                 })
             else
                 lib.notify({
-                    title = 'No Bandages Available',
-                    description = 'You need bandages in your inventory to replace the treatment',
+                    title = locale('cl_menu_no_bandages_available'),
+                    description = locale('cl_desc_need_bandages_replace'),
                     type = 'error',
                     duration = 4000
                 })
@@ -2424,8 +2424,8 @@ RegisterCommand('addtreatment', function(source, args)
     }
     
     lib.notify({
-        title = 'Test Treatment Added',
-        description = string.format('Added %s to %s for testing', treatmentType, bodyPart),
+        title = locale('cl_menu_test_treatment_added'),
+        description = string.format(locale('cl_desc_fmt_added_treatment_test'), treatmentType, bodyPart),
         type = 'success',
         duration = 3000
     })
@@ -2471,22 +2471,22 @@ end, false)
 RegisterCommand('forceinfection', function(source, args)
     if not Config.InfectionSystem.debugging.enabled then
         lib.notify({
-            title = "Command Disabled",
-            description = "Developer commands only available with debugging enabled",
+            title = locale('cl_menu_command_disabled'),
+            description = locale('cl_desc_dev_commands_debug'),
             type = 'error',
             duration = 5000
         })
         return
     end
-    
+
     local bodyPart = args[1] or 'UPPER_BODY'
     local stage = tonumber(args[2]) or 1
     
     -- Validate body part
     if not Config.BodyParts[bodyPart] then
         lib.notify({
-            title = "Invalid Body Part",
-            description = string.format("Body part '%s' not found. Use: HEAD, UPPER_BODY, LOWER_BODY, LARM, RARM, LLEG, RLEG", bodyPart),
+            title = locale('cl_menu_invalid_body_part'),
+            description = string.format(locale('cl_desc_fmt_body_part_not_found'), bodyPart),
             type = 'error',
             duration = 8000
         })
@@ -2496,8 +2496,8 @@ RegisterCommand('forceinfection', function(source, args)
     -- Validate stage
     if stage < 1 or stage > #Config.InfectionSystem.stages then
         lib.notify({
-            title = "Invalid Stage",
-            description = string.format("Stage must be between 1 and %d", #Config.InfectionSystem.stages),
+            title = locale('cl_menu_invalid_stage'),
+            description = string.format(locale('cl_desc_fmt_stage_must_be_between'), #Config.InfectionSystem.stages),
             type = 'error',
             duration = 5000
         })
@@ -2508,8 +2508,8 @@ RegisterCommand('forceinfection', function(source, args)
     CreateForceInfection(bodyPart, stage)
     
     lib.notify({
-        title = "Developer Command",
-        description = string.format("Forced %s infection on %s (Stage %d)", 
+        title = locale('cl_menu_developer_command'),
+        description = string.format(locale('cl_desc_fmt_forced_infection'),
             Config.InfectionSystem.stages[stage].name, bodyPart, stage),
         type = 'inform',
         duration = 6000
@@ -2522,14 +2522,14 @@ end)
 RegisterCommand('listinfections', function()
     if not Config.InfectionSystem.debugging.enabled then
         lib.notify({
-            title = "Command Disabled", 
-            description = "Developer commands only available with debugging enabled",
+            title = locale('cl_menu_command_disabled'),
+            description = locale('cl_desc_dev_commands_debug'),
             type = 'error',
             duration = 5000
         })
         return
     end
-    
+
     local infections = GetInfectionData()
     local count = 0
     
@@ -2553,8 +2553,8 @@ RegisterCommand('listinfections', function()
     print("========================")
     
     lib.notify({
-        title = "Infection List",
-        description = string.format("Found %d active infections (check console)", count),
+        title = locale('cl_menu_infection_list'),
+        description = string.format(locale('cl_desc_fmt_found_infections_console'), count),
         type = 'inform',
         duration = 5000
     })
@@ -2565,8 +2565,8 @@ end)
 RegisterCommand('usebandage', function(source, args)
     if #args < 2 then
         lib.notify({
-            title = "Usage",
-            description = "/usebandage [bandageType] [bodyPart]\nBandage Types: cloth, cotton, linen, sterile\nBody Parts: HEAD, UPPER_BODY, LOWER_BODY, LARM, RARM, LLEG, RLEG, etc.",
+            title = locale('cl_menu_usage'),
+            description = locale('cl_desc_usebandage_help'),
             type = 'inform',
             duration = 8000
         })
@@ -2584,8 +2584,8 @@ RegisterCommand('usebandage', function(source, args)
         end
         
         lib.notify({
-            title = "Invalid Bandage Type",
-            description = string.format("Available types: %s", table.concat(availableTypes, ", ")),
+            title = locale('cl_menu_invalid_bandage_type'),
+            description = string.format(locale('cl_desc_fmt_available_types'), table.concat(availableTypes, ", ")),
             type = 'error',
             duration = 6000
         })
@@ -2598,16 +2598,16 @@ RegisterCommand('usebandage', function(source, args)
         for part, config in pairs(Config.BodyParts) do
             table.insert(availableParts, part)
         end
-        
+
         lib.notify({
-            title = "Invalid Body Part",
-            description = string.format("Available parts: %s", table.concat(availableParts, ", ")),
+            title = locale('cl_menu_invalid_body_part'),
+            description = string.format(locale('cl_desc_fmt_available_parts'), table.concat(availableParts, ", ")),
             type = 'error',
             duration = 8000
         })
         return
     end
-    
+
     -- Trigger the same event flow as useable bandage items
     -- Store the target body part for the bandage system to use
     targetBodyPartOverride = bodyPart
@@ -2618,8 +2618,8 @@ end)
 RegisterCommand('removebandage', function(source, args)
     if #args < 1 then
         lib.notify({
-            title = "Usage",
-            description = "/removebandage [bodyPart]\nExample: /removebandage HEAD",
+            title = locale('cl_menu_usage'),
+            description = locale('cl_desc_removebandage_help'),
             type = 'inform',
             duration = 5000
         })
@@ -2634,22 +2634,22 @@ RegisterCommand('removebandage', function(source, args)
         for part, config in pairs(Config.BodyParts) do
             table.insert(availableParts, part)
         end
-        
+
         lib.notify({
-            title = "Invalid Body Part",
-            description = string.format("Available parts: %s", table.concat(availableParts, ", ")),
+            title = locale('cl_menu_invalid_body_part'),
+            description = string.format(locale('cl_desc_fmt_available_parts'), table.concat(availableParts, ", ")),
             type = 'error',
             duration = 8000
         })
         return
     end
-    
+
     -- Check if body part has a bandage
     local activeTreatments = ActiveTreatments or {}
     if not activeTreatments[bodyPart] or activeTreatments[bodyPart].treatmentType ~= "bandage" then
         lib.notify({
-            title = "No Bandage",
-            description = string.format("No bandage found on %s", Config.BodyParts[bodyPart].label),
+            title = locale('cl_menu_no_bandage'),
+            description = string.format(locale('cl_desc_fmt_no_bandage_found'), Config.BodyParts[bodyPart].label),
             type = 'error',
             duration = 5000
         })
@@ -2658,10 +2658,10 @@ RegisterCommand('removebandage', function(source, args)
     
     -- Remove the bandage
     RemoveTreatment(bodyPart, "bandage")
-    
+
     lib.notify({
-        title = "Bandage Removed",
-        description = string.format("Removed bandage from %s", Config.BodyParts[bodyPart].label),
+        title = locale('cl_menu_bandage_removed'),
+        description = string.format(locale('cl_desc_fmt_removed_bandage'), Config.BodyParts[bodyPart].label),
         type = 'success',
         duration = 5000
     })
