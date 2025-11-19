@@ -451,13 +451,16 @@ end)
 -- player update health loop
 ---------------------------------------------------------------------
 CreateThread(function()
+    local lasthealth = 0
     repeat Wait(1000) until LocalPlayer.state['isLoggedIn']
     while true do
         local health = GetEntityHealth(cache.ped)
         
         -- PERFORMANCE FIX: Don't send server events when dead (saves network traffic)
-        if not deathactive then
+        if not deathactive and health ~= lasthealth then
             TriggerServerEvent('QC-AdvancedMedic:server:SetHealth', health)
+            lasthealth = health
+            print('^2[QC-AdvancedMedic] Sent health update to server: ' .. tostring(health) .. '^7')
         end
         
         Wait(deathactive and 5000 or 1000) -- Check every 5 seconds when dead, every 1 second when alive
