@@ -200,8 +200,8 @@ RegisterNetEvent('QC-AdvancedMedic:server:MedicApplyBandage')
 AddEventHandler('QC-AdvancedMedic:server:MedicApplyBandage', function(targetId, bodyPart, bandageType)
     local src = source
     local Medic = RSGCore.Functions.GetPlayer(src)
-    local Patient = RSGCore.Functions.GetPlayer(targetId)
-    
+    local Patient = RSGCore.Functions.GetPlayerByCitizenId(targetId)
+    print(targetId)
     if not Medic or not Patient then return end
     
     -- Check if source is a medic
@@ -216,7 +216,7 @@ AddEventHandler('QC-AdvancedMedic:server:MedicApplyBandage', function(targetId, 
     end
     
     -- Check if medic has the required item
-    if not Medic.Functions.GetItemByName(bandageType) then
+    if not Medic.Functions.GetItemByName(Config.BandageTypes[bandageType].itemName or bandageType) then
         TriggerClientEvent('ox_lib:notify', src, {
             title = locale('sv_missing_supplies'),
             description = string.format(locale('sv_you_dont_have_item'), bandageType),
@@ -227,7 +227,7 @@ AddEventHandler('QC-AdvancedMedic:server:MedicApplyBandage', function(targetId, 
     end
     
     -- Remove item from medic
-    if Medic.Functions.RemoveItem(bandageType, 1) then
+    if Medic.Functions.RemoveItem(Config.BandageTypes[bandageType].itemName or bandageType, 1) then
         TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[bandageType], 'remove', 1)
         
         -- Apply treatment to patient
@@ -236,7 +236,7 @@ AddEventHandler('QC-AdvancedMedic:server:MedicApplyBandage', function(targetId, 
         -- Log medical action
         exports['QC-AdvancedMedic']:LogMedicalEvent(
             Patient.PlayerData.citizenid,
-            'medic_treatment',
+            'medical_treatment',
             string.format("Medic applied %s to %s", bandageType, bodyPart),
             bodyPart,
             Medic.PlayerData.citizenid
@@ -263,7 +263,8 @@ RegisterNetEvent('QC-AdvancedMedic:server:MedicApplyTourniquet')
 AddEventHandler('QC-AdvancedMedic:server:MedicApplyTourniquet', function(targetId, bodyPart, tourniquetType)
     local src = source
     local Medic = RSGCore.Functions.GetPlayer(src)
-    local Patient = RSGCore.Functions.GetPlayer(targetId)
+    local Patient = RSGCore.Functions.GetPlayerByCitizenId(targetId)
+
     
     if not Medic or not Patient then return end
     
@@ -279,7 +280,7 @@ AddEventHandler('QC-AdvancedMedic:server:MedicApplyTourniquet', function(targetI
     end
     
     -- Check if medic has the required item  
-    if not Medic.Functions.GetItemByName(tourniquetType) then
+    if not Medic.Functions.GetItemByName(Config.TourniquetTypes[tourniquetType].itemName or tourniquetType) then
         TriggerClientEvent('ox_lib:notify', src, {
             title = locale('sv_missing_supplies'),
             description = string.format(locale('sv_you_dont_have_item'), tourniquetType),
@@ -290,7 +291,7 @@ AddEventHandler('QC-AdvancedMedic:server:MedicApplyTourniquet', function(targetI
     end
     
     -- Remove item from medic
-    if Medic.Functions.RemoveItem(tourniquetType, 1) then
+    if Medic.Functions.RemoveItem(Config.TourniquetTypes[tourniquetType].itemName or tourniquetType, 1) then
         TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[tourniquetType], 'remove', 1)
         
         -- Apply emergency treatment to patient
@@ -299,7 +300,7 @@ AddEventHandler('QC-AdvancedMedic:server:MedicApplyTourniquet', function(targetI
         -- Log medical action
         exports['QC-AdvancedMedic']:LogMedicalEvent(
             Patient.PlayerData.citizenid,
-            'emergency_treatment',
+            'medical_treatment',
             string.format("Medic applied emergency %s to %s", tourniquetType, bodyPart),
             bodyPart,
             Medic.PlayerData.citizenid
@@ -324,9 +325,11 @@ end)
 
 RegisterNetEvent('QC-AdvancedMedic:server:MedicApplyMedicine')
 AddEventHandler('QC-AdvancedMedic:server:MedicApplyMedicine', function(targetId, medicineType)
+    print("MedicApplyMedicine triggered",targetId)
     local src = source
     local Medic = RSGCore.Functions.GetPlayer(src)
-    local Patient = RSGCore.Functions.GetPlayer(targetId)
+    local Patient = RSGCore.Functions.GetPlayerByCitizenId(targetId)
+
     
     if not Medic or not Patient then return end
     
@@ -384,7 +387,7 @@ AddEventHandler('QC-AdvancedMedic:server:MedicApplyMedicine', function(targetId,
         -- Log medical action
         exports['QC-AdvancedMedic']:LogMedicalEvent(
             Patient.PlayerData.citizenid,
-            'medicine_treatment',
+            'medical_treatment',
             string.format("Medic administered %s for pain management", medicineConfig.label or medicineType),
             'patient', -- Medicine affects the whole patient, not specific body part
             Medic.PlayerData.citizenid
@@ -556,7 +559,7 @@ end)
 --=========================================================
 -- MEDIC INSPECT COMMAND
 --=========================================================
-RSGCore.Commands.Add('inspect', 'Inspect another player\'s medical condition (Medic Only)', {{name = 'id', help = 'Player ID to inspect'}}, true, function(source, args)
+RSGCore.Commands.Add('inspectmedic', 'Inspect another player\'s medical condition (Medic Only)', {{name = 'id', help = 'Player ID to inspect'}}, true, function(source, args)
     local src = source
     print('^3[QC-AdvancedMedic] DEBUG: /inspect command triggered by player ' .. src .. '^7')
     local Medic = RSGCore.Functions.GetPlayer(src)

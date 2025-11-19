@@ -164,7 +164,7 @@ Config.MedicJobLocations = {
         prompt = 'valmedic',
         coords = vector3(-289.46, 806.82, 119.39 - 0.08),
         showblip = true,
-        job = 'valmedic'
+        job = 'doctor'
     },
     {
         name = 'Saint Denis',
@@ -318,7 +318,7 @@ Config.BodyParts = {
     HEAD       = { label = 'Head',       maxHealth = 100 , limp = false },
     NECK       = { label = 'Neck',       maxHealth = 80 , limp = false  },
     SPINE      = { label = 'Spine',      maxHealth = 120 , limp = true },
-    UPPER_BODY = { label = 'Upper Body', maxHealth = 150 , limp = false },
+    UPBODY     = { label = 'Upper Body', maxHealth = 150 , limp = false },
     LOWER_BODY = { label = 'Lower Body', maxHealth = 150 , limp = true },
     LARM       = { label = 'Left Arm',   maxHealth = 90 , limp = false  },
     LHAND      = { label = 'Left Hand',  maxHealth = 60 , limp = false  },
