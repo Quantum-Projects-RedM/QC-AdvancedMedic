@@ -124,7 +124,7 @@ CREATE TABLE IF NOT EXISTS `player_fractures` (
 CREATE TABLE IF NOT EXISTS `medical_history` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `citizenid` varchar(50) NOT NULL,
-    `event_type` enum('wound_created', 'wound_change', 'treatment_applied', 'treatment_change', 'treatment_removed', 'infection_started', 'infection_cured', 'wound_healed', 'wound_scarred', 'fracture_created', 'fracture_healed', 'admin_clear_wounds', 'medical_inspection') NOT NULL,
+    `event_type` enum('wound_created', 'wound_change', 'treatment_applied', 'treatment_change', 'treatment_removed', 'infection_started', 'infection_cured', 'wound_healed', 'wound_scarred', 'fracture_created', 'fracture_healed', 'admin_clear_wounds', 'medical_inspection','medical_treatment') NOT NULL,
     `body_part` varchar(20) DEFAULT NULL,
     `details` json NOT NULL,
     `performed_by` varchar(50) DEFAULT NULL,

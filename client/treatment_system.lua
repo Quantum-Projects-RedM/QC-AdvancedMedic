@@ -30,13 +30,15 @@ local InjectionEffects = {}
 -- NEW BANDAGE SYSTEM - One-time Application with Decay
 --=========================================================
 function ApplyBandage(bodyPart, bandageType, appliedBy)
+    print("Applying bandage:", bodyPart, bandageType, appliedBy)
+
     local bandageConfig = Config.BandageTypes[bandageType]
     if not bandageConfig then
         print("[ERROR] Unknown bandage type: " .. tostring(bandageType))
         return false
     end
     
-    local bodyPartConfig = Config.BodyParts[bodyPart]
+    local bodyPartConfig = Config.BodyParts[string.upper(bodyPart)] or Config.BodyParts[bodyPart]
     if not bodyPartConfig then
         print("[ERROR] Unknown body part: " .. tostring(bodyPart))
         return false
@@ -45,7 +47,10 @@ function ApplyBandage(bodyPart, bandageType, appliedBy)
     -- Get current wounds for this body part
     local wounds = PlayerWounds or {}
     local wound = wounds[bodyPart]
+    local bleadingLevel = wound and tonumber(wound.bleedingLevel) or 0
+    local painLevel = wound and tonumber(wound.painLevel) or 0
     
+    -- Check if wound exists
     if not wound then
         lib.notify({
             title = locale('cl_menu_treatment'),
@@ -57,7 +62,8 @@ function ApplyBandage(bodyPart, bandageType, appliedBy)
     end
     
     -- Check if wound is bleeding (bandages only work on bleeding wounds)
-    if not wound.bleedingLevel or wound.bleedingLevel <= 0 then
+    print(bleadingLevel)
+    if not bleadingLevel or bleadingLevel <= 0 then
         lib.notify({
             title = locale('cl_menu_treatment'),
             description = string.format(locale('cl_desc_fmt_no_bleeding_detected'), bodyPartConfig.label),
@@ -93,24 +99,24 @@ function ApplyBandage(bodyPart, bandageType, appliedBy)
     
     -- SIMPLIFIED TIME-BASED BANDAGE SYSTEM
     -- Store original wound levels for 50% return when bandage expires
-    local originalPain = wound.painLevel
-    local originalBleeding = wound.bleedingLevel
+    local originalPain = painLevel
+    local originalBleeding = bleadingLevel
     
     -- BLEEDING REDUCTION (immediate effect)
     local bleedingReduction = 0
-    if wound.bleedingLevel > 0 and bandageConfig.bleedingReduction then
+    if bleadingLevel > 0 and bandageConfig.bleedingReduction then
         bleedingReduction = bandageConfig.bleedingReduction
         -- Apply reduction but maintain minimum level 1 (wounds don't vanish)
-        wound.bleedingLevel = math.max(wound.bleedingLevel - bleedingReduction, 1)
+        bleadingLevel = math.max(bleadingLevel - bleedingReduction, 1)
     end
     
     -- PAIN REDUCTION (proportional to bleeding reduction since pain = bleeding + tissue damage)
     local painReduction = 0
-    if bleedingReduction > 0 and wound.painLevel > 0 then
+    if bleedingReduction > 0 and painLevel > 0 then
         -- Pain reduces proportionally to bleeding (since pain is related to bleeding)
         -- But maintain minimum level 2 (tissue damage persists)
         painReduction = bleedingReduction
-        wound.painLevel = math.max(wound.painLevel - painReduction, 2)
+        painLevel = math.max(painLevel - painReduction, 2)
     end
     
     -- Update wound data on server
@@ -118,7 +124,7 @@ function ApplyBandage(bodyPart, bandageType, appliedBy)
     
     if Config.WoundSystem.debugging.enabled then
         print(string.format("^3[BANDAGE] Pain:%.1f→%.1f Bleed:%.1f→%.1f^7", 
-            originalPain or 0, wound.painLevel or 0, originalBleeding or 0, wound.bleedingLevel or 0))
+            originalPain or 0, painLevel or 0, originalBleeding or 0, bleadingLevel or 0))
     end
     
     -- SIMPLIFIED TIME-BASED BANDAGE TRACKING
@@ -236,6 +242,7 @@ end
 --=========================================================
 local function ApplyTourniquet(bodyPart, tourniquetType, appliedBy)
     local tourniquetConfig = Config.TourniquetTypes[tourniquetType]
+    local bodyPart = string.upper(bodyPart)
     if not tourniquetConfig then
         print("[ERROR] Unknown tourniquet type: " .. tostring(tourniquetType))
         return false
@@ -282,11 +289,12 @@ local function ApplyTourniquet(bodyPart, tourniquetType, appliedBy)
     -- Get current wounds for bleeding check
     local wounds = PlayerWounds or {}
     local wound = wounds[bodyPart]
-    
+    local bleadingLevel = wound and tonumber(wound.bleedingLevel) or 0
+    local painLevel = wound and tonumber(wound.painLevel) or 0
     -- Apply immediate bleeding control
-    if wound and wound.bleedingLevel > 0 then
+    if wound and bleadingLevel > 0 then
         if math.random() <= tourniquetConfig.bleedingStopChance then
-            wound.bleedingLevel = 0
+            bleadingLevel = 0
             TriggerServerEvent('QC-AdvancedMedic:server:UpdateWoundData', wounds)
 
             lib.notify({
@@ -315,7 +323,7 @@ local function ApplyTourniquet(bodyPart, tourniquetType, appliedBy)
     
     -- Increase pain due to tourniquet pressure
     if wound and tourniquetConfig.painIncrease then
-        wound.painLevel = math.min(wound.painLevel + (tourniquetConfig.painIncrease / 10), 10)
+        painLevel = math.min(painLevel + (tourniquetConfig.painIncrease / 10), 10)
         TriggerServerEvent('QC-AdvancedMedic:server:UpdateWoundData', wounds)
     end
     
@@ -449,7 +457,8 @@ local function AdministreMedicine(medicineType, appliedBy)
     -- Medicine affects pain conditions across all wounded body parts
     if PlayerWounds then
         for bodyPart, woundData in pairs(PlayerWounds) do
-            if woundData and woundData.painLevel and woundData.painLevel > 0 then
+            local painLevel = tonumber(woundData.painLevel) or 0
+            if woundData and painLevel and painLevel > 0 then
                 -- Add medicine treatment to the wound's treatments
                 if not woundData.treatments then
                     woundData.treatments = {}
@@ -694,6 +703,7 @@ end)
 RegisterNetEvent('QC-AdvancedMedic:client:ApplyBandage')
 AddEventHandler('QC-AdvancedMedic:client:ApplyBandage', function(bodyPart, bandageType, appliedBy)
     ApplyBandage(bodyPart, bandageType, appliedBy)
+
 end)
 
 RegisterNetEvent('QC-AdvancedMedic:client:ApplyTourniquet')

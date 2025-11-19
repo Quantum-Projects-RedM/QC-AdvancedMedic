@@ -451,13 +451,16 @@ end)
 -- player update health loop
 ---------------------------------------------------------------------
 CreateThread(function()
+    local lasthealth = 0
     repeat Wait(1000) until LocalPlayer.state['isLoggedIn']
     while true do
         local health = GetEntityHealth(cache.ped)
         
         -- PERFORMANCE FIX: Don't send server events when dead (saves network traffic)
-        if not deathactive then
+        if not deathactive and health ~= lasthealth then
             TriggerServerEvent('QC-AdvancedMedic:server:SetHealth', health)
+            lasthealth = health
+            print('^2[QC-AdvancedMedic] Sent health update to server: ' .. tostring(health) .. '^7')
         end
         
         Wait(deathactive and 5000 or 1000) -- Check every 5 seconds when dead, every 1 second when alive
@@ -1492,9 +1495,11 @@ end)
 
 -- Handle medical treatment messages from NUI (via window.postMessage)
 RegisterNUICallback('medical-treatment', function(data, cb)
+    print(json.encode(data))
     local action = data.action
     local treatmentData = data.data
-    
+    local targetPlayerId = treatmentData.playerId
+
     if not action or not treatmentData then
         cb({status = 'error', message = 'Invalid treatment data'})
         return
@@ -1508,7 +1513,6 @@ RegisterNUICallback('medical-treatment', function(data, cb)
     if action == 'administer-medicine' then
         -- Use the existing administer-medicine callback logic
         local medicineType = treatmentData.itemType
-        local targetPlayerId = treatmentData.playerId
         
         if not medicineType then
             cb({status = 'error', message = 'Missing medicine type'})
@@ -1550,6 +1554,7 @@ RegisterNUICallback('medical-treatment', function(data, cb)
             end
         else
             -- Handle real player medicine application
+            print(string.format("^3[MEDICAL-TREATMENT] Administering %s to player %s^7", medicineType, tostring(targetPlayerId)))
             TriggerServerEvent('QC-AdvancedMedic:server:MedicApplyMedicine', targetPlayerId, medicineType)
             cb({status = 'success', message = 'Medicine administered successfully'})
             
@@ -1573,6 +1578,7 @@ RegisterNUICallback('medical-treatment', function(data, cb)
             
             cb({status = 'success', message = 'Bandage applied to mission patient'})
         else
+            print(string.format("^3[MEDICAL-TREATMENT] Applying %s bandage to player %s on body part %s^7", bandageType, tostring(targetPlayerId), bodyPart))
             -- Handle real player bandage application
             TriggerServerEvent('QC-AdvancedMedic:server:MedicApplyBandage', targetPlayerId, bodyPart, bandageType)
             cb({status = 'success', message = 'Bandage applied successfully'})
