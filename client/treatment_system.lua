@@ -31,14 +31,14 @@ local InjectionEffects = {}
 --=========================================================
 function ApplyBandage(bodyPart, bandageType, appliedBy)
     print("Applying bandage:", bodyPart, bandageType, appliedBy)
-    local bodyPart =  string.upper(bodyPart)
+
     local bandageConfig = Config.BandageTypes[bandageType]
     if not bandageConfig then
         print("[ERROR] Unknown bandage type: " .. tostring(bandageType))
         return false
     end
     
-    local bodyPartConfig = Config.BodyParts[bodyPart]
+    local bodyPartConfig = Config.BodyParts[string.upper(bodyPart)] or Config.BodyParts[bodyPart]
     if not bodyPartConfig then
         print("[ERROR] Unknown body part: " .. tostring(bodyPart))
         return false
@@ -242,6 +242,7 @@ end
 --=========================================================
 local function ApplyTourniquet(bodyPart, tourniquetType, appliedBy)
     local tourniquetConfig = Config.TourniquetTypes[tourniquetType]
+    local bodyPart = string.upper(bodyPart)
     if not tourniquetConfig then
         print("[ERROR] Unknown tourniquet type: " .. tostring(tourniquetType))
         return false
@@ -288,11 +289,12 @@ local function ApplyTourniquet(bodyPart, tourniquetType, appliedBy)
     -- Get current wounds for bleeding check
     local wounds = PlayerWounds or {}
     local wound = wounds[bodyPart]
-    
+    local bleadingLevel = wound and tonumber(wound.bleedingLevel) or 0
+    local painLevel = wound and tonumber(wound.painLevel) or 0
     -- Apply immediate bleeding control
-    if wound and wound.bleedingLevel > 0 then
+    if wound and bleadingLevel > 0 then
         if math.random() <= tourniquetConfig.bleedingStopChance then
-            wound.bleedingLevel = 0
+            bleadingLevel = 0
             TriggerServerEvent('QC-AdvancedMedic:server:UpdateWoundData', wounds)
 
             lib.notify({
@@ -321,7 +323,7 @@ local function ApplyTourniquet(bodyPart, tourniquetType, appliedBy)
     
     -- Increase pain due to tourniquet pressure
     if wound and tourniquetConfig.painIncrease then
-        wound.painLevel = math.min(wound.painLevel + (tourniquetConfig.painIncrease / 10), 10)
+        painLevel = math.min(painLevel + (tourniquetConfig.painIncrease / 10), 10)
         TriggerServerEvent('QC-AdvancedMedic:server:UpdateWoundData', wounds)
     end
     
@@ -455,7 +457,8 @@ local function AdministreMedicine(medicineType, appliedBy)
     -- Medicine affects pain conditions across all wounded body parts
     if PlayerWounds then
         for bodyPart, woundData in pairs(PlayerWounds) do
-            if woundData and woundData.painLevel and woundData.painLevel > 0 then
+            local painLevel = tonumber(woundData.painLevel) or 0
+            if woundData and painLevel and painLevel > 0 then
                 -- Add medicine treatment to the wound's treatments
                 if not woundData.treatments then
                     woundData.treatments = {}

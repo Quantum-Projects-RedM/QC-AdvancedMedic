@@ -207,7 +207,6 @@ local function SaveTreatmentData(citizenid, treatmentData)
     if not citizenid or not treatmentData then return false end
     
     -- Mark all existing treatments as inactive
-    MySQL.Async.execute('UPDATE medical_treatments SET is_active = 0 WHERE citizenid = ? AND is_active = 1', {citizenid})
     
     -- Insert current active treatments (supports all treatment types)
     for bodyPart, treatment in pairs(treatmentData) do
@@ -229,9 +228,9 @@ local function SaveTreatmentData(citizenid, treatmentData)
         
         MySQL.Async.execute([[
             INSERT INTO medical_treatments 
-            (citizenid, body_part, treatment_type, item_type, applied_by, expiration_time, duration, 
+            (citizenid, body_part, treatment_type, item_type, applied_by, expiration_time, duration, is_active, 
              original_pain_level, original_bleeding_level, pain_reduction, bleeding_reduction, metadata)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ]], {
             citizenid,
             bodyPart,
@@ -240,6 +239,7 @@ local function SaveTreatmentData(citizenid, treatmentData)
             treatment.appliedBy or citizenid, -- Default to self if not specified
             mysqlExpirationTime, -- Properly formatted MySQL datetime
             treatment.duration, -- NULL for bandages, seconds for medicines
+            1,
             treatment.originalPainLevel, -- Original pain before treatment
             treatment.originalBleedingLevel, -- Original bleeding before treatment
             treatment.painReduction, -- How much pain was reduced
@@ -261,11 +261,12 @@ end
 
 -- Load treatment data for a player
 local function LoadTreatmentData(citizenid)
+    print('Loading treatment data for ' .. citizenid)
     if not citizenid then return {} end
     
     local result = MySQL.Sync.fetchAll('SELECT * FROM medical_treatments WHERE citizenid = ? AND is_active = 1', {citizenid})
     local treatmentData = {}
-    
+    print('Found ' .. #result .. ' treatment records')
     for _, row in ipairs(result) do
         local metadata = {}
         if row.metadata then
