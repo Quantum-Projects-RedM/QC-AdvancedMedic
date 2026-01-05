@@ -11,7 +11,6 @@ shared_scripts {
     '@ox_lib/init.lua',
     'config.lua',
     'ConfigMissions.lua',
-    'client/client_shared.lua',   -- Load shared functions after config
 }
 
 files {
@@ -22,23 +21,54 @@ files {
 
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
-    'server/server.lua',          -- Core server functionality
+
+    -- Core (kept for useable items and initialization)
+    'server/server.lua',          -- Main entry point & useable items
+    'server/database.lua',        -- Database integration layer
+
+    -- Helpers (load before systems)
+    'server/helpers/validators.lua',      -- NEW: Consolidated validation (IsMedicJob defined once)
+    'server/helpers/notifications.lua',   -- NEW: Centralized notifications
+
+    -- Systems (treatments includes server-authoritative validation)
+    'server/systems/wounds.lua',          -- NEW: Wound data operations
+    'server/systems/treatments.lua',      -- NEW: Treatment system with auth (distance, rate limit, item checks)
+    'server/systems/infections.lua',      -- NEW: Infection data operations
+
+    -- Handlers
+    'server/handlers/callbacks.lua',      -- NEW: Callback router system
+    'server/handlers/events.lua',         -- NEW: Network event handlers
+    'server/handlers/commands.lua',       -- NEW: Admin commands (consolidated /revive+/clearwounds)
+
+    -- Misc
     'server/sv_bag.lua',          -- Medical bag server logic
     'server/versionchecker.lua',  -- Version checking
-    'server/database.lua',        -- NEW: Database integration layer
-    'server/medical_events.lua',  -- NEW: Medical system network events
-    'server/medical_server.lua'   -- NEW: Medical inspection system with /inspect command
 }
 
 client_scripts {
-    'client/client.lua',          -- Core client functionality (death, revive, UI)
-    'client/bag.lua',             -- Medical bag system
-    'client/job_system.lua',      -- Job-related functionality & Missions
-    'client/wound_system.lua',    -- Advanced wound detection & tracking
-    'client/infection_system.lua', -- Infection progression system
-    'client/treatment_system.lua', -- Treatment application system
-    'client/wound_healing.lua',   -- Wound healing to scars system
-    'client/envanim_system.lua'   -- Environmental & animal attack system
+    -- Utilities (load first)
+    'client/utils/callbacks.lua',        -- Server-authoritative callback system
+    'client/utils/medical_helpers.lua',  -- NEW: Utility functions (replaces client_shared.lua)
+
+    -- Main entry point
+    'client/main.lua',                   -- NEW: initialization
+
+    -- Core medical systems (NEW CONSOLIDATED STRUCTURE)
+    'client/medical/core_medical.lua',   -- NEW: Consolidated wound + treatment + healing
+    'client/medical/infection_system.lua', -- Infection progression (refactored)
+
+    -- Job systems
+    'client/job/medic_job.lua',          -- Job mechanics (duty, revive, treat)
+    'client/job/medic_missions.lua',     -- Mission system (ConfigMissions integration)
+
+    -- Environmental
+    'client/environmental/envanim_system.lua', -- Environmental & animal attacks
+
+    -- Crafting
+    'client/crafting/medic_bag.lua',     -- Medical bag system
+
+    -- Legacy (TEMP: Death/revive/UI logic - to be refactored)
+    'client/client.lua',                 -- Core client functionality (death, revive, UI)
 }
 
 dependencies {

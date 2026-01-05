@@ -1,257 +1,17 @@
+--=========================================================
+-- QC-ADVANCED MEDIC - MEDIC MISSIONS SYSTEM
+--=========================================================
+-- ConfigMissions integration for training scenarios
+-- NPC patient treatment, transport, and surgical procedures
+-- Extracted from job_system.lua for better organization
+--=========================================================
+
 local RSGCore = exports['rsg-core']:GetCoreObject()
-local blipEntries = {}
-local transG = Config.DeathTimer
 
--- Debug ConfigMissions loading
-Citizen.CreateThread(function()
-    Citizen.Wait(1000) -- Wait for configs to load
-    if ConfigMissions then
-        print("^2SUCCESS: ConfigMissions loaded successfully^7")
-        if ConfigMissions.MedicMissions then
-            print("^2SUCCESS: Found", #ConfigMissions.MedicMissions, "medic missions^7")
-        end
-    else
-        print("^1ERROR: ConfigMissions is still nil after resource start^7")
-    end
-end)
+--=========================================================
+-- MISSION STATE VARIABLES
+--=========================================================
 
-------------------------
---- FUNCTIONS 
-------------------------
--- Get Closest Player
-local GetClosestPlayer = function()
-    local coords = GetEntityCoords(cache.ped)
-    local closestDistance = -1
-    local closestPlayer = -1
-    local closestPlayers = RSGCore.Functions.GetPlayersFromCoords()
-
-    for i = 1, #closestPlayers, 1 do
-        if closestPlayers[i] ~= PlayerId() then
-            local ped = GetPlayerPed(closestPlayers[i])
-            local pos = GetEntityCoords(ped)
-            local distance = #(pos - coords)
-
-            if closestDistance == -1 or closestDistance > distance then
-                closestPlayer = closestPlayers[i]
-                closestDistance = distance
-            end
-        end
-    end
-
-    return closestPlayer, closestDistance
-end
-
-------------------------
---- EVENTS
-------------------------
--- Helper function to check if current job is a medic job
-local function IsPlayerMedic()
-    local PlayerData = RSGCore.Functions.GetPlayerData()
-    local job = PlayerData.job.name
-    
-    for _, location in pairs(Config.MedicJobLocations) do
-        if location.job == job then
-            return true
-        end
-    end
-    return false
-end
-
--- Toggle On-Duty
-AddEventHandler('QC-AdvancedMedic:client:ToggleDuty', function()
-    RSGCore.Functions.GetPlayerData(function(PlayerData)
-        if not IsPlayerMedic() then
-            lib.notify({ title = locale('cl_not_medic'), type = 'error', icon = 'fa-solid fa-kit-medical', iconAnimation = 'shake', duration = 7000 })
-            return
-        end
-
-        TriggerServerEvent("RSGCore:ToggleDuty")
-    end)
-end)
-
--- Medic Revive Player
-AddEventHandler('QC-AdvancedMedic:client:RevivePlayer', function()
-    local hasItem = RSGCore.Functions.HasItem('firstaid', 1)
-    local ped = PlayerPedId()
-    if not hasItem then
-        lib.notify({ title = locale('cl_need_kit'), type = 'error', icon = 'fa-solid fa-kit-medical', iconAnimation = 'shake',  duration = 7000  })
-        return
-    end
-
-    local player, distance = GetClosestPlayer()
-    if player == -1 or distance >= 5.0 then
-        lib.notify({ title = locale('cl_player_nearby'), type = 'error', icon = 'fa-solid fa-kit-medical', iconAnimation = 'shake', duration = 7000 })
-        return
-    end
-
-    local playerId = GetPlayerServerId(player)
-    local tped = GetPlayerPed(GetPlayerFromServerId(playerId))
-
-    TaskTurnPedToFaceEntity(cache.ped, tped, -1)
-
-    Wait(3000)
-
-    FreezeEntityPosition(cache.ped, true)
-    TaskStartScenarioInPlace(cache.ped, `WORLD_HUMAN_CROUCH_INSPECT`, -1, true, false, false, false)
-
-    Wait(5000)
-
-    ExecuteCommand('me Reviving')
-
-    lib.progressBar({
-        duration = Config.MedicReviveTime,
-        position = 'bottom',
-        useWhileDead = false,
-        canCancel = false,
-        disableControl = true,
-        disable = {
-            move = true,
-            mouse = false,
-        },
-        anim = {
-            dict = 'mini_games@story@mob4@heal_jules@bandage@arthur',
-            clip = 'bandage_fast'
-        },
-        label = locale('cl_reviving'),
-    })
-    ClearPedTasks(cache.ped)
-    FreezeEntityPosition(cache.ped, false)
-    TriggerServerEvent('QC-AdvancedMedic:server:RevivePlayer', playerId)
-    -- NOTE: Wounds persist through medic revive - use treat wounds or /clearwounds to clear them
-    transG = 0
-
-end)
-
--- Medic Treat Wounds
-AddEventHandler('QC-AdvancedMedic:client:TreatWounds', function()
-    local hasItem = RSGCore.Functions.HasItem('bandage', 1)
-    if not hasItem then
-        lib.notify({ title = locale('cl_need_bandage'), type = 'error', icon = 'fa-solid fa-kit-medical', iconAnimation = 'shake', duration = 7000 })
-        return
-    end
-
-    local player, distance = GetClosestPlayer()
-    if player == -1 or distance >= 5.0 then
-        lib.notify({ title = locale('cl_player_nearby'), type = 'error', icon = 'fa-solid fa-kit-medical', iconAnimation = 'shake', duration = 7000 })
-        return
-    end
-
-    local ped = PlayerPedId()
-    local playerId = GetPlayerServerId(player)
-    local tped = GetPlayerPed(GetPlayerFromServerId(playerId))
-
-    TaskTurnPedToFaceEntity(cache.ped, tped, -1)
-
-    Wait(3000)
-
-    FreezeEntityPosition(cache.ped, true)
-    TaskStartScenarioInPlace(cache.ped, `WORLD_HUMAN_CROUCH_INSPECT`, -1, true, false, false, false)
-
-    Wait(5000)
-
-    ExecuteCommand('me Treating Wounds')
-
-    lib.progressBar({
-        duration = Config.MedicTreatTime,
-        position = 'bottom',
-        useWhileDead = false,
-        canCancel = false,
-        disableControl = true,
-        disable = {
-            move = true,
-            mouse = false,
-        },
-        label = locale('cl_treating'),
-    })
-
-    ClearPedTasks(cache.ped)
-    FreezeEntityPosition(cache.ped, false)
-    TriggerServerEvent('QC-AdvancedMedic:server:TreatWounds', playerId)
-    TriggerEvent('QC-AdvancedMedic:ResetLimbs', playerId)
-    transG = 0
-
-end)
-
--- Medic Treat Wounds
-RegisterNetEvent('QC-AdvancedMedic:client:HealInjuries', function()
-    SetAttributeCoreValue(cache.ped, 0, 100)
-    SetAttributeCoreValue(cache.ped, 1, 100)
-    TriggerServerEvent("RSGCore:Server:SetMetaData", "hunger", RSGCore.Functions.GetPlayerData().metadata["hunger"] + 100)
-    TriggerServerEvent("RSGCore:Server:SetMetaData", "thirst", RSGCore.Functions.GetPlayerData().metadata["thirst"] + 100)
-    ClearPedBloodDamage(cache.ped)
-end)
-
--- Medic Alert
-RegisterNetEvent('QC-AdvancedMedic:client:medicAlert', function(coords, text)
-    lib.notify({ title = locale('cl_info'), description = text, type = 'info', duration = 7000 })
-
-    local blip = BlipAddForCoords(1664425300, coords.x, coords.y, coords.z)
-    local blip2 = BlipAddForCoords(1664425300, coords.x, coords.y, coords.z)
-
-    SetBlipSprite(blip, 1109348405)
-    SetBlipSprite(blip2, -184692826)
-    BlipAddModifier(blip, GetHashKey('BLIP_MODIFIER_AREA_PULSE'))
-    BlipAddModifier(blip2, GetHashKey('BLIP_MODIFIER_AREA_PULSE'))
-    SetBlipScale(blip, 0.8)
-    SetBlipScale(blip2, 2.0)
-    SetBlipName(blip, text)
-    SetBlipName(blip2, text)
-
-    blipEntries[#blipEntries + 1] = {coords = coords, handle = blip}
-    blipEntries[#blipEntries + 1] = {coords = coords, handle = blip2}
-
-    -- Add GPS Route
-
-    if Config.AddGPSRoute then
-        StartGpsMultiRoute(`COLOR_GREEN`, true, true)
-        AddPointToGpsMultiRoute(coords)
-        SetGpsMultiRouteRender(true)
-    end
-
-    CreateThread(function ()
-        while transG ~= 0 do
-            Wait(180 * 4)
-
-            local pcoord = GetEntityCoords(cache.ped)
-            local distance = #(coords - pcoord)
-            transG = transG - 1
-
-            if Config.Debug then
-                print(locale('cl_player_blip') .. tostring(distance) .. locale('cl_m'))
-            end
-
-            if transG <= 0 or distance < 5.0 then
-                for i = 1, #blipEntries do
-                    local blips = blipEntries[i]
-                    local bcoords = blips.coords
-
-                    if coords == bcoords then
-                        if Config.Debug then
-                            print('')
-                            print(locale('cl_blip')..tostring(bcoords))
-                            print(locale('cl_blip_remove')..tostring(blipEntries[i].handle))
-                            print('')
-                        end
-
-                        RemoveBlip(blipEntries[i].handle)
-                    end
-                end
-
-                transG = Config.DeathTimer
-
-                if Config.AddGPSRoute then
-                    ClearGpsMultiRoute(coords)
-                end
-
-                return
-            end
-        end
-    end)
-end)
-
----------------------------------------------------------------------
--- MEDIC MISSION SYSTEM
----------------------------------------------------------------------
 local medicMissionActive = false
 local medicMissionData = nil
 local medicMissionPed = nil
@@ -262,56 +22,117 @@ local currentMissionStep = 0
 local missionStepData = {}
 local transportVehicle = nil
 
--- Miss from the menu
-RegisterNetEvent('QC-AdvancedMedic:client:startMission', function()
+--=========================================================
+-- CONFIGMISSIONS VALIDATION
+--=========================================================
 
+-- Debug ConfigMissions loading
+Citizen.CreateThread(function()
+    Citizen.Wait(1000) -- Wait for configs to load
+    if ConfigMissions then
+        print("^2[MISSIONS] ConfigMissions loaded successfully^7")
+        if ConfigMissions.MedicMissions then
+            print("^2[MISSIONS] Found", #ConfigMissions.MedicMissions, "medic missions^7")
+        end
+    else
+        print("^1[MISSIONS ERROR] ConfigMissions is still nil after resource start^7")
+    end
+end)
+
+--=========================================================
+-- MISSION START
+--=========================================================
+
+-- Start mission event handler
+RegisterNetEvent('QC-AdvancedMedic:client:startMission', function()
     if medicMissionActive then
-        lib.notify({ title = locale('cl_mission_active'), type = 'error', duration = 5000 })
+        lib.notify({
+            title = locale('cl_menu_mission_already_active'),
+            description = locale('cl_desc_mission_finish_current'),
+            type = 'error',
+            duration = 5000
+        })
         return
     end
-    
-    if not Config.EnableMedicMissions or not ConfigMissions.MedicMissions or #ConfigMissions.MedicMissions == 0 then
-        lib.notify({ title = locale('cl_no_missions'), type = 'error', duration = 5000 })
-        print("^3DEBUG: Config.EnableMedicMissions:", Config.EnableMedicMissions, "ConfigMissions.MedicMissions:", ConfigMissions.MedicMissions and "exists" or "nil")
+
+    if not ConfigMissions or not ConfigMissions.MedicMissions then
+        lib.notify({
+            title = locale('cl_menu_mission_error'),
+            description = 'ConfigMissions not loaded properly',
+            type = 'error',
+            duration = 5000
+        })
+        print("^1[MISSIONS ERROR] ConfigMissions is nil or missing MedicMissions^7")
         return
     end
-    -- Get player's job to determine available locations
-    local PlayerData = RSGCore.Functions.GetPlayerData()
-    local playerJob = PlayerData.job.name
-    
-    -- Find matching location group for the player's job
-    local availableLocations = {}
-    for locationName, locationData in pairs(ConfigMissions.Locations) do
-        if locationData.job == playerJob then
-            availableLocations = locationData.locations
-            break
+
+    -- Get player job
+    local Player = RSGCore.Functions.GetPlayerData()
+    local playerJob = Player.job.name
+
+    -- Filter missions by job
+    local availableMissions = {}
+    for missionId, missionData in pairs(ConfigMissions.MedicMissions) do
+        if missionData.job == playerJob or missionData.job == "all" then
+            table.insert(availableMissions, missionId)
         end
     end
-    
-    -- If no job-specific locations found, return error
-    if #availableLocations == 0 then
-        lib.notify({ title = locale('cl_no_missions_job'), type = 'error', duration = 5000 })
+
+    if #availableMissions == 0 then
+        lib.notify({
+            title = locale('cl_menu_no_missions'),
+            description = string.format(locale('cl_desc_no_missions_for_job'), playerJob),
+            type = 'error',
+            duration = 5000
+        })
         return
     end
-    
-    -- Choose a random mission and random location
-    print("^3DEBUG: Total available missions:", #ConfigMissions.MedicMissions)
-    local missionId = math.random(1, #ConfigMissions.MedicMissions)
-    print("^3DEBUG: Selected mission ID:", missionId)
+
+    -- Select random mission
+    local missionId = availableMissions[math.random(1, #availableMissions)]
+
+    -- Get job-specific locations for this mission
+    local jobLocations = ConfigMissions.JobLocations[playerJob]
+    if not jobLocations then
+        lib.notify({
+            title = locale('cl_menu_mission_error'),
+            description = 'No locations configured for ' .. playerJob,
+            type = 'error',
+            duration = 5000
+        })
+        return
+    end
+
+    -- Select random location
+    local availableLocations = jobLocations.patientLocations or {}
+    if #availableLocations == 0 then
+        lib.notify({
+            title = locale('cl_menu_mission_error'),
+            description = 'No patient locations configured',
+            type = 'error',
+            duration = 5000
+        })
+        return
+    end
+
+    if Config.WoundSystem.debugging.enabled then
+        print("^3[MISSIONS DEBUG] Selected mission ID:", missionId)
+    end
+
     local randomLocation = availableLocations[math.random(1, #availableLocations)]
     medicMissionData = ConfigMissions.MedicMissions[missionId]
     medicMissionActive = true
-    
+
     -- Add the location to mission data
     medicMissionData.coords = randomLocation
-    
+
     -- Expand simplified wound config into full wound structure
     local currentTime = GetGameTimer()
     for bodyPart, woundData in pairs(medicMissionData.patientData.wounds) do
         -- Get injury state descriptions from Config.InjuryStates
         local painState = Config.InjuryStates[woundData.painLevel] or Config.InjuryStates[1]
         local bleedingState = Config.InjuryStates[woundData.bleedingLevel] or Config.InjuryStates[1]
-        
+
         -- Build full wound structure from simplified config
         local fullWound = {
             painLevel = woundData.painLevel,
@@ -347,10 +168,10 @@ RegisterNetEvent('QC-AdvancedMedic:client:startMission', function()
         }
         medicMissionData.patientData.wounds[bodyPart] = fullWound
     end
-    
+
     -- Create NPC and Blip using the selected location
     local coords = medicMissionData.coords
-    
+
     print(string.format("^2[MISSION] Starting mission %d: %s at %s location (Job: %s)^7", missionId, medicMissionData.patientData.playerName, tostring(randomLocation), playerJob))
     local pedModel = GetHashKey(medicMissionData.pedModel)
     RequestModel(pedModel)
@@ -381,6 +202,7 @@ RegisterNetEvent('QC-AdvancedMedic:client:startMission', function()
     SetBlipSprite(medicMissionBlip, GetHashKey(medicMissionData.blipSprite), true)
     SetBlipScale(medicMissionBlip, 0.2)
     SetBlipName(medicMissionBlip, medicMissionData.blipName)
+
     -- GPS leads to a mission
     if Config.AddGPSRoute then
         ClearGpsMultiRoute()
@@ -388,7 +210,8 @@ RegisterNetEvent('QC-AdvancedMedic:client:startMission', function()
         AddPointToGpsMultiRoute(coords.x, coords.y, coords.z)
         SetGpsMultiRouteRender(true)
     end
-    -- QTarget zona (ox_target)
+
+    -- ox_target interaction
     exports.ox_target:addLocalEntity(medicMissionPed, {
         {
             name = 'medic_mission_heal',
@@ -402,13 +225,23 @@ RegisterNetEvent('QC-AdvancedMedic:client:startMission', function()
             end
         }
     })
-    lib.notify({ title = locale('mission_title'), description = string.format(locale('cl_desc_fmt_mission_gps_set'), tostring(missionId)), type = 'inform', duration = 9000 })
+
+    lib.notify({
+        title = locale('mission_title'),
+        description = string.format(locale('cl_desc_fmt_mission_gps_set'), tostring(missionId)),
+        type = 'inform',
+        duration = 9000
+    })
 end)
+
+--=========================================================
+-- MISSION INSPECTION
+--=========================================================
 
 -- New mission inspection system that shows medical data
 RegisterNetEvent('QC-AdvancedMedic:client:inspectMissionPed', function()
     if not medicMissionActive or not medicMissionPed or not medicMissionData then return end
-    
+
     -- Use the new patientData structure (same format as player inspections)
     local inspectionData = {
         playerName = medicMissionData.patientData.playerName,
@@ -425,19 +258,20 @@ RegisterNetEvent('QC-AdvancedMedic:client:inspectMissionPed', function()
         description = medicMissionData.patientData.description,
         difficulty = medicMissionData.patientData.difficulty
     }
-    
+
     -- Use NUI inspection panel instead of ox_lib menu
     -- This integrates perfectly with the existing player inspection system
     TriggerEvent('QC-AdvancedMedic:client:ShowInspectionPanel', inspectionData)
 end)
 
--- Mission inspection now uses the NUI system instead of ox_lib menus
--- This provides the same interface as player-to-player inspections for training consistency
+--=========================================================
+-- MISSION NUI REFRESH
+--=========================================================
 
 -- Refresh NUI with updated mission wound data after treatments
 RegisterNetEvent('QC-AdvancedMedic:client:RefreshMissionNUI', function()
     if not medicMissionActive or not medicMissionData then return end
-    
+
     -- Send updated wound data to NUI
     local inspectionData = {
         playerId = -1,
@@ -457,28 +291,32 @@ RegisterNetEvent('QC-AdvancedMedic:client:RefreshMissionNUI', function()
             isDead = false
         }
     }
-    
+
     -- Trigger NUI update
     SendNUIMessage({
         type = 'update-mission-wounds',
         data = inspectionData
     })
-    
-    if Config.Debug then
+
+    if Config.WoundSystem.debugging.enabled then
         print("^2[MISSION NUI] Refreshed wound data after treatment^7")
     end
 end)
 
+--=========================================================
+-- MISSION TREATMENT APPLICATION
+--=========================================================
+
 -- Handle medicine application to mission NPCs
 RegisterNetEvent('QC-AdvancedMedic:client:ApplyMissionMedicine', function(medicineType)
     if not medicMissionActive or not medicMissionData then return end
-    
+
     local medicineConfig = Config.MedicineTypes[medicineType]
     if not medicineConfig then return end
-    
+
     -- Consume the medicine item from inventory
     TriggerServerEvent('QC-AdvancedMedic:server:removeitem', medicineConfig.itemName, 1)
-    
+
     -- Mark only PAIN conditions as treated with medicine (not bleeding)
     local treatedParts = {}
     for bodyPart, woundData in pairs(medicMissionData.patientData.wounds or {}) do
@@ -487,7 +325,7 @@ RegisterNetEvent('QC-AdvancedMedic:client:ApplyMissionMedicine', function(medici
             if not woundData.treatments then
                 woundData.treatments = {}
             end
-            
+
             woundData.treatments[medicineType .. "_pain"] = {
                 treatmentType = "medicine",
                 medicineType = medicineType,
@@ -499,11 +337,11 @@ RegisterNetEvent('QC-AdvancedMedic:client:ApplyMissionMedicine', function(medici
                 status = "active",
                 treatsCondition = "pain" -- Only treats pain, not bleeding
             }
-            
+
             table.insert(treatedParts, bodyPart .. " (pain)")
         end
     end
-    
+
     -- Show notifications
     if #treatedParts > 0 then
         lib.notify({
@@ -512,12 +350,12 @@ RegisterNetEvent('QC-AdvancedMedic:client:ApplyMissionMedicine', function(medici
             type = 'success',
             duration = 8000
         })
-        
-        if Config.Debug then
-            print(string.format("^2[MISSION MEDICINE] Applied %s to mission NPC body parts: %s^7", 
+
+        if Config.WoundSystem.debugging.enabled then
+            print(string.format("^2[MISSION MEDICINE] Applied %s to mission NPC body parts: %s^7",
                 medicineType, table.concat(treatedParts, ", ")))
         end
-        
+
         -- Check if this completes the mission treatment requirements
         checkMissionTreatmentProgress()
     else
@@ -533,13 +371,13 @@ end)
 -- Handle bandage application to mission NPCs
 RegisterNetEvent('QC-AdvancedMedic:client:ApplyMissionBandage', function(bodyPart, bandageType)
     if not medicMissionActive or not medicMissionData then return end
-    
+
     local bandageConfig = Config.BandageTypes[bandageType]
     if not bandageConfig then return end
-    
+
     -- Consume the bandage item from inventory
     TriggerServerEvent('QC-AdvancedMedic:server:removeitem', bandageConfig.itemName, 1)
-    
+
     -- Find the wound for this body part
     local woundData = medicMissionData.patientData.wounds[bodyPart]
     if not woundData then
@@ -551,7 +389,7 @@ RegisterNetEvent('QC-AdvancedMedic:client:ApplyMissionBandage', function(bodyPar
         })
         return
     end
-    
+
     -- Check if this is appropriate for bandage (bleeding 1-6)
     local bleedingLevel = woundData.bleedingLevel or 0
     if bleedingLevel < 1 or bleedingLevel > 6 then
@@ -563,12 +401,12 @@ RegisterNetEvent('QC-AdvancedMedic:client:ApplyMissionBandage', function(bodyPar
         })
         return
     end
-    
+
     -- Apply bandage treatment
     if not woundData.treatments then
         woundData.treatments = {}
     end
-    
+
     woundData.treatments[bandageType .. "_bleeding"] = {
         treatmentType = "bandage",
         bandageType = bandageType,
@@ -585,24 +423,24 @@ RegisterNetEvent('QC-AdvancedMedic:client:ApplyMissionBandage', function(bodyPar
         type = 'success',
         duration = 8000
     })
-    
-    if Config.Debug then
+
+    if Config.WoundSystem.debugging.enabled then
         print(string.format("^2[MISSION BANDAGE] Applied %s to %s (bleeding level: %d)^7", bandageType, bodyPart, bleedingLevel))
     end
-    
+
     checkMissionTreatmentProgress()
 end)
 
 -- Handle tourniquet application to mission NPCs
 RegisterNetEvent('QC-AdvancedMedic:client:ApplyMissionTourniquet', function(bodyPart, tourniquetType)
     if not medicMissionActive or not medicMissionData then return end
-    
+
     local tourniquetConfig = Config.TourniquetTypes[tourniquetType]
     if not tourniquetConfig then return end
-    
+
     -- Consume the tourniquet item from inventory
     TriggerServerEvent('QC-AdvancedMedic:server:removeitem', tourniquetConfig.itemName, 1)
-    
+
     -- Find the wound for this body part
     local woundData = medicMissionData.patientData.wounds[bodyPart]
     if not woundData then
@@ -614,7 +452,7 @@ RegisterNetEvent('QC-AdvancedMedic:client:ApplyMissionTourniquet', function(body
         })
         return
     end
-    
+
     -- Check if this is appropriate for tourniquet (bleeding 7+)
     local bleedingLevel = woundData.bleedingLevel or 0
     if bleedingLevel < 7 then
@@ -626,12 +464,12 @@ RegisterNetEvent('QC-AdvancedMedic:client:ApplyMissionTourniquet', function(body
         })
         return
     end
-    
+
     -- Apply tourniquet treatment
     if not woundData.treatments then
         woundData.treatments = {}
     end
-    
+
     woundData.treatments[tourniquetType .. "_severe_bleeding"] = {
         treatmentType = "tourniquet",
         tourniquetType = tourniquetType,
@@ -648,31 +486,35 @@ RegisterNetEvent('QC-AdvancedMedic:client:ApplyMissionTourniquet', function(body
         type = 'success',
         duration = 8000
     })
-    
-    if Config.Debug then
+
+    if Config.WoundSystem.debugging.enabled then
         print(string.format("^2[MISSION TOURNIQUET] Applied %s to %s (bleeding level: %d)^7", tourniquetType, bodyPart, bleedingLevel))
     end
-    
+
     checkMissionTreatmentProgress()
 end)
+
+--=========================================================
+-- MISSION TREATMENT PROGRESS CHECKING
+--=========================================================
 
 -- Check mission treatment progress and completion
 function checkMissionTreatmentProgress()
     if not medicMissionData or not medicMissionData.patientData then return end
-    
+
     local totalConditions = 0
     local treatedConditions = 0
     local treatmentStatus = {}
-    
+
     for bodyPart, woundData in pairs(medicMissionData.patientData.wounds or {}) do
         local painLevel = woundData.painLevel or 0
         local bleedingLevel = woundData.bleedingLevel or 0
-        
+
         -- Count each condition type that needs treatment
         if painLevel > 0 then
             totalConditions = totalConditions + 1
             local painTreated = false
-            
+
             -- Check if pain has been treated with medicine
             if woundData.treatments then
                 for treatmentId, treatment in pairs(woundData.treatments) do
@@ -682,7 +524,7 @@ function checkMissionTreatmentProgress()
                     end
                 end
             end
-            
+
             if painTreated then
                 treatedConditions = treatedConditions + 1
                 treatmentStatus[bodyPart .. "_pain"] = "✅ Pain treated with medicine"
@@ -690,11 +532,11 @@ function checkMissionTreatmentProgress()
                 treatmentStatus[bodyPart .. "_pain"] = "❌ Pain requires medicine"
             end
         end
-        
+
         if bleedingLevel > 0 then
             totalConditions = totalConditions + 1
             local bleedingTreated = false
-            
+
             -- Check if bleeding has been treated appropriately
             if woundData.treatments then
                 for treatmentId, treatment in pairs(woundData.treatments) do
@@ -710,7 +552,7 @@ function checkMissionTreatmentProgress()
                     end
                 end
             end
-            
+
             if bleedingTreated then
                 treatedConditions = treatedConditions + 1
                 if bleedingLevel >= 7 then
@@ -727,14 +569,14 @@ function checkMissionTreatmentProgress()
             end
         end
     end
-    
-    if Config.Debug then
+
+    if Config.WoundSystem.debugging.enabled then
         print(string.format("^3[MISSION] Treatment progress: %d/%d conditions treated^7", treatedConditions, totalConditions))
         for condition, status in pairs(treatmentStatus) do
             print(string.format("^3[MISSION] %s: %s^7", condition, status))
         end
     end
-    
+
     -- Complete mission when ALL conditions are treated appropriately
     if treatedConditions >= totalConditions and totalConditions > 0 then
         CreateThread(function()
@@ -746,7 +588,7 @@ function checkMissionTreatmentProgress()
                 type = 'success',
                 duration = 10000
             })
-            
+
             Wait(3000)
             completeMissionTreatment()
         end)
@@ -761,11 +603,9 @@ function checkMissionTreatmentProgress()
     end
 end
 
--- Treatment functionality is now handled through NUI callbacks
--- Mission completion will be checked through the existing treatment system
-
--- Treatment functions are now integrated with the NUI system
--- The existing treatment callbacks will handle mission NPCs automatically
+--=========================================================
+-- PATIENT TRANSPORT SYSTEM
+--=========================================================
 
 -- Start patient transport for surgery missions (RedM follow system)
 function startPatientTransport()
@@ -777,7 +617,7 @@ function startPatientTransport()
         type = 'inform',
         duration = 5000
     })
-    
+
     -- Make patient follow the medic
     startPatientFollow()
 
@@ -787,7 +627,7 @@ function startPatientTransport()
         type = 'success',
         duration = 7000
     })
-    
+
     -- Set GPS to medical station
     local stationCoords = ConfigMissions.Settings.medicalStationCoords
     if Config.AddGPSRoute then
@@ -796,23 +636,23 @@ function startPatientTransport()
         AddPointToGpsMultiRoute(stationCoords.x, stationCoords.y, stationCoords.z)
         SetGpsMultiRouteRender(true)
     end
-    
+
     -- Start monitoring for horse mounting
     CreateThread(function()
         while medicMissionPed and DoesEntityExist(medicMissionPed) and not missionPatientTransported do
             local playerPed = cache.ped
             local playerMount = GetMount(playerPed)
-            
+
             -- Check if player mounted a horse and patient isn't already mounted
             if playerMount and playerMount ~= 0 and not IS_PED_ON_MOUNT(medicMissionPed) then
                 mountPatientOnHorse(playerMount)
             end
-            
+
             -- Check if player dismounted and patient is mounted
             if (not playerMount or playerMount == 0) and IS_PED_ON_MOUNT(medicMissionPed) then
                 dismountPatientFromHorse()
             end
-            
+
             -- Check if at medical station
             local playerCoords = GetEntityCoords(playerPed)
             local distance = #(playerCoords - stationCoords)
@@ -820,7 +660,7 @@ function startPatientTransport()
                 handlePatientArrival()
                 break
             end
-            
+
             Wait(1000)
         end
     end)
@@ -829,13 +669,13 @@ end
 -- Start patient following the medic
 function startPatientFollow()
     if not medicMissionPed or not DoesEntityExist(medicMissionPed) then return end
-    
+
     -- Clear any existing tasks
     ClearPedTasks(medicMissionPed)
-    
+
     -- Make patient follow the medic with appropriate offset
     TaskFollowToOffsetOfEntity(medicMissionPed, cache.ped, -2.0, -2.0, 0.0, 1.0, -1, 2.5, true, true, false, true, true, true)
-    
+
     -- Set relationship to companion so they follow properly
     SetPedRelationshipGroupHash(medicMissionPed, GetHashKey('COMPANION'))
 
@@ -850,13 +690,13 @@ end
 -- Mount patient on horse when player mounts
 function mountPatientOnHorse(playerMount)
     if not medicMissionPed or not DoesEntityExist(medicMissionPed) or not playerMount then return end
-    
+
     -- Check if horse has available seat (behind player)
     local availableSeats = GetVehicleMaxNumberOfPassengers(playerMount)
     if availableSeats > 0 then
         -- Clear patient tasks
         ClearPedTasks(medicMissionPed)
-        
+
         -- Mount patient on horse behind player
         TaskMountAnimal(medicMissionPed, playerMount, -1, -1, 1.0, 1)
 
@@ -872,10 +712,10 @@ end
 -- Dismount patient from horse when player dismounts
 function dismountPatientFromHorse()
     if not medicMissionPed or not DoesEntityExist(medicMissionPed) then return end
-    
+
     -- Dismount patient
     TaskDismountAnimal(medicMissionPed, 1, 0, 0, 0, 0)
-    
+
     -- Wait a moment then resume following
     CreateThread(function()
         Wait(2000)
@@ -895,9 +735,9 @@ end
 -- Handle patient arrival at medical station
 function handlePatientArrival()
     if not medicMissionPed or missionPatientTransported then return end
-    
+
     missionPatientTransported = true
-    
+
     -- Clear patient tasks
     ClearPedTasks(medicMissionPed)
 
@@ -917,14 +757,18 @@ function handlePatientArrival()
     })
 end
 
--- Load patient into ambulance (legacy function - kept for compatibility)
+--=========================================================
+-- AMBULANCE TRANSPORT (Legacy - kept for compatibility)
+--=========================================================
+
+-- Load patient into ambulance
 function loadPatientIntoAmbulance()
     if not medicMissionPed or not transportVehicle then return end
-    
+
     local playerCoords = GetEntityCoords(cache.ped)
     local pedCoords = GetEntityCoords(medicMissionPed)
     local distance = #(playerCoords - pedCoords)
-    
+
     if distance > ConfigMissions.Settings.transportRange then
         lib.notify({
             title = locale('cl_menu_too_far'),
@@ -934,10 +778,10 @@ function loadPatientIntoAmbulance()
         })
         return
     end
-    
+
     -- Animation for loading patient
     TaskStartScenarioInPlace(cache.ped, `WORLD_HUMAN_CROUCH_INSPECT`, -1, true, false, false, false)
-    
+
     if lib.progressBar({
         duration = 8000,
         position = 'bottom',
@@ -953,7 +797,7 @@ function loadPatientIntoAmbulance()
         },
     }) then
         ClearPedTasks(cache.ped)
-        
+
         -- "Load" patient (make them invisible and attach to vehicle)
         SetEntityVisible(medicMissionPed, false)
         FreezeEntityPosition(medicMissionPed, true)
@@ -964,7 +808,7 @@ function loadPatientIntoAmbulance()
             type = 'success',
             duration = 5000
         })
-        
+
         -- Set GPS to medical station
         local stationCoords = ConfigMissions.Settings.medicalStationCoords
         if Config.AddGPSRoute then
@@ -973,13 +817,13 @@ function loadPatientIntoAmbulance()
             AddPointToGpsMultiRoute(stationCoords.x, stationCoords.y, stationCoords.z)
             SetGpsMultiRouteRender(true)
         end
-        
+
         -- Add target to unload at medical station
         CreateThread(function()
             while transportVehicle and DoesEntityExist(transportVehicle) and not missionPatientTransported do
                 local vehCoords = GetEntityCoords(transportVehicle)
                 local distanceToStation = #(vehCoords - stationCoords)
-                
+
                 if distanceToStation < ConfigMissions.Settings.transportRange then
                     exports.ox_target:addLocalEntity(transportVehicle, {
                         {
@@ -999,7 +843,7 @@ function loadPatientIntoAmbulance()
                 Wait(1000)
             end
         end)
-        
+
     else
         ClearPedTasks(cache.ped)
         lib.notify({
@@ -1014,11 +858,11 @@ end
 -- Unload patient at medical station
 function unloadPatientAtStation()
     if not transportVehicle or missionPatientTransported then return end
-    
+
     local stationCoords = ConfigMissions.Settings.medicalStationCoords
     local vehCoords = GetEntityCoords(transportVehicle)
     local distance = #(vehCoords - stationCoords)
-    
+
     if distance > ConfigMissions.Settings.transportRange then
         lib.notify({
             title = locale('cl_menu_wrong_location'),
@@ -1028,10 +872,10 @@ function unloadPatientAtStation()
         })
         return
     end
-    
+
     -- Animation for unloading
     TaskStartScenarioInPlace(cache.ped, `WORLD_HUMAN_CROUCH_INSPECT`, -1, true, false, false, false)
-    
+
     if lib.progressBar({
         duration = 6000,
         position = 'bottom',
@@ -1042,17 +886,17 @@ function unloadPatientAtStation()
         label = 'Unloading patient at medical station...'
     }) then
         ClearPedTasks(cache.ped)
-        
+
         -- Move patient to surgery room
         local surgeryCoords = ConfigMissions.Settings.surgeryRoomCoords
         SetEntityCoords(medicMissionPed, surgeryCoords.x, surgeryCoords.y, surgeryCoords.z)
         SetEntityVisible(medicMissionPed, true)
         FreezeEntityPosition(medicMissionPed, true)
-        
+
         -- Clean up transport vehicle
         DeleteEntity(transportVehicle)
         transportVehicle = nil
-        
+
         missionPatientTransported = true
 
         lib.notify({
@@ -1061,11 +905,11 @@ function unloadPatientAtStation()
             type = 'success',
             duration = 7000
         })
-        
+
         if Config.AddGPSRoute then
             ClearGpsMultiRoute()
         end
-        
+
         -- Update mission blip to surgery room
         if medicMissionBlip then
             RemoveBlip(medicMissionBlip)
@@ -1074,7 +918,7 @@ function unloadPatientAtStation()
         SetBlipSprite(medicMissionBlip, GetHashKey('blip_shop_doctor'), true)
         SetBlipScale(medicMissionBlip, 0.3)
         SetBlipName(medicMissionBlip, 'Surgery Patient')
-        
+
     else
         ClearPedTasks(cache.ped)
         lib.notify({
@@ -1086,15 +930,19 @@ function unloadPatientAtStation()
     end
 end
 
+--=========================================================
+-- SURGICAL PROCEDURES
+--=========================================================
+
 -- Start surgical procedures
 function startSurgicalProcedures()
     if not medicMissionData or not missionPatientTransported then return end
-    
+
     local surgeryTreatment = medicMissionData.medicalCondition.surgeryTreatment
     if not surgeryTreatment or not surgeryTreatment.surgicalProcedures then return end
-    
+
     surgeryInProgress = true
-    
+
     -- Show surgery menu
     showSurgeryMenu(surgeryTreatment.surgicalProcedures)
 end
@@ -1108,11 +956,11 @@ function showSurgeryMenu(procedures)
         description = locale('mission_select_procedures'),
         disabled = true
     })
-    
+
     for i, procedure in ipairs(procedures) do
         local completed = missionStepData['surgery_' .. i] and missionStepData['surgery_' .. i].completed
         local statusIcon = completed and '✅' or '🔄'
-        
+
         table.insert(options, {
             title = statusIcon .. ' ' .. (ConfigMissions.SurgeryProcedures[procedure.procedure] and ConfigMissions.SurgeryProcedures[procedure.procedure].name or procedure.procedure),
             description = procedure.description .. (completed and ' (COMPLETED)' or ''),
@@ -1124,7 +972,7 @@ function showSurgeryMenu(procedures)
             end
         })
     end
-    
+
     -- Check if all procedures are complete
     local allComplete = true
     for i, _ in ipairs(procedures) do
@@ -1133,7 +981,7 @@ function showSurgeryMenu(procedures)
             break
         end
     end
-    
+
     if allComplete then
         table.insert(options, {
             title = locale('cl_menu_complete_surgery'),
@@ -1150,13 +998,13 @@ function showSurgeryMenu(procedures)
         onSelect = function()
         end
     })
-    
+
     lib.registerContext({
         id = 'surgery_procedures',
         title = locale('cl_menu_surgical_procedures') .. ' - ' .. medicMissionData.medicalCondition.name,
         options = options
     })
-    
+
     lib.showContext('surgery_procedures')
 end
 
@@ -1164,7 +1012,7 @@ end
 function performSurgicalProcedure(procedure, procedureIndex)
     local procedureData = ConfigMissions.SurgeryProcedures[procedure.procedure]
     if not procedureData then return end
-    
+
     -- Check if player has required items
     for _, item in ipairs(procedureData.requiredItems) do
         if not RSGCore.Functions.HasItem(item, 1) then
@@ -1177,10 +1025,10 @@ function performSurgicalProcedure(procedure, procedureIndex)
             return
         end
     end
-    
+
     -- Start procedure animation and progress
     TaskStartScenarioInPlace(cache.ped, `WORLD_HUMAN_CROUCH_INSPECT`, -1, true, false, false, false)
-    
+
     if lib.progressBar({
         duration = procedureData.duration * 1000,
         position = 'bottom',
@@ -1196,14 +1044,14 @@ function performSurgicalProcedure(procedure, procedureIndex)
         },
     }) then
         ClearPedTasks(cache.ped)
-        
+
         -- Consume required items
         for _, item in ipairs(procedureData.requiredItems) do
             if ConfigMissions.MedicalEquipment[item] and ConfigMissions.MedicalEquipment[item].consumable then
                 TriggerServerEvent('QC-AdvancedMedic:server:removeitem', item, 1)
             end
         end
-        
+
         -- Mark procedure as completed
         missionStepData['surgery_' .. procedureIndex] = {
             completed = true,
@@ -1216,11 +1064,11 @@ function performSurgicalProcedure(procedure, procedureIndex)
             type = 'success',
             duration = 5000
         })
-        
+
         -- Show updated surgery menu
         local surgeryTreatment = medicMissionData.medicalCondition.surgeryTreatment
         showSurgeryMenu(surgeryTreatment.surgicalProcedures)
-        
+
     else
         ClearPedTasks(cache.ped)
         lib.notify({
@@ -1246,12 +1094,16 @@ function completeSurgicalMission()
     completeMissionTreatment()
 end
 
+--=========================================================
+-- MISSION COMPLETION
+--=========================================================
+
 -- Get closest vehicle spawn point
 function GetClosestVehicleSpawn(coords)
     local spawns = ConfigMissions.PatientTransport.ambulanceSpawns
     local closestSpawn = spawns[1]
     local closestDistance = #(coords - vector3(spawns[1].x, spawns[1].y, spawns[1].z))
-    
+
     for i = 2, #spawns do
         local distance = #(coords - vector3(spawns[i].x, spawns[i].y, spawns[i].z))
         if distance < closestDistance then
@@ -1259,7 +1111,7 @@ function GetClosestVehicleSpawn(coords)
             closestSpawn = spawns[i]
         end
     end
-    
+
     return closestSpawn
 end
 
@@ -1274,10 +1126,10 @@ function completeMissionTreatment()
         SetPedSeeingRange(medicMissionPed, 25.0)
         SetPedHearingRange(medicMissionPed, 25.0)
         SetPedKeepTask(medicMissionPed, false)
-        
+
         -- Let him walk random like a plain ped
         TaskWanderStandard(medicMissionPed, 10.0, 10)
-        
+
         -- NPC disappears after 10 seconds
         CreateThread(function()
             Wait(10000)
@@ -1286,26 +1138,26 @@ function completeMissionTreatment()
             end
         end)
     end
-    
+
     -- Clean up mission data
     if medicMissionBlip then
         RemoveBlip(medicMissionBlip)
         medicMissionBlip = nil
     end
-    
+
     if transportVehicle and DoesEntityExist(transportVehicle) then
         DeleteEntity(transportVehicle)
         transportVehicle = nil
     end
-    
+
     if Config.AddGPSRoute then
         ClearGpsMultiRoute()
     end
-    
+
     -- Determine reward based on mission type
     local missionType = medicMissionData and medicMissionData.missionType or 'field'
     TriggerServerEvent('QC-AdvancedMedic:server:MissionReward', missionType)
-    
+
     -- Reset mission variables
     medicMissionActive = false
     medicMissionPed = nil
@@ -1316,16 +1168,41 @@ function completeMissionTreatment()
     missionStepData = {}
 end
 
--- Cleanup
+--=========================================================
+-- CLEANUP ON RESOURCE STOP
+--=========================================================
+
 local resource = GetCurrentResourceName()
 AddEventHandler("onResourceStop", function(resourceName)
     if resource ~= resourceName then return end
 
-    ClearGpsMultiRoute(coords)
-
-    for i = 1, #blipEntries do
-        if blipEntries[i].handle then
-            RemoveBlip(blipEntries[i].handle)
-        end
+    -- Cleanup missions
+    if Config.AddGPSRoute then
+        ClearGpsMultiRoute()
     end
+
+    if medicMissionBlip and DoesBlipExist(medicMissionBlip) then
+        RemoveBlip(medicMissionBlip)
+    end
+
+    if medicMissionPed and DoesEntityExist(medicMissionPed) then
+        DeleteEntity(medicMissionPed)
+    end
+
+    if transportVehicle and DoesEntityExist(transportVehicle) then
+        DeleteEntity(transportVehicle)
+    end
+
+    print("^2[MISSIONS] Mission system cleaned up^7")
 end)
+
+--=========================================================
+-- EXPORTS
+--=========================================================
+
+exports('startPatientTransport', startPatientTransport)
+exports('checkMissionTreatmentProgress', checkMissionTreatmentProgress)
+
+if Config.WoundSystem and Config.WoundSystem.debugging and Config.WoundSystem.debugging.enabled then
+    print("^2[MEDIC MISSIONS] Mission system loaded^7")
+end

@@ -1,0 +1,2 @@
+#Ignore all files in any directory named backup
+backup_old_files/
