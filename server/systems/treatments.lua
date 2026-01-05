@@ -149,6 +149,7 @@ local function ApplyBandageToPlayer(medicSource, patientSource, bandageData)
 end
 
 -- Apply tourniquet to player (server-authoritative)
+-- Global application - no body part needed (circuit-damage pattern)
 local function ApplyTourniquetToPlayer(medicSource, patientSource, tourniquetData)
     -- Server-authoritative validation
     local authorized, MedicOrErr, Patient = AuthorizeTreatment(
@@ -165,44 +166,37 @@ local function ApplyTourniquetToPlayer(medicSource, patientSource, tourniquetDat
 
     local Medic = MedicOrErr
 
-    -- Validate body part has artery
-    local valid, validErr = exports['QC-AdvancedMedic']:ValidateBodyPartForTreatment(
-        tourniquetData.bodyPart,
-        'tourniquet'
-    )
-
-    if not valid then
-        exports['QC-AdvancedMedic']:NotifyValidationError(medicSource, validErr)
-        return false, validErr
-    end
-
     -- Remove item from inventory
     if not Medic.Functions.RemoveItem(tourniquetData.itemName or tourniquetData.tourniquetType, 1) then
         exports['QC-AdvancedMedic']:NotifyError(medicSource, locale('sv_error'), "Failed to remove item")
         return false, "FAILED_REMOVE_ITEM"
     end
 
-    -- Send treatment to client
-    TriggerClientEvent('QC-AdvancedMedic:client:ReceiveTourniquet', patientSource, tourniquetData)
+    -- Send global tourniquet to client (no body part)
+    TriggerClientEvent('QC-AdvancedMedic:client:ReceiveTourniquet', patientSource, {
+        tourniquetType = tourniquetData.tourniquetType,
+        appliedBy = medicSource
+    })
 
-    -- Log event
+    -- Log event (global application)
     pcall(function()
         exports['QC-AdvancedMedic']:LogMedicalEvent(
             Patient.PlayerData.citizenid,
             'tourniquet_applied',
-            tourniquetData.bodyPart,
+            nil, -- No body part - global application
             {
                 tourniquetType = tourniquetData.tourniquetType,
-                appliedBy = Medic.PlayerData.citizenid
+                appliedBy = Medic.PlayerData.citizenid,
+                isGlobal = true
             }
         )
     end)
 
-    exports['QC-AdvancedMedic']:NotifyTreatmentApplied(medicSource, 'tourniquet', tourniquetData.bodyPart)
+    exports['QC-AdvancedMedic']:NotifyTreatmentApplied(medicSource, 'tourniquet', nil)
 
     if Config.WoundSystem.debugging.enabled then
-        print(string.format("^2[TREATMENT] Tourniquet applied: %s on %s^7",
-            tourniquetData.tourniquetType, tourniquetData.bodyPart))
+        print(string.format("^2[TREATMENT] Global tourniquet applied: %s (stops ALL bleeding)^7",
+            tourniquetData.tourniquetType))
     end
 
     return true

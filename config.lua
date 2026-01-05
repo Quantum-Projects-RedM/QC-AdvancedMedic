@@ -624,45 +624,45 @@ Config.TourniquetTypes = {
         label = 'Rope Tourniquet',
         itemName = 'tourniquet_rope',    -- Actual item name in inventory
         effectiveness = 70,
-        maxDuration = 1200,          -- 20 minutes max (rough material causes damage)
+        maxDuration = 20,            -- 20 minutes max (rough material causes damage)
         damageAmount = 3,            -- Higher damage from coarse rope
         bleedingStopChance = 85,     -- Decent bleeding control
         oneTimeHeal = 0,             -- No healing, only bleeding control
         painIncrease = 15,           -- Causes significant pain
-        description = 'Improvised rope tourniquet - rough but effective'
+        description = 'Stops ALL bleeding for 20 minutes. Improvised rope - rough but effective.'
     },
     ['leather'] = {
         label = 'Leather Strap',
         itemName = 'tourniquet_leather', -- Actual item name in inventory
         effectiveness = 75,
-        maxDuration = 1400,          -- 23 minutes max
+        maxDuration = 23,            -- 23 minutes max
         damageAmount = 2,            -- Moderate damage
         bleedingStopChance = 88,     -- Good bleeding control
         oneTimeHeal = 2,             -- Slight comfort benefit
         painIncrease = 12,           -- Moderate pain increase
-        description = 'Leather strap tourniquet - durable frontier solution'
+        description = 'Stops ALL bleeding for 23 minutes. Durable frontier solution.'
     },
     ['cloth'] = {
         label = 'Cloth Tourniquet',
         itemName = 'tourniquet_cloth',   -- Actual item name in inventory
         effectiveness = 65,
-        maxDuration = 1000,          -- 16 minutes max (stretches out)
+        maxDuration = 16,            -- 16 minutes max (stretches out)
         damageAmount = 2,            -- Lower pressure damage
         bleedingStopChance = 80,     -- Basic bleeding control
         oneTimeHeal = 0,             -- No healing benefit
         painIncrease = 10,           -- Lower pain increase
-        description = 'Cloth tourniquet - basic emergency bleeding control'
+        description = 'Stops ALL bleeding for 16 minutes. Basic emergency bleeding control.'
     },
     ['medical'] = {
         label = 'Medical Tourniquet',
         itemName = 'tourniquet_medical', -- Actual item name in inventory
         effectiveness = 95,
-        maxDuration = 1800,          -- 30 minutes max (professional grade)
+        maxDuration = 30,            -- 30 minutes max (professional grade)
         damageAmount = 1,            -- Minimal damage when used properly
         bleedingStopChance = 98,     -- Excellent bleeding control
         oneTimeHeal = 5,             -- Professional application provides comfort
         painIncrease = 8,            -- Minimal additional pain
-        description = 'Professional medical tourniquet - hospital grade'
+        description = 'Stops ALL bleeding for 30 minutes. Professional hospital-grade equipment.'
     }
 }
 
@@ -876,123 +876,143 @@ Config.UI = {
 
 Config.InfectionSystem = {
     enabled = true,                         -- Enable/disable entire infection system
-    
+
     -- ========================================
-    -- UNIFIED TIMING SETTINGS
+    -- GLOBAL INFECTION TIMING SETTINGS
     -- ========================================
-    -- Uses same timing as wound progression (2 minutes) for efficiency
-    progressionInterval = 120000,           -- 2 minutes (same as wound progression)
-    
-    -- ========================================  
-    -- INFECTION TRIGGER SETTINGS
+    progressionInterval = 120000,           -- 2 minutes between progression checks
+    checkInterval = 10000,                  -- 10 seconds - how often to check and apply effects
+    progressionRate = 2,                    -- +2 infection level per progression interval (0-100 scale)
+
     -- ========================================
-    dirtyBandageGracePeriod = 60,           -- Seconds after bandage effectiveness expires before infection risk (1 minute for testing)
-    baseInfectionChance = 15,               -- Base 15% infection chance per tick with dirty bandage
-    
+    -- INFECTION TRIGGER SETTINGS (DIRTY BANDAGES)
+    -- ========================================
+    dirtyBandageGracePeriod = 60,           -- Seconds after bandage expires before infection risk
+    baseInfectionChance = 15,               -- Base 15% infection chance per check with dirty bandage
+
     -- ========================================
     -- WOUND TYPE INFECTION MULTIPLIERS
-    -- ========================================  
+    -- ========================================
     -- Multiplies baseInfectionChance based on bullet penetration type
     woundTypeMultipliers = {
         bullet_stuck = 2.0,         -- Lodged bullet = 30% chance (15 × 2.0)
-        bullet_fragmented = 2.5,    -- Bullet fragments = 37.5% chance (15 × 2.5)  
+        bullet_fragmented = 2.5,    -- Bullet fragments = 37.5% chance (15 × 2.5)
         bullet_through = 1.0,       -- Clean through = 15% chance (15 × 1.0)
         default = 1.2               -- Other wounds = 18% chance (15 × 1.2)
     },
-    
+
     -- ========================================
-    -- PERCENTAGE-BASED INFECTION PROGRESSION
+    -- INFECTION SOURCES (AMOUNT ADDED TO LEVEL)
     -- ========================================
-    -- Infection builds up percentage over time until stage thresholds reached
-    infectionPercentagePerTick = 10,        -- 10% infection buildup per progression tick
-    
+    -- How much each source adds to global infection level (0-100)
+    sources = {
+        dirty_bandage = 15,         -- Expired bandage
+        old_bandage = 10,           -- Old bandage removed
+        untreated_wound_24h = 20,   -- Wound untreated for 24 hours
+        swamp_water = 25,           -- Environmental contamination
+        animal_bite = 30,           -- Animal attack
+    }
+
     -- ========================================
-    -- INFECTION STAGES - 4 stages progression
+    -- GLOBAL INFECTION STAGES (0-100 LEVEL)
     -- ========================================
-    -- Each stage has symptoms, effects, and progression chance
-    -- Effects apply every stageInterval (60 seconds for testing, 600 for production)
-    -- 
-    -- HEALTH DAMAGE GUIDE (Max Health = 600):
-    -- - Stage 1: 1-3 damage = Very mild (can survive 200+ ticks)
-    -- - Stage 2: 3-8 damage = Mild (can survive 75+ ticks) 
-    -- - Stage 3: 8-15 damage = Serious (can survive 40+ ticks)
-    -- - Stage 4: 15-25 damage = Critical (can survive 24+ ticks)
+    -- Stage 0: 0% (No infection)
+    -- Stage 1: 1-20% (Mild)
+    -- Stage 2: 21-50% (Moderate)
+    -- Stage 3: 51-80% (Severe)
+    -- Stage 4: 81-100% (Critical)
     stages = {
+        [0] = {
+            name = "No Infection",
+            minLevel = 0,
+            maxLevel = 0,
+            symptom = nil,
+            effects = nil
+        },
         [1] = {
-            name = "Early Infection",
-            minPercent = 25,                -- Triggers at 25% infection
-            maxPercent = 49,                -- Stage 1: 25-49%
-            symptom = "You feel a burning sensation around your bandage",
+            name = "Mild Infection",
+            minLevel = 1,
+            maxLevel = 20,
+            symptom = "You feel a burning sensation - a mild infection is developing",
             effects = {
-                staminaDrain = 8.0,         -- Noticeable stamina drain
-                temperatureChange = 0.5,    -- Mild fever (no visual effects)
-                movementPenalty = 5.0       -- 5% movement speed reduction
+                healthDrain = 1,            -- -1 HP per check (very mild)
+                movementPenalty = 0         -- No movement penalty yet
             }
         },
         [2] = {
-            name = "Moderate Infection", 
-            minPercent = 50,                -- Triggers at 50% infection
-            maxPercent = 74,                -- Stage 2: 50-74%
-            symptom = "The area around your bandage is becoming red and swollen",
+            name = "Moderate Infection",
+            minLevel = 21,
+            maxLevel = 50,
+            symptom = "The infection is worsening - you feel feverish and weak",
             effects = {
-                staminaDrain = 15.0,        -- Heavy stamina drain
-                temperatureChange = 1.0,    -- Low fever (mild visual effects)
-                movementPenalty = 15.0      -- 15% movement speed reduction
+                healthDrain = 2,            -- -2 HP per check
+                movementPenalty = 5         -- 5% slower movement (0.95x)
             }
         },
         [3] = {
-            name = "Serious Infection",
-            minPercent = 75,                -- Triggers at 75% infection
-            maxPercent = 89,                -- Stage 3: 75-89%
-            symptom = "The infection is causing significant pain and inflammation", 
+            name = "Severe Infection",
+            minLevel = 51,
+            maxLevel = 80,
+            symptom = "The infection is spreading dangerously - seek immediate treatment!",
             effects = {
-                staminaDrain = 25.0,        -- Severe stamina drain  
-                temperatureChange = 1.5,    -- High fever (noticeable effects)
-                movementPenalty = 25.0      -- 25% movement speed reduction
+                healthDrain = 3,            -- -3 HP per check
+                movementPenalty = 10,       -- 10% slower movement (0.90x)
+                visualEffects = true        -- Screen effects (blur, color grading)
             }
         },
         [4] = {
-            name = "Severe Infection",
-            minPercent = 90,                -- Triggers at 90% infection
-            maxPercent = 100,               -- Stage 4: 90-100%
-            symptom = "The infection is spreading and causing high fever",
+            name = "Critical Infection",
+            minLevel = 81,
+            maxLevel = 100,
+            symptom = "Critical infection! Life-threatening sepsis - you need antibiotics NOW!",
             effects = {
-                staminaDrain = 40.0,        -- Extreme stamina drain
-                temperatureChange = 2.5,    -- Very high fever (strong visual effects)
-                movementPenalty = 45.0      -- 45% movement speed reduction
+                healthDrain = 5,            -- -5 HP per check (very dangerous)
+                movementPenalty = 15,       -- 15% slower movement (0.85x)
+                visualEffects = true        -- Strong visual effects
             }
         }
     },
     
     -- ========================================
-    -- CURE ITEMS - Gradual healing system
+    -- CURE ITEMS - GLOBAL INFECTION TREATMENT
     -- ========================================
-    -- Items slowly reduce infection over multiple uses
+    -- Items reduce global infection level (0-100)
     -- Configure these to match your server's available items
     cureItems = {
         ['antibiotics'] = {
             label = 'Antibiotics',
             itemName = 'antibiotics',       -- Your inventory item name
-            cureProgress = 40.0,            -- 40% cure progress per use (gradual healing)
+            cureProgress = 100,             -- Reduces infection level by 100 (full cure)
             treatmentTime = 15000,          -- 15 seconds to apply
-            preventReinfection = 3600,      -- Prevents reinfection for 1 hour
-            description = 'Modern medicine - most effective treatment'
+            description = 'Modern medicine - full cure for any infection'
         },
         ['alcohol'] = {
             label = 'Alcohol',
-            itemName = 'alcohol',           -- Your inventory item name  
-            cureProgress = 25.0,            -- 25% cure progress per use (slower healing)
+            itemName = 'alcohol',           -- Your inventory item name
+            cureProgress = 30,              -- Reduces infection level by 30
             treatmentTime = 8000,           -- 8 seconds to apply
-            preventReinfection = 1800,      -- Prevents reinfection for 30 minutes
-            description = 'Disinfectant - moderate effectiveness'
+            description = 'Disinfectant - reduces infection moderately'
         },
         ['cocaine'] = {
-            label = 'Cocaine', 
+            label = 'Cocaine',
             itemName = 'cocaine',           -- Your inventory item name
-            cureProgress = 15.0,            -- 15% cure progress per use (very slow)
+            cureProgress = 15,              -- Reduces infection level by 15
             treatmentTime = 5000,           -- 5 seconds to apply
-            preventReinfection = 600,       -- Prevents reinfection for 10 minutes
             description = 'Pain relief with mild antiseptic properties'
+        },
+        ['medicine_basic'] = {
+            label = 'Basic Medicine',
+            itemName = 'medicine_basic',
+            cureProgress = 30,              -- Reduces infection level by 30
+            treatmentTime = 10000,          -- 10 seconds to apply
+            description = '1890s frontier medicine - moderate effectiveness'
+        },
+        ['injection_antibiotic'] = {
+            label = 'Antibiotic Injection',
+            itemName = 'injection_antibiotic',
+            cureProgress = 100,             -- Full cure
+            treatmentTime = 12000,          -- 12 seconds to inject
+            description = 'Modern injection - completely cures infection'
         }
     },
     

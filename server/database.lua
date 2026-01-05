@@ -298,72 +298,75 @@ end
 -- INFECTION DATA PERSISTENCE
 --=========================================================
 
--- Save infection data for a player (optimized with immunity tracking)
+-- Save global infection data for a player (simplified global tracking)
 local function SaveInfectionData(citizenid, infectionData)
     if not citizenid or not infectionData then return false end
-    
-    -- Mark all existing infections as inactive
-    MySQL.Async.execute('UPDATE player_infections SET is_active = 0 WHERE citizenid = ? AND is_active = 1', {citizenid})
-    
-    -- Insert current active infections (with consolidated immunity data)
-    for bodyPart, infection in pairs(infectionData) do
-        local metadata = json.encode(infection.metadata or {})
-        
-        MySQL.Async.execute([[
-            INSERT INTO player_infections 
-            (citizenid, body_part, infection_type, category, stage, start_time, last_progress_check, metadata)
-            VALUES (?, ?, ?, ?, ?, FROM_UNIXTIME(?), FROM_UNIXTIME(?), ?)
-            ON DUPLICATE KEY UPDATE
-                stage = VALUES(stage),
-                last_progress_check = VALUES(last_progress_check),
-                metadata = VALUES(metadata)
-        ]], {
-            citizenid,
-            bodyPart,
-            'bandage_infection',  -- Always bandage infection in simplified system
-            'dirtyBandage',       -- Always dirty bandage category
-            infection.stage,
-            math.floor(infection.startTime / 1000), -- Convert from GetGameTimer() to unix timestamp
-            math.floor(infection.lastProgressCheck / 1000),
-            metadata
-        })
-        
-        -- Log infection creation in medical history (only if tables exist)
+
+    -- Handle global infection structure
+    local sourcesJson = json.encode(infectionData.sources or {})
+
+    MySQL.Async.execute([[
+        INSERT INTO player_infection
+        (citizenid, infection_level, infection_stage, infection_sources, timestamp, last_progress_check)
+        VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), FROM_UNIXTIME(?))
+        ON DUPLICATE KEY UPDATE
+            infection_level = VALUES(infection_level),
+            infection_stage = VALUES(infection_stage),
+            infection_sources = VALUES(infection_sources),
+            timestamp = VALUES(timestamp),
+            last_progress_check = VALUES(last_progress_check),
+            updated_at = CURRENT_TIMESTAMP
+    ]], {
+        citizenid,
+        infectionData.level or 0,
+        infectionData.stage or 0,
+        sourcesJson,
+        math.floor((infectionData.timestamp or 0) / 1000), -- Convert from GetGameTimer() to unix timestamp
+        math.floor((infectionData.lastProgressCheck or 0) / 1000)
+    })
+
+    -- Log infection changes in medical history
+    if infectionData.level > 0 then
         pcall(function()
-            LogMedicalEvent(citizenid, 'infection_started', bodyPart, {
-                stage = infection.stage,
-                cause = infection.metadata and infection.metadata.causeDescription
+            LogMedicalEvent(citizenid, 'infection_update', nil, {
+                level = infectionData.level,
+                stage = infectionData.stage,
+                sources = infectionData.sources
             })
         end)
     end
-    
+
     return true
 end
 
--- Load infection data for a player
+-- Load global infection data for a player
 local function LoadInfectionData(citizenid)
-    if not citizenid then return {} end
-    
-    local result = MySQL.Sync.fetchAll('SELECT * FROM player_infections WHERE citizenid = ? AND is_active = 1', {citizenid})
-    local infectionData = {}
-    
-    for _, row in ipairs(result) do
-        local metadata = {}
-        
-        if row.metadata then
-            local success, decoded = pcall(json.decode, row.metadata)
-            if success then metadata = decoded end
+    if not citizenid then
+        return { level = 0, stage = 0, sources = {}, timestamp = 0, lastProgressCheck = 0 }
+    end
+
+    local result = MySQL.Sync.fetchAll('SELECT * FROM player_infection WHERE citizenid = ?', {citizenid})
+
+    if result and result[1] then
+        local row = result[1]
+        local sources = {}
+
+        if row.infection_sources then
+            local success, decoded = pcall(json.decode, row.infection_sources)
+            if success then sources = decoded end
         end
-        
-        infectionData[row.body_part] = {
-            stage = row.stage,
-            startTime = (row.start_time * 1000), -- Convert unix timestamp to GetGameTimer() format
-            lastProgressCheck = (row.last_progress_check * 1000),
-            metadata = metadata
+
+        return {
+            level = row.infection_level or 0,
+            stage = row.infection_stage or 0,
+            sources = sources,
+            timestamp = (row.timestamp or 0) * 1000, -- Convert unix timestamp to GetGameTimer() format
+            lastProgressCheck = (row.last_progress_check or 0) * 1000
         }
     end
-    
-    return infectionData
+
+    -- Return empty global infection if no data found
+    return { level = 0, stage = 0, sources = {}, timestamp = 0, lastProgressCheck = 0 }
 end
 
 --=========================================================

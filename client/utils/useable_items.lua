@@ -9,119 +9,98 @@ local isBusy = false
 local targetBodyPartOverride = nil
 
 --=========================================================
--- BANDAGE USAGE
+-- BANDAGE HELPER FUNCTIONS
 --=========================================================
 
-RegisterNetEvent('QC-AdvancedMedic:client:usebandage', function(bandageType)
-    if isBusy then return end
-
-    -- Default to cotton if no type specified
-    bandageType = bandageType or 'cotton'
-
-    -- Get bandage config
-    local bandageConfig = Config.BandageTypes[bandageType]
+-- Validate bandage usage (consolidated validation)
+local function ValidateBandageUsage(bandageType)
+    -- Get bandage configuration
+    local bandageConfig = Config.BandageTypes[bandageType or 'cotton']
     if not bandageConfig then
-        lib.notify({
-            title = locale('cl_menu_configuration_error'),
-            description = string.format(locale('cl_desc_fmt_unknown_bandage_type'), bandageType),
-            type = 'error',
-            duration = 5000
-        })
-        return
+        return false, locale('cl_desc_fmt_unknown_bandage_type'), bandageType
     end
 
-    local itemName = bandageConfig.itemName or bandageType
-    local hasItem = RSGCore.Functions.HasItem(itemName, 1)
+    -- Check if busy
+    if isBusy then
+        return false, locale('cl_error_c')
+    end
+
+    -- Check player state (dead/handcuffed)
     local PlayerData = RSGCore.Functions.GetPlayerData()
-
     if PlayerData.metadata['isdead'] or PlayerData.metadata['ishandcuffed'] then
-        lib.notify({
-            title = locale('cl_error'),
-            description = locale('cl_error_c'),
-            type = 'error',
-            duration = 5000
-        })
-        return
+        return false, locale('cl_error_c')
     end
 
-    if not hasItem then
-        lib.notify({
-            title = locale('cl_error'),
-            description = string.format(locale('cl_desc_fmt_no_item_available'), bandageConfig.label),
-            type = 'error',
-            duration = 5000
-        })
-        return
+    -- Check item possession
+    local itemName = bandageConfig.itemName or bandageType
+    if not RSGCore.Functions.HasItem(itemName, 1) then
+        return false, string.format(locale('cl_desc_fmt_no_item_available'), bandageConfig.label)
     end
 
-    -- Check if player has any wounds to treat
+    -- Check for wounds
     local wounds = exports['QC-AdvancedMedic']:GetMedicalState('wounds') or {}
     if not next(wounds) then
-        lib.notify({
-            title = locale('cl_error'),
-            description = locale('cl_desc_no_wounds_bandaging'),
-            type = 'error',
-            duration = 5000
-        })
-        return
+        return false, locale('cl_desc_no_wounds_bandaging')
     end
 
-    -- Find target body part
-    local targetBodyPart = nil
+    return true, bandageConfig, itemName
+end
 
-    if targetBodyPartOverride then
+-- Select body part for bandage application
+local function SelectBodyPartForBandage(override)
+    local wounds = exports['QC-AdvancedMedic']:GetMedicalState('wounds')
+
+    if override then
         -- Command specified exact body part
-        if wounds[targetBodyPartOverride] then
-            targetBodyPart = targetBodyPartOverride
+        if wounds[override] then
+            return override
         else
             lib.notify({
                 title = locale('cl_menu_treatment_error'),
-                description = string.format(locale('cl_desc_fmt_no_wound_detected'),
-                    Config.BodyParts[targetBodyPartOverride] and Config.BodyParts[targetBodyPartOverride].label or targetBodyPartOverride),
+                description = string.format(
+                    locale('cl_desc_fmt_no_wound_detected'),
+                    Config.BodyParts[override] and Config.BodyParts[override].label or override
+                ),
                 type = 'error',
                 duration = 5000
             })
-            targetBodyPartOverride = nil
-            return
-        end
-        targetBodyPartOverride = nil
-    else
-        -- Find most severe wound (prioritize bleeding > pain)
-        local highestSeverity = 0
-
-        for bodyPart, wound in pairs(wounds) do
-            local severity = (wound.bleedingLevel * 2) + wound.painLevel
-            if severity > highestSeverity then
-                highestSeverity = severity
-                targetBodyPart = bodyPart
-            end
-        end
-
-        if not targetBodyPart then
-            lib.notify({
-                title = locale('cl_error'),
-                description = locale('cl_desc_no_suitable_wound'),
-                type = 'error',
-                duration = 5000
-            })
-            return
+            return nil
         end
     end
 
-    -- Check if body part already has a bandage
-    local treatments = exports['QC-AdvancedMedic']:GetMedicalState('treatments') or {}
-    if treatments[targetBodyPart] and treatments[targetBodyPart].treatmentType == "bandage" then
+    -- Auto-selection: Find most severe wound (prioritize bleeding > pain)
+    local highestSeverity = 0
+    local targetBodyPart = nil
+
+    for bodyPart, wound in pairs(wounds) do
+        local severity = (wound.bleedingLevel * 2) + wound.painLevel
+        if severity > highestSeverity then
+            highestSeverity = severity
+            targetBodyPart = bodyPart
+        end
+    end
+
+    if not targetBodyPart then
         lib.notify({
-            title = locale('cl_menu_treatment_error'),
-            description = string.format(locale('cl_desc_fmt_bandage_already_applied'),
-                Config.BodyParts[targetBodyPart] and Config.BodyParts[targetBodyPart].label or targetBodyPart),
+            title = locale('cl_error'),
+            description = locale('cl_desc_no_suitable_wound'),
             type = 'error',
             duration = 5000
         })
-        return
+        return nil
     end
 
-    -- Apply bandage
+    return targetBodyPart
+end
+
+-- Check if body part already has active bandage
+local function HasActiveBandage(bodyPart)
+    local treatments = exports['QC-AdvancedMedic']:GetMedicalState('treatments') or {}
+    return treatments[bodyPart] and treatments[bodyPart].treatmentType == "bandage"
+end
+
+-- Apply bandage with animation and progress bar
+local function ApplyBandageWithAnimation(bodyPart, bandageType, bandageConfig, itemName)
     isBusy = true
     LocalPlayer.state:set('inv_busy', true, true)
     SetCurrentPedWeapon(cache.ped, GetHashKey('weapon_unarmed'))
@@ -145,7 +124,7 @@ RegisterNetEvent('QC-AdvancedMedic:client:usebandage', function(bandageType)
     })
 
     -- Apply bandage using core medical system
-    local success = exports['QC-AdvancedMedic']:ApplyBandage(targetBodyPart, bandageType, GetPlayerServerId(PlayerId()))
+    local success = exports['QC-AdvancedMedic']:ApplyBandage(bodyPart, bandageType, GetPlayerServerId(PlayerId()))
 
     if success then
         TriggerServerEvent('QC-AdvancedMedic:server:removeitem', itemName, 1)
@@ -160,6 +139,54 @@ RegisterNetEvent('QC-AdvancedMedic:client:usebandage', function(bandageType)
 
     LocalPlayer.state:set('inv_busy', false, true)
     isBusy = false
+end
+
+--=========================================================
+-- BANDAGE USAGE
+--=========================================================
+
+RegisterNetEvent('QC-AdvancedMedic:client:usebandage', function(bandageType)
+    -- Default to cotton if no type specified
+    bandageType = bandageType or 'cotton'
+
+    -- Validate bandage usage (consolidated validation)
+    local valid, configOrError, itemName = ValidateBandageUsage(bandageType)
+    if not valid then
+        lib.notify({
+            title = locale('cl_error'),
+            description = configOrError, -- Error message
+            type = 'error',
+            duration = 5000
+        })
+        return
+    end
+
+    local bandageConfig = configOrError
+
+    -- Select body part (auto-selection or override)
+    local targetBodyPart = SelectBodyPartForBandage(targetBodyPartOverride)
+    targetBodyPartOverride = nil -- Clear override after use
+
+    if not targetBodyPart then
+        return -- Error notification already shown by SelectBodyPartForBandage
+    end
+
+    -- Check for duplicate bandage
+    if HasActiveBandage(targetBodyPart) then
+        lib.notify({
+            title = locale('cl_menu_treatment_error'),
+            description = string.format(
+                locale('cl_desc_fmt_bandage_already_applied'),
+                Config.BodyParts[targetBodyPart] and Config.BodyParts[targetBodyPart].label or targetBodyPart
+            ),
+            type = 'error',
+            duration = 5000
+        })
+        return
+    end
+
+    -- Apply bandage with animation
+    ApplyBandageWithAnimation(targetBodyPart, bandageType, bandageConfig, itemName)
 end)
 
 --=========================================================
@@ -171,8 +198,17 @@ AddEventHandler('QC-AdvancedMedic:client:CheckForSelfTreatment', function(treatm
     if treatmentType == "bandage" then
         TriggerEvent('QC-AdvancedMedic:client:usebandage', itemType)
     elseif treatmentType == "tourniquet" then
-        -- Handled by core_medical.lua
-        exports['QC-AdvancedMedic']:ApplyTourniquet(nil, itemType, GetPlayerServerId(PlayerId()))
+        -- Global tourniquet application (no body part needed)
+        local success = exports['QC-AdvancedMedic']:ApplyTourniquet(itemType, GetPlayerServerId(PlayerId()))
+
+        if not success then
+            lib.notify({
+                title = locale('cl_menu_treatment_failed'),
+                description = locale('cl_desc_tourniquet_failed'),
+                type = 'error',
+                duration = 5000
+            })
+        end
     elseif treatmentType == "medicine" then
         -- Handled by core_medical.lua
         exports['QC-AdvancedMedic']:AdministreMedicine(itemType, GetPlayerServerId(PlayerId()))

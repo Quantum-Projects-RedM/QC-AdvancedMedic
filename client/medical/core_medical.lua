@@ -668,80 +668,85 @@ function ApplyBandage(bodyPart, bandageType, appliedBy)
     return true
 end
 
--- Apply tourniquet treatment (timestamp-based, pattern)
-function ApplyTourniquet(bodyPart, tourniquetType, appliedBy)
+-- Apply tourniquet treatment (global application, circuit-damage pattern)
+function ApplyTourniquet(tourniquetType, appliedBy)
     local tourniquetConfig = Config.TourniquetTypes[tourniquetType]
+
+    -- Validation 1: Config exists
     if not tourniquetConfig then
         print("[ERROR] Unknown tourniquet type: " .. tostring(tourniquetType))
         return false
     end
 
-    local bodyPartConfig = Config.BodyParts[bodyPart]
-    if not bodyPartConfig then
-        print("[ERROR] Unknown body part: " .. tostring(bodyPart))
-        return false
+    -- Validation 2: Check if ANY wound has bleeding
+    local hasBleedingWounds = false
+    for _, wound in pairs(MedicalState.wounds) do
+        if wound.bleedingLevel and wound.bleedingLevel > 0 then
+            hasBleedingWounds = true
+            break
+        end
     end
 
-    -- Check if wound exists
-    local wound = MedicalState.wounds[bodyPart]
-    if not wound then
+    if not hasBleedingWounds then
         lib.notify({
             title = locale('cl_menu_treatment'),
-            description = string.format(locale('cl_desc_fmt_no_injury_detected'), bodyPartConfig.label),
+            description = locale('cl_desc_no_bleeding_wounds'),
             type = 'error',
             duration = 5000
         })
         return false
     end
 
-    -- Check if tourniquet already applied
-    if MedicalState.treatments[bodyPart] and MedicalState.treatments[bodyPart].treatmentType == "tourniquet" then
+    -- Validation 3: Check if tourniquet already active globally
+    if LocalPlayer.state.tourniquet and LocalPlayer.state.tourniquet > GetGameTimer() then
         lib.notify({
             title = locale('cl_menu_treatment_error'),
-            description = locale('cl_desc_tourniquet_already_applied'),
+            description = locale('cl_desc_tourniquet_already_active'),
             type = 'error',
             duration = 5000
         })
         return false
     end
 
-    -- Apply tourniquet - store timestamp (pattern)
+    -- Apply tourniquet globally - store single timestamp (circuit-damage pattern)
     local currentTime = GetGameTimer()
     local duration = (tourniquetConfig.maxDuration or 30) * 60 * 1000 -- Convert minutes to ms
     local expirationTime = currentTime + duration
 
-    MedicalState.treatments[bodyPart] = {
-        treatmentType = "tourniquet",
-        itemType = tourniquetType,
-        appliedTime = currentTime,
-        expirationTime = expirationTime,
-        appliedBy = appliedBy,
-        isActive = true,
-        metadata = {
-            maxDuration = tourniquetConfig.maxDuration,
-            effectiveness = tourniquetConfig.effectiveness
-        }
-    }
+    -- Set global tourniquet timestamp
+    LocalPlayer.state:set('tourniquet', expirationTime, false)
 
-    -- Update LocalPlayer.state for efficient timestamp checking (pattern)
-    local tourniquets = LocalPlayer.state.tourniquets or {}
-    tourniquets[bodyPart] = expirationTime
-    LocalPlayer.state:set('tourniquets', tourniquets, false)
-
-    -- Update global for backwards compatibility
-    ActiveTreatments = MedicalState.treatments
+    -- STOP bleeding on ALL wounds immediately
+    for bodyPart, wound in pairs(MedicalState.wounds) do
+        if wound.bleedingLevel and wound.bleedingLevel > 0 then
+            wound.isTourniqueted = true  -- Flag for NUI display
+        end
+    end
 
     -- Notify player
     lib.notify({
-        title = locale('cl_menu_treatment'),
-        description = string.format(locale('cl_desc_fmt_tourniquet_applied'), bodyPartConfig.label),
+        title = locale('cl_menu_tourniquet_applied'),
+        description = string.format(
+            locale('cl_desc_fmt_tourniquet_global'),
+            tourniquetConfig.label,
+            math.floor(tourniquetConfig.maxDuration)
+        ),
         type = 'success',
         duration = 5000
     })
 
+    -- Server callback to log event
+    if appliedBy then
+        TriggerServerEvent('QC-AdvancedMedic:server:LogTourniquetApplication', {
+            tourniquetType = tourniquetType,
+            appliedBy = appliedBy,
+            expirationTime = expirationTime
+        })
+    end
+
     if Config.WoundSystem.debugging.enabled then
-        print(string.format("^2[TOURNIQUET] Applied to %s, expires in %.1f minutes^7",
-            bodyPart, tourniquetConfig.maxDuration))
+        print(string.format("^2[TOURNIQUET] Applied globally, expires in %.1f minutes^7",
+            tourniquetConfig.maxDuration))
     end
 
     return true
@@ -1058,30 +1063,27 @@ CreateThread(function()
         -- Early exit if no wounds
         if not next(MedicalState.wounds) then goto continue_bleeding_loop end
 
+        -- Global tourniquet check (circuit-damage pattern)
+        -- If tourniquet is active, it COMPLETELY HALTS all bleeding - no damage, no progression
+        local tourniquetActive = LocalPlayer.state.tourniquet and LocalPlayer.state.tourniquet > GetGameTimer()
+        if tourniquetActive then
+            goto continue_bleeding_loop
+        end
+
         -- Calculate bleeding damage from untreated wounds
         for bodyPart, wound in pairs(MedicalState.wounds) do
             if not wound.isScar and wound.bleedingLevel and tonumber(wound.bleedingLevel) > 0 then
                 local hasBandage = false
-                local hasTourniquet = false
-
-                -- Check for active tourniquet (complete bleeding halt)
-                if MedicalState.treatments[bodyPart] and MedicalState.treatments[bodyPart].treatmentType == "tourniquet" then
-                    local tourniquets = LocalPlayer.state.tourniquets or {}
-                    local expirationTime = tourniquets[bodyPart]
-                    if expirationTime and GetGameTimer() < expirationTime then
-                        hasTourniquet = true
-                    end
-                end
 
                 -- Check for active bandage
-                if not hasTourniquet and MedicalState.treatments[bodyPart] and
+                if MedicalState.treatments[bodyPart] and
                    MedicalState.treatments[bodyPart].treatmentType == "bandage" and
                    MedicalState.treatments[bodyPart].isActive then
                     hasBandage = true
                 end
 
-                -- Apply bleeding damage if not protected
-                if not hasBandage and not hasTourniquet then
+                -- Apply bleeding damage if not protected by bandage
+                if not hasBandage then
                     local injuryState = Config.InjuryStates[wound.bleedingLevel]
                     if injuryState and injuryState.bleedingDamagePerTick then
                         totalBleedingDamage = totalBleedingDamage + injuryState.bleedingDamagePerTick
@@ -1121,6 +1123,42 @@ CreateThread(function()
         end
 
         ::continue_bleeding_loop::
+    end
+end)
+
+-- Tourniquet expiration handler (global tourniquet pattern)
+CreateThread(function()
+    repeat Wait(1000) until LocalPlayer.state.isLoggedIn
+
+    while LocalPlayer.state.loggedIn do
+        Wait(5000) -- Check every 5 seconds
+
+        local currentTime = GetGameTimer()
+        local tourniquetExpiry = LocalPlayer.state.tourniquet
+
+        -- Check if tourniquet expired
+        if tourniquetExpiry and tourniquetExpiry <= currentTime then
+            -- Clear expired tourniquet
+            LocalPlayer.state:set('tourniquet', nil, false)
+
+            -- Remove isTourniqueted flags from all wounds
+            for bodyPart, wound in pairs(MedicalState.wounds) do
+                if wound.isTourniqueted then
+                    wound.isTourniqueted = false
+                end
+            end
+
+            lib.notify({
+                title = locale('cl_menu_tourniquet_expired'),
+                description = locale('cl_desc_tourniquet_wore_off'),
+                type = 'warning',
+                duration = 5000
+            })
+
+            if Config.WoundSystem.debugging.enabled then
+                print("^3[TOURNIQUET] Tourniquet expired - bleeding may resume^7")
+            end
+        end
     end
 end)
 

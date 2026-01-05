@@ -3,7 +3,10 @@
 -- =========================================================
 -- Simplified from 8 tables to 5 core tables for better performance
 -- Maintains all functionality while reducing complexity
--- Tables: player_wounds, medical_treatments, player_infections, player_fractures, medical_history
+-- Tables: player_wounds, medical_treatments, player_infection, player_fractures, medical_history
+--
+-- NOTE: player_infection uses GLOBAL infection tracking (0-100 level per player)
+--       instead of per-body-part tracking for simplified gameplay
 -- =========================================================
 
 -- =========================================================
@@ -65,31 +68,22 @@ CREATE TABLE IF NOT EXISTS `medical_treatments` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =========================================================
--- TABLE 3: PLAYER INFECTIONS (Infections with immunity)
+-- TABLE 3: PLAYER INFECTION (Global infection tracking - simplified)
 -- =========================================================
-CREATE TABLE IF NOT EXISTS `player_infections` (
-    `id` int(11) NOT NULL AUTO_INCREMENT,
+-- Single global infection level per player (0-100) instead of per-body-part
+-- Stage calculated from level: 0=none, 1-20=mild, 21-50=moderate, 51-80=severe, 81-100=critical
+CREATE TABLE IF NOT EXISTS `player_infection` (
     `citizenid` varchar(50) NOT NULL,
-    `body_part` varchar(20) NOT NULL,
-    `infection_percentage` int(3) NOT NULL DEFAULT 0 COMMENT 'Infection buildup 0-100%',
-    `stage` int(2) NOT NULL DEFAULT 0 COMMENT 'Current infection stage (0=none, 1-4=stages)',
-    `wound_type` varchar(50) DEFAULT NULL COMMENT 'bullet_stuck, bullet_fragmented, etc.',
-    `start_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `last_progress_check` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `cure_progress` int(3) NOT NULL DEFAULT 0 COMMENT 'Cure progress 0-100%',
-    `immunity_end_time` timestamp NULL DEFAULT NULL COMMENT 'When immunity from treatment expires',
-    `metadata` json DEFAULT NULL COMMENT 'symptoms, treatments, progression data',
-    `is_active` tinyint(1) NOT NULL DEFAULT 1,
-    `cured_at` timestamp NULL DEFAULT NULL,
-    `cured_by` varchar(50) DEFAULT NULL,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `unique_infection` (`citizenid`, `body_part`),
-    KEY `idx_citizenid` (`citizenid`),
-    KEY `idx_active` (`is_active`),
-    KEY `idx_infection_percentage` (`infection_percentage`),
-    KEY `idx_stage` (`stage`),
-    KEY `idx_start_time` (`start_time`),
-    KEY `idx_immunity` (`immunity_end_time`)
+    `infection_level` int(3) NOT NULL DEFAULT 0 COMMENT 'Global infection level 0-100',
+    `infection_stage` int(1) NOT NULL DEFAULT 0 COMMENT 'Infection stage 0-4 (calculated from level)',
+    `infection_sources` json DEFAULT NULL COMMENT 'Sources that caused infection {dirty_bandage:2, untreated_wound:1}',
+    `timestamp` bigint(20) NOT NULL DEFAULT 0 COMMENT 'When infection started (GetGameTimer format)',
+    `last_progress_check` bigint(20) NOT NULL DEFAULT 0 COMMENT 'Last progression check time',
+    `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`citizenid`),
+    KEY `idx_infection_level` (`infection_level`),
+    KEY `idx_infection_stage` (`infection_stage`),
+    KEY `idx_updated_at` (`updated_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =========================================================
@@ -124,7 +118,7 @@ CREATE TABLE IF NOT EXISTS `player_fractures` (
 CREATE TABLE IF NOT EXISTS `medical_history` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `citizenid` varchar(50) NOT NULL,
-    `event_type` enum('wound_created', 'wound_change', 'treatment_applied', 'treatment_change', 'treatment_removed', 'infection_started', 'infection_cured', 'wound_healed', 'wound_scarred', 'fracture_created', 'fracture_healed', 'admin_clear_wounds', 'medical_inspection') NOT NULL,
+    `event_type` enum('wound_created', 'wound_change', 'treatment_applied', 'treatment_change', 'treatment_removed', 'infection_update', 'infection_cured', 'wound_healed', 'wound_scarred', 'fracture_created', 'fracture_healed', 'admin_clear_wounds', 'medical_inspection') NOT NULL,
     `body_part` varchar(20) DEFAULT NULL,
     `details` json NOT NULL,
     `performed_by` varchar(50) DEFAULT NULL,
@@ -155,10 +149,10 @@ BEGIN
     WHERE t.`citizenid` = player_citizenid AND t.`is_active` = 1
     ORDER BY t.`applied_time` DESC;
     
-    -- Get active infections (with immunity)
-    SELECT 'infections' as data_type, i.* 
-    FROM `player_infections` i 
-    WHERE i.`citizenid` = player_citizenid AND i.`is_active` = 1;
+    -- Get global infection data
+    SELECT 'infection' as data_type, i.*
+    FROM `player_infection` i
+    WHERE i.`citizenid` = player_citizenid;
     
     -- Get active fractures (healing progress < 100%)
     SELECT 'fractures' as data_type, f.* 
@@ -168,29 +162,24 @@ BEGIN
 END$$
 DELIMITER ;
 
--- Clean up expired treatments and immunity
+-- Clean up expired treatments
 DELIMITER $$
 CREATE PROCEDURE IF NOT EXISTS `CleanupExpiredMedicalData`()
 BEGIN
     -- Deactivate expired medicine effects
-    UPDATE `medical_treatments` 
+    UPDATE `medical_treatments`
     SET `is_active` = 0, `removed_at` = NOW()
-    WHERE `treatment_type` IN ('medicine', 'injection') 
-    AND `duration` IS NOT NULL 
-    AND TIMESTAMPADD(SECOND, `duration`, `applied_time`) < NOW() 
+    WHERE `treatment_type` IN ('medicine', 'injection')
+    AND `duration` IS NOT NULL
+    AND TIMESTAMPADD(SECOND, `duration`, `applied_time`) < NOW()
     AND `is_active` = 1;
-    
-    -- Clear expired infection immunity
-    UPDATE `player_infections` 
-    SET `immunity_end_time` = NULL, `immunity_granted_by` = NULL
-    WHERE `immunity_end_time` < NOW() AND `immunity_end_time` IS NOT NULL;
-    
+
     -- Clean up old inactive treatments (older than 24 hours)
-    DELETE FROM `medical_treatments` 
+    DELETE FROM `medical_treatments`
     WHERE `is_active` = 0 AND `removed_at` < DATE_SUB(NOW(), INTERVAL 24 HOUR);
-    
+
     -- Archive old medical history (older than 30 days)
-    DELETE FROM `medical_history` 
+    DELETE FROM `medical_history`
     WHERE `timestamp` < DATE_SUB(NOW(), INTERVAL 30 DAY);
 END$$
 DELIMITER ;
@@ -244,18 +233,21 @@ SELECT
      LIMIT 1) as latest_treatment
 FROM player_wounds w
 UNION ALL
-SELECT 
+SELECT
     i.citizenid,
-    i.body_part,
+    'GLOBAL' as body_part,
     'infection' as condition_type,
-    CONCAT(COALESCE(i.wound_type, 'Unknown'), ' Infection - Stage ', i.stage, ' (', i.infection_percentage, '%)') as description,
-    i.start_time as condition_start,
-    CASE 
-        WHEN i.immunity_end_time > NOW() THEN CONCAT('Immune until ', i.immunity_end_time)
-        ELSE CONCAT('Cure progress: ', i.cure_progress, '%')
+    CONCAT('Global Infection - Stage ', i.infection_stage, ' (Level: ', i.infection_level, '%)') as description,
+    FROM_UNIXTIME(i.timestamp / 1000) as condition_start,
+    CASE
+        WHEN i.infection_level = 0 THEN 'No infection'
+        WHEN i.infection_level <= 20 THEN 'Mild - requires basic treatment'
+        WHEN i.infection_level <= 50 THEN 'Moderate - seek medical attention'
+        WHEN i.infection_level <= 80 THEN 'Severe - urgent treatment needed'
+        ELSE 'Critical - life-threatening condition'
     END as latest_treatment
-FROM player_infections i
-WHERE i.is_active = 1
+FROM player_infection i
+WHERE i.infection_level > 0
 UNION ALL
 SELECT 
     f.citizenid,

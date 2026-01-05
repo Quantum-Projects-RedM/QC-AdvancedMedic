@@ -2,8 +2,10 @@
 -- QC-ADVANCED MEDIC - DEATH SYSTEM
 --=========================================================
 -- Handles player death, death camera, respawn, and revive mechanics
+-- Uses CFX GLM for camera math
 --=========================================================
 
+local glm = require 'glm'
 local RSGCore = exports['rsg-core']:GetCoreObject()
 local sharedWeapons = exports['rsg-core']:GetWeapons()
 
@@ -21,16 +23,15 @@ local deadcam = nil
 local closestRespawn = nil
 
 -- Camera settings
-local maxangley = 89.0
-local minangley = -89.0
-local maxradius = 3.5
-local mincoldist = 1.0
-local sensedisabled = 0.3
-local senseenabled = 0.05
-local camheight = 0.5
+local camRotation = vec2(0.0, 0.0) -- pitch, yaw
+local camDistance = 3.5
+local camMinDist = 1.0
+local camMaxPitch = 89.0
+local camMinPitch = -89.0
+local camSensitivity = vec2(0.05, 0.3) -- enabled, disabled
+local camHeight = 0.5
 local looklr = 0x6BC904FC
 local lookud = 0x84574AE8
-local angley, anglez = 0.0, 0.0
 
 --=========================================================
 -- DEATH TIMER
@@ -83,57 +84,54 @@ end
 --=========================================================
 
 local function ProcessNewPosition()
-    local sense = IsInputDisabled(0) and sensedisabled or senseenabled
+    local sense = IsInputDisabled(0) and camSensitivity.y or camSensitivity.x
     local mousex = GetDisabledControlNormal(1, looklr) * sense
     local mousey = GetDisabledControlNormal(1, lookud) * sense
 
-    anglez = anglez - mousex
-    angley = math.max(minangley, math.min(maxangley, angley + mousey))
+    -- Update camera rotation
+    camRotation = vec2(
+        glm.clamp(camRotation.x + mousey, camMinPitch, camMaxPitch),
+        camRotation.y - mousex
+    )
 
-    local cosz = math.cos(anglez)
-    local sinz = math.sin(anglez)
-    local cosy = math.cos(angley)
-    local siny = math.sin(angley)
+    -- Calculate direction vector using GLM
+    local direction = glm.eulerAngleYX(math.rad(camRotation.y), math.rad(camRotation.x))
+    local forward = glm.normalize(vec3(direction[1][3], direction[2][3], direction[3][3]))
 
-    local pcoords = GetEntityCoords(cache.ped)
+    local pedCoords = GetEntityCoords(cache.ped)
+    local pedPos = vec3(pedCoords.x, pedCoords.y, pedCoords.z + camHeight)
 
-    local dirx = cosz * cosy
-    local diry = sinz * cosy
-    local dirz = siny
+    -- Target position behind player
+    local targetPos = pedPos + (forward * camDistance)
 
-    local behindcam = {
-        x = pcoords.x + dirx,
-        y = pcoords.y + diry,
-        z = pcoords.z + dirz
-    }
+    -- Raycast for collision
+    local rayHandle = StartShapeTestRay(pedPos.x, pedPos.y, pedPos.z,
+                                       targetPos.x, targetPos.y, targetPos.z, -1, cache.ped, 0)
+    local _, hit, hitCoords = GetShapeTestResult(rayHandle)
 
-    local rayhandle = StartShapeTestRay(pcoords.x, pcoords.y, pcoords.z + camheight,
-                                      behindcam.x, behindcam.y, behindcam.z, -1, cache.ped, 0)
-    local _, hitbool, hitcoords = GetShapeTestResult(rayhandle)
-
-    local radius = maxradius
-    if hitbool then
-        local collisiondist = #(vector3(pcoords.x, pcoords.y, pcoords.z) - hitcoords)
-        if collisiondist < mincoldist then
-            radius = collisiondist
+    local finalDistance = camDistance
+    if hit then
+        local hitPos = vec3(hitCoords.x, hitCoords.y, hitCoords.z)
+        local collisionDist = glm.distance(pedPos, hitPos)
+        if collisionDist < camMinDist then
+            finalDistance = collisionDist
         end
     end
 
-    return {
-        x = pcoords.x + dirx * radius,
-        y = pcoords.y + diry * radius,
-        z = pcoords.z + dirz * radius
-    }
+    -- Final camera position
+    local finalPos = pedPos + (forward * finalDistance)
+    return finalPos
 end
 
 local function ProcessCamControls()
     if not Config.DeadMoveCam or not deadcam or not Dead then return end
 
-    local playercoords = GetEntityCoords(cache.ped)
+    local pedCoords = GetEntityCoords(cache.ped)
     DisableOnFootFirstPersonViewThisUpdate()
-    local newpos = ProcessNewPosition()
-    SetCamCoord(deadcam, newpos.x, newpos.y, newpos.z)
-    PointCamAtCoord(deadcam, playercoords.x, playercoords.y, playercoords.z)
+
+    local newPos = ProcessNewPosition()
+    SetCamCoord(deadcam, newPos.x, newPos.y, newPos.z)
+    PointCamAtCoord(deadcam, pedCoords.x, pedCoords.y, pedCoords.z)
 end
 
 local function StartDeathCam()
@@ -170,7 +168,7 @@ local function EndDeathCam()
         deadcam = nil
     end
     DestroyAllCams(true)
-    angley, anglez = 0.0, 0.0
+    camRotation = vec2(0.0, 0.0)
 end
 
 --=========================================================

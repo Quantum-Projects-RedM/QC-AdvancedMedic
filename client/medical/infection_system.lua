@@ -7,124 +7,193 @@
 
 local RSGCore = exports['rsg-core']:GetCoreObject()
 
--- Infection tracking data
-PlayerInfections = {}
-BandageTracker = {} -- Tracks bandage effectiveness and dirty factor over time
-local InfectionImmunity = {} -- Tracks temporary immunity from treatments
-InfectionCureProgress = {} -- Tracks gradual cure progress (0-100%)
+--=========================================================
+-- GLOBAL INFECTION STATE (SIMPLIFIED)
+--=========================================================
+-- Single global infection level instead of per-body-part tracking
+local GlobalInfection = {
+    level = 0,            -- 0-100 infection level
+    stage = 0,            -- 0-4 (0=none, 1=mild, 2=moderate, 3=severe, 4=critical)
+    sources = {},         -- Track what caused infection { dirty_bandage = 2, untreated_wound = 1 }
+    timestamp = 0,        -- When infection started
+    lastProgressCheck = 0 -- Last time we checked for progression
+}
+
+-- Bandage effectiveness tracking (still per-body-part for wound management)
+BandageTracker = {}
 
 --=========================================================
--- INFECTION DATA STRUCTURE (SIMPLIFIED)
+-- INFECTION STAGE CALCULATION
 --=========================================================
--- PlayerInfections[bodyPart] = {
---     stage = 1,                          -- Current infection stage (1-4)
---     startTime = GetGameTimer(),          -- When infection started
---     lastProgressCheck = GetGameTimer(),  -- When last checked for progression
---     metadata = {
---         causeDescription = "Dirty bandage infection",
---         symptoms = {},
---         treatments = {}
---     }
--- }
---
--- InfectionCureProgress[bodyPart] = 0.0   -- Cure progress (0-100%)
+-- Calculate infection stage from level (0-100)
+local function CalculateInfectionStage(level)
+    if level == 0 then return 0 end
+    if level <= 20 then return 1 end  -- Mild
+    if level <= 50 then return 2 end  -- Moderate
+    if level <= 80 then return 3 end  -- Severe
+    return 4                          -- Critical
+end
 
---=========================================================
--- BANDAGE EFFECTIVENESS TRACKING
---=========================================================
--- BandageTracker[bodyPart] = {
---     bandageType = "cotton",
---     appliedTime = os.time(),
---     effectiveness = 80, -- Current effectiveness (0-100)
---     decayRate = 1.5, -- From Config.BandageTypes
---     dirtyFactor = 0, -- Accumulates when effectiveness hits 0
---     lastUpdateTime = os.time()
--- }
-
---=========================================================
--- INFECTION SYMPTOM DISPLAY
---=========================================================
-local function ShowInfectionSymptom(bodyPart, stage)
-    local infection = PlayerInfections[bodyPart]
-    if not infection then return end
-    
-    local stageConfig = Config.InfectionSystem.stages[stage]
-    
-    if stageConfig and stageConfig.symptom then
-        lib.notify({
-            title = locale('cl_menu_medical_condition'),
-            description = stageConfig.symptom,
-            type = 'inform',
-            duration = 6000
-        })
-    end
+-- Get stage label for display
+local function GetInfectionStageLabel(stage)
+    local labels = {
+        [0] = "None",
+        [1] = "Mild",
+        [2] = "Moderate",
+        [3] = "Severe",
+        [4] = "Critical"
+    }
+    return labels[stage] or "Unknown"
 end
 
 --=========================================================
--- INFECTION CREATION & MANAGEMENT
+-- GLOBAL INFECTION MANAGEMENT
 --=========================================================
-local function CreateInfection(bodyPart)
+
+-- Add infection level to global infection
+local function AddInfectionLevel(source, amount)
     if not Config.InfectionSystem.enabled then return end
-    
-    PlayerInfections[bodyPart] = {
-        stage = 1,
-        startTime = GetGameTimer(),
-        lastProgressCheck = GetGameTimer(),
-        metadata = {
-            causeDescription = "Infection from dirty bandage",
-            symptoms = {Config.InfectionSystem.stages[1].symptom},
-            treatments = {}
-        }
-    }
-    
-    -- Initialize cure progress
-    InfectionCureProgress[bodyPart] = 0.0
-    
-    -- Show initial symptom
-    ShowInfectionSymptom(bodyPart, 1)
-    
-    -- Update server
-    TriggerServerEvent('QC-AdvancedMedic:server:UpdateInfectionData', PlayerInfections)
-    
-    if Config.InfectionSystem.debugging.enabled then
-        print(string.format("^1[INFECTION] Created on %s^7", bodyPart))
+
+    if GlobalInfection.level == 0 then
+        -- Starting new infection
+        GlobalInfection.timestamp = GetGameTimer()
+        GlobalInfection.lastProgressCheck = GetGameTimer()
     end
+
+    -- Add to infection level (capped at 100)
+    GlobalInfection.level = math.min(GlobalInfection.level + amount, 100)
+
+    -- Track source
+    GlobalInfection.sources[source] = (GlobalInfection.sources[source] or 0) + 1
+
+    -- Calculate new stage
+    local oldStage = GlobalInfection.stage
+    GlobalInfection.stage = CalculateInfectionStage(GlobalInfection.level)
+
+    -- Show notification if stage changed
+    if GlobalInfection.stage > oldStage and Config.InfectionSystem.stages[GlobalInfection.stage] then
+        local stageConfig = Config.InfectionSystem.stages[GlobalInfection.stage]
+        if stageConfig.symptom then
+            lib.notify({
+                title = "Infection Worsening",
+                description = stageConfig.symptom,
+                type = 'error',
+                duration = 7000
+            })
+        end
+    elseif GlobalInfection.stage == oldStage then
+        -- Level increased but stage didn't change
+        lib.notify({
+            title = "Infection Level Increased",
+            description = string.format("Infection: %d%% (%s)", GlobalInfection.level, GetInfectionStageLabel(GlobalInfection.stage)),
+            type = 'warning',
+            duration = 5000
+        })
+    end
+
+    -- Save to server
+    TriggerServerEvent('QC-AdvancedMedic:server:UpdateInfectionData', GlobalInfection)
+
+    if Config.InfectionSystem.debugging.enabled then
+        print(string.format("^1[INFECTION] Level: %d%% | Stage: %d (%s) | Source: %s^7",
+            GlobalInfection.level, GlobalInfection.stage, GetInfectionStageLabel(GlobalInfection.stage), source))
+    end
+end
+
+-- Cure infection (reduce level)
+local function CureInfection(cureAmount)
+    if GlobalInfection.level == 0 then return false end
+
+    GlobalInfection.level = math.max(GlobalInfection.level - cureAmount, 0)
+
+    if GlobalInfection.level == 0 then
+        -- Fully cured
+        local oldStage = GlobalInfection.stage
+        GlobalInfection.stage = 0
+        GlobalInfection.sources = {}
+        GlobalInfection.timestamp = 0
+
+        -- Clear visual effects
+        ClearTimecycleModifier()
+        SetPedMoveRateOverride(cache.ped, 1.0)
+        SetPlayerStaminaSprintDepletionMultiplier(PlayerId(), 1.0)
+
+        lib.notify({
+            title = "Infection Cured",
+            description = "Your infection has been fully cured.",
+            type = 'success',
+            duration = 5000
+        })
+
+        if Config.InfectionSystem.debugging.enabled then
+            print(string.format("^2[INFECTION] Fully cured (was stage %d)^7", oldStage))
+        end
+    else
+        -- Partially cured
+        local oldStage = GlobalInfection.stage
+        GlobalInfection.stage = CalculateInfectionStage(GlobalInfection.level)
+
+        -- Notify stage reduction if applicable
+        if GlobalInfection.stage < oldStage then
+            lib.notify({
+                title = "Infection Improving",
+                description = string.format("Infection reduced to %d%% (%s)", GlobalInfection.level, GetInfectionStageLabel(GlobalInfection.stage)),
+                type = 'inform',
+                duration = 5000
+            })
+        else
+            lib.notify({
+                title = "Treatment Applied",
+                description = string.format("Infection: %d%% (%s)", GlobalInfection.level, GetInfectionStageLabel(GlobalInfection.stage)),
+                type = 'inform',
+                duration = 5000
+            })
+        end
+
+        if Config.InfectionSystem.debugging.enabled then
+            print(string.format("^3[INFECTION] Reduced to %d%% | Stage: %d (%s)^7",
+                GlobalInfection.level, GlobalInfection.stage, GetInfectionStageLabel(GlobalInfection.stage)))
+        end
+    end
+
+    -- Save to server
+    TriggerServerEvent('QC-AdvancedMedic:server:UpdateInfectionData', GlobalInfection)
+
+    return true
 end
 --=========================================================
 -- INFECTION DEVELOPMENT FROM DIRTY BANDAGES
 --=========================================================
 local function CheckForBandageInfection(bodyPart, bandageData, timeSinceExpiration)
-    if PlayerInfections[bodyPart] then return end -- Already infected
-    if InfectionImmunity[bodyPart] and InfectionImmunity[bodyPart] > GetGameTimer() then return end -- Immune
-    
     -- Calculate infection chance based on time since bandage expired
     local baseChance = Config.InfectionSystem.baseInfectionChance / 100 -- Convert percentage to decimal
     local totalChance = math.min(timeSinceExpiration * (baseChance / 10), baseChance) -- Build up over time
-    
+
     -- Apply wound type multiplier if available
     local woundTypeMultiplier = 1.0
     if bandageData.metadata and bandageData.metadata.woundType then
-        woundTypeMultiplier = Config.InfectionSystem.woundTypeMultipliers[bandageData.metadata.woundType] or 
+        woundTypeMultiplier = Config.InfectionSystem.woundTypeMultipliers[bandageData.metadata.woundType] or
                              Config.InfectionSystem.woundTypeMultipliers.default
     end
     totalChance = totalChance * woundTypeMultiplier
-    
+
     if Config.InfectionSystem.debugging.enabled and Config.InfectionSystem.debugging.printPercentages then
-        print(string.format("^1[INFECTION] %s: %.1f%% chance (%.1fmin, %.1fx)^7", 
+        print(string.format("^1[INFECTION] %s: %.1f%% chance (%.1fmin, %.1fx)^7",
             bodyPart, totalChance * 100, timeSinceExpiration, woundTypeMultiplier))
     end
-    
-    -- Roll for infection
+
+    -- Roll for infection - add to global infection level
     if math.random() <= totalChance then
-        CreateInfection(bodyPart)
-        
+        -- Add infection level based on severity (15 points per dirty bandage)
+        AddInfectionLevel("dirty_bandage", 15)
+
         -- Notify player
         lib.notify({
-            title = Config.InfectionSystem.notifications.infectionStart.title,
-            description = string.format(locale('cl_desc_fmt_expired_bandage_infection'),
+            title = "Infection Risk",
+            description = string.format("Expired bandage on %s may cause infection!",
                 Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label or bodyPart),
-            type = Config.InfectionSystem.notifications.infectionStart.type,
-            duration = Config.InfectionSystem.notifications.infectionStart.duration
+            type = 'warning',
+            duration = 5000
         })
     end
 end
@@ -160,197 +229,121 @@ local function UpdateBandageEffectiveness()
     end
 end
 --=========================================================
--- INFECTION EFFECTS APPLICATION
+-- GLOBAL INFECTION EFFECTS APPLICATION
 --=========================================================
-local function ApplyInfectionEffects(bodyPart, infection)
-    local stageConfig = Config.InfectionSystem.stages[infection.stage]
-    
+local function ApplyInfectionEffects(stage)
+    if stage == 0 then
+        -- No infection - clear all effects
+        SetPedMoveRateOverride(cache.ped, 1.0)
+        SetPlayerStaminaSprintDepletionMultiplier(PlayerId(), 1.0)
+        ClearTimecycleModifier()
+        return
+    end
+
+    local stageConfig = Config.InfectionSystem.stages[stage]
     if not stageConfig or not stageConfig.effects then return end
-    
-    local ped = PlayerPedId()
+
+    local ped = cache.ped
     local effects = stageConfig.effects
-    
-    -- Health damage removed - infections now focus on immersive effects only
-    
-    -- Apply stamina drain by making stamina deplete faster
-    if effects.staminaDrain and effects.staminaDrain > 0 then
-        local playerId = PlayerId()
-        local currentStamina = GetPlayerStamina(playerId)
-        -- Make stamina drain faster based on infection severity
-        local multiplier = 1.0 + (effects.staminaDrain / 50.0) -- More reasonable multiplier
-        SetPlayerStaminaSprintDepletionMultiplier(playerId, multiplier)
-        
-        if Config.InfectionSystem.debugging.enabled then
-            print(string.format("^1[INFECTION] %s: stage%d stamina %.2fx^7", 
-                bodyPart, infection.stage, multiplier))
+
+    -- Stage 1: Mild (health drain)
+    if stage >= 1 then
+        local currentHealth = GetEntityHealth(ped)
+        if currentHealth > 100 then
+            SetEntityHealth(ped, math.max(currentHealth - 1, 100))
         end
     end
-    
-    -- Apply movement penalty
-    if effects.movementPenalty and effects.movementPenalty > 0 then
-        local moveRate = 1.0 - (effects.movementPenalty / 100)
-        local finalMoveRate = math.max(moveRate, 0.2)
-        SetPedMoveRateOverride(ped, finalMoveRate)
-        
-        if Config.InfectionSystem.debugging.enabled then
-            print(string.format("^1[INFECTION] %s: stage%d movement %.2fx^7", 
-                bodyPart, infection.stage, finalMoveRate))
+
+    -- Stage 2: Moderate (slower movement)
+    if stage >= 2 then
+        SetPedMoveRateOverride(ped, 0.95)
+    end
+
+    -- Stage 3: Severe (visual effects + more movement penalty)
+    if stage >= 3 then
+        SetPedMoveRateOverride(ped, 0.90)
+        -- Screen effects (blur, color grading)
+        SetTimecycleModifier("MP_death_stagger")
+    end
+
+    -- Stage 4: Critical (heavy damage + severe penalties)
+    if stage >= 4 then
+        SetPedMoveRateOverride(ped, 0.85)
+        local currentHealth = GetEntityHealth(ped)
+        if currentHealth > 50 then
+            SetEntityHealth(ped, math.max(currentHealth - 3, 50))
+        end
+
+        -- Persistent critical notification (every 60 seconds)
+        local timeSinceStart = (GetGameTimer() - GlobalInfection.timestamp) / 1000
+        if timeSinceStart % 60 < 5 then -- Show notification in first 5 seconds of each minute
+            lib.notify({
+                title = "Critical Infection!",
+                description = "Your infection is life-threatening! Seek immediate medical attention!",
+                type = 'error',
+                duration = 10000
+            })
         end
     end
-    
-    -- Apply temperature change (fever/chills) - RedM compatible
-    if effects.temperatureChange and effects.temperatureChange > 0 then
-        -- For now, just track temperature for debugging (visual effects can be added later)
-        if Config.InfectionSystem.debugging.enabled then
-            print(string.format("^1[INFECTION] %s: stage%d fever %.1f°^7", 
-                bodyPart, infection.stage, effects.temperatureChange))
-        end
-        
-        -- TODO: Add RedM-compatible visual effects here in the future
-        -- Examples: screen tinting, blur effects, or other RedM-supported visuals
+
+    if Config.InfectionSystem.debugging.enabled then
+        print(string.format("^1[INFECTION] Stage %d effects applied (level: %d%%)^7", stage, GlobalInfection.level))
     end
 end
 --=========================================================
--- INFECTION PROGRESSION SYSTEM
+-- GLOBAL INFECTION PROGRESSION SYSTEM
 --=========================================================
 local function ProcessInfectionProgression()
+    if GlobalInfection.level == 0 then return end -- No active infection
+
     local currentTime = GetGameTimer()
-    
-    for bodyPart, infection in pairs(PlayerInfections) do
-        local stageConfig = Config.InfectionSystem.stages[infection.stage]
-        
-        if not stageConfig then
-            goto continue
-        end
-        
-        local timeSinceLastCheck = (currentTime - infection.lastProgressCheck) / 1000 -- Convert to seconds
-        
-        -- Check if enough time has passed for progression check (convert ms to seconds)
-        if timeSinceLastCheck >= (Config.InfectionSystem.progressionInterval / 1000) then
-            infection.lastProgressCheck = currentTime
-            
-            -- Roll for progression
-            if math.random() <= stageConfig.progressionChance and infection.stage < #Config.InfectionSystem.stages then
-                infection.stage = infection.stage + 1
-                
-                -- Show new symptom
-                ShowInfectionSymptom(bodyPart, infection.stage)
-                
-                -- Add to symptom history
-                local newSymptom = Config.InfectionSystem.stages[infection.stage].symptom
-                table.insert(infection.metadata.symptoms, newSymptom)
-                
-                -- Notify of progression
+    local timeSinceLastCheck = (currentTime - GlobalInfection.lastProgressCheck) / 1000 -- Convert to seconds
+
+    -- Check if enough time has passed for progression check
+    if timeSinceLastCheck >= (Config.InfectionSystem.progressionInterval / 1000) then
+        GlobalInfection.lastProgressCheck = currentTime
+
+        -- Increase infection level over time (2 points per interval by default)
+        local progressionRate = Config.InfectionSystem.progressionRate or 2
+        GlobalInfection.level = math.min(GlobalInfection.level + progressionRate, 100)
+
+        -- Update stage
+        local oldStage = GlobalInfection.stage
+        GlobalInfection.stage = CalculateInfectionStage(GlobalInfection.level)
+
+        -- Stage transition notification
+        if GlobalInfection.stage > oldStage then
+            local stageConfig = Config.InfectionSystem.stages[GlobalInfection.stage]
+            if stageConfig and stageConfig.symptom then
                 lib.notify({
-                    title = Config.InfectionSystem.notifications.infectionProgression.title,
-                    description = newSymptom,
-                    type = Config.InfectionSystem.notifications.infectionProgression.type,
-                    duration = Config.InfectionSystem.notifications.infectionProgression.duration
+                    title = "Infection Worsening",
+                    description = string.format("%s (Stage %d: %s)",
+                        stageConfig.symptom,
+                        GlobalInfection.stage,
+                        GetInfectionStageLabel(GlobalInfection.stage)),
+                    type = 'error',
+                    duration = 7000
                 })
-                
-                if Config.InfectionSystem.debugging.enabled and Config.InfectionSystem.debugging.printProgression then
-                    print(string.format("[INFECTION] %s infection progressed to stage %d", bodyPart, infection.stage))
-                end
+            end
+
+            if Config.InfectionSystem.debugging.enabled then
+                print(string.format("^1[INFECTION] Progressed to stage %d (%s) - Level: %d%%^7",
+                    GlobalInfection.stage, GetInfectionStageLabel(GlobalInfection.stage), GlobalInfection.level))
             end
         end
-        
-        -- Apply stage effects
-        ApplyInfectionEffects(bodyPart, infection)
-        
-        ::continue::
+
+        -- Save to server
+        TriggerServerEvent('QC-AdvancedMedic:server:UpdateInfectionData', GlobalInfection)
     end
+
+    -- Apply global effects
+    ApplyInfectionEffects(GlobalInfection.stage)
 end
 
 --=========================================================
--- INFECTION TREATMENT SYSTEM - GRADUAL CURE
+-- NOTE: TreatInfection function removed - now using global CureInfection
+-- See CureInfection function above (lines 104-163)
 --=========================================================
-local function TreatInfection(bodyPart, treatmentItem)
-    if not PlayerInfections[bodyPart] then return false end
-    
-    local infection = PlayerInfections[bodyPart]
-    local treatmentConfig = Config.InfectionSystem.cureItems[treatmentItem]
-    
-    if not treatmentConfig then
-        lib.notify({
-            title = locale('cl_menu_treatment_failed'),
-            description = string.format(locale('cl_desc_fmt_unknown_treatment_item'), treatmentItem),
-            type = 'error',
-            duration = 5000
-        })
-        return false
-    end
-    
-    -- Initialize cure progress if not exists
-    if not InfectionCureProgress[bodyPart] then
-        InfectionCureProgress[bodyPart] = 0.0
-    end
-    
-    -- Add cure progress
-    local oldProgress = InfectionCureProgress[bodyPart]
-    InfectionCureProgress[bodyPart] = math.min(InfectionCureProgress[bodyPart] + treatmentConfig.cureProgress, 100.0)
-    
-    -- Record treatment
-    table.insert(infection.metadata.treatments, {
-        item = treatmentItem,
-        progress = treatmentConfig.cureProgress,
-        timestamp = GetGameTimer()
-    })
-    
-    if Config.InfectionSystem.debugging.enabled and Config.InfectionSystem.debugging.printCureProgress then
-        print(string.format("^3[CURE] %s: %.1f%%→%.1f%% (%s)^7", 
-            bodyPart, oldProgress, InfectionCureProgress[bodyPart], treatmentItem))
-    end
-    
-    -- Check if infection is cured
-    if InfectionCureProgress[bodyPart] >= 100.0 then
-        -- Cure successful
-        PlayerInfections[bodyPart] = nil
-        InfectionCureProgress[bodyPart] = nil
-        
-        -- Reset stamina multiplier to normal
-        SetPlayerStaminaSprintDepletionMultiplier(PlayerId(), 1.0)
-        
-        if Config.InfectionSystem.debugging.enabled then
-            print(string.format("[INFECTION] %s infection cured - effects cleared", bodyPart))
-        end
-        
-        -- Grant temporary immunity
-        if treatmentConfig.preventReinfection and treatmentConfig.preventReinfection > 0 then
-            InfectionImmunity[bodyPart] = GetGameTimer() + (treatmentConfig.preventReinfection * 1000)
-        end
-        
-        -- Notify success
-        lib.notify({
-            title = Config.InfectionSystem.notifications.infectionCured.title,
-            description = string.format(locale('cl_desc_fmt_infection_cured'),
-                Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label or bodyPart),
-            type = Config.InfectionSystem.notifications.infectionCured.type,
-            duration = Config.InfectionSystem.notifications.infectionCured.duration
-        })
-        
-        -- Update server
-        TriggerServerEvent('QC-AdvancedMedic:server:UpdateInfectionData', PlayerInfections)
-        
-        -- Log cure event
-        TriggerServerEvent('QC-AdvancedMedic:server:LogInfectionCure', bodyPart, treatmentItem)
-        
-        return true
-    else
-        -- Treatment applied but not fully cured yet
-        local remainingProgress = 100.0 - InfectionCureProgress[bodyPart]
-        local estimatedTreatments = math.ceil(remainingProgress / treatmentConfig.cureProgress)
-
-        lib.notify({
-            title = locale('cl_menu_treatment_applied'),
-            description = string.format(locale('cl_desc_fmt_infection_cure_progress'),
-                InfectionCureProgress[bodyPart], estimatedTreatments),
-            type = 'inform',
-            duration = 6000
-        })
-
-        return true
-    end
-end
 
 --=========================================================
 -- MAIN UPDATE LOOPS
@@ -374,12 +367,14 @@ CreateThread(function()
 end)
 
 --=========================================================
--- EXPORTS FOR OTHER MODULES
+-- EXPORTS FOR OTHER MODULES (GLOBAL INFECTION)
 --=========================================================
+
+-- Add bandage tracking (for dirty bandage detection)
 exports('AddBandage', function(bodyPart, bandageType)
     local bandageConfig = Config.BandageTypes[bandageType]
     if not bandageConfig then return false end
-    
+
     BandageTracker[bodyPart] = {
         bandageType = bandageType,
         appliedTime = GetGameTimer(),
@@ -388,28 +383,47 @@ exports('AddBandage', function(bodyPart, bandageType)
         dirtyFactor = 0,
         lastUpdateTime = GetGameTimer()
     }
-    
+
     return true
 end)
 
+-- Remove bandage tracking
 exports('RemoveBandage', function(bodyPart)
     BandageTracker[bodyPart] = nil
 end)
 
-exports('GetInfectionData', function(bodyPart)
-    return bodyPart and PlayerInfections[bodyPart] or PlayerInfections
+-- Get global infection data
+exports('GetGlobalInfection', function()
+    return GlobalInfection
 end)
 
-exports('TreatInfection', function(bodyPart, treatmentItem)
-    return TreatInfection(bodyPart, treatmentItem)
+-- Get infection level (0-100)
+exports('GetInfectionLevel', function()
+    return GlobalInfection.level
 end)
 
+-- Get infection stage (0-4)
+exports('GetInfectionStage', function()
+    return GlobalInfection.stage
+end)
+
+-- Add infection level (source, amount)
+exports('AddInfectionLevel', AddInfectionLevel)
+
+-- Cure infection (reduce level)
+exports('CureInfection', CureInfection)
+
+-- Clear all infections
 exports('ClearAllInfections', function()
-    PlayerInfections = {}
+    GlobalInfection = {
+        level = 0,
+        stage = 0,
+        sources = {},
+        timestamp = 0,
+        lastProgressCheck = 0
+    }
     BandageTracker = {}
-    InfectionImmunity = {}
-    InfectionCureProgress = {}
-    
+
     -- Clear all infection effects
     SetPlayerStaminaSprintDepletionMultiplier(PlayerId(), 1.0)
     
@@ -418,115 +432,68 @@ exports('ClearAllInfections', function()
     end
 end)
 
-exports('GetCureProgress', function(bodyPart)
-    return bodyPart and InfectionCureProgress[bodyPart] or InfectionCureProgress
-end)
-
-exports('CreateForceInfection', function(bodyPart, stage)
+-- Force create infection at specific level (for testing/debugging)
+exports('CreateForceInfection', function(level)
     if not Config.InfectionSystem.enabled then return false end
-    
-    -- Validate inputs
-    if not bodyPart or not Config.BodyParts[bodyPart] then return false end
-    if not stage or stage < 1 or stage > #Config.InfectionSystem.stages then return false end
-    
-    -- Create infection at specified stage
-    PlayerInfections[bodyPart] = {
-        stage = stage,
-        startTime = GetGameTimer(),
-        lastProgressCheck = GetGameTimer(),
-        metadata = {
-            causeDescription = "Developer forced infection",
-            symptoms = {},
-            treatments = {}
-        }
-    }
-    
-    -- Initialize cure progress
-    InfectionCureProgress[bodyPart] = 0.0
-    
-    -- Add symptoms up to current stage
-    for i = 1, stage do
-        if Config.InfectionSystem.stages[i] and Config.InfectionSystem.stages[i].symptom then
-            table.insert(PlayerInfections[bodyPart].metadata.symptoms, Config.InfectionSystem.stages[i].symptom)
-        end
-    end
-    
-    -- Show current stage symptom
-    ShowInfectionSymptom(bodyPart, stage)
-    
+
+    -- Validate level (0-100)
+    level = math.max(0, math.min(100, level or 50))
+
+    GlobalInfection.level = level
+    GlobalInfection.stage = CalculateInfectionStage(level)
+    GlobalInfection.timestamp = GetGameTimer()
+    GlobalInfection.lastProgressCheck = GetGameTimer()
+    GlobalInfection.sources = { forced = 1 }
+
+    -- Show notification
+    lib.notify({
+        title = "Forced Infection",
+        description = string.format("Infection set to %d%% (Stage %d: %s)",
+            level, GlobalInfection.stage, GetInfectionStageLabel(GlobalInfection.stage)),
+        type = 'warning',
+        duration = 5000
+    })
+
     -- Update server
-    TriggerServerEvent('QC-AdvancedMedic:server:UpdateInfectionData', PlayerInfections)
-    
+    TriggerServerEvent('QC-AdvancedMedic:server:UpdateInfectionData', GlobalInfection)
+
     if Config.InfectionSystem.debugging.enabled then
-        print(string.format("[INFECTION] Force created infection on %s at stage %d", bodyPart, stage))
+        print(string.format("^1[INFECTION] Forced to %d%% (Stage %d)^7", level, GlobalInfection.stage))
     end
-    
+
     return true
 end)
 
 --=========================================================
--- NETWORK EVENTS
+-- NETWORK EVENTS (GLOBAL INFECTION)
 --=========================================================
+
+-- Sync global infection data from server
 RegisterNetEvent('QC-AdvancedMedic:client:SyncInfectionData')
 AddEventHandler('QC-AdvancedMedic:client:SyncInfectionData', function(infectionData)
-    PlayerInfections = infectionData or {}
+    if infectionData then
+        GlobalInfection = infectionData
+    end
 end)
 
-RegisterNetEvent('QC-AdvancedMedic:client:TreatInfection')
-AddEventHandler('QC-AdvancedMedic:client:TreatInfection', function(bodyPart, treatmentItem)
-    TreatInfection(bodyPart, treatmentItem)
-end)
-
-RegisterNetEvent('QC-AdvancedMedic:client:ApplyBandage')
-AddEventHandler('QC-AdvancedMedic:client:ApplyBandage', function(bodyPart, bandageType)
-    -- Use core_medical export instead of local function
-    exports['QC-AdvancedMedic']:ApplyBandage(bodyPart, bandageType)
-end)
-
--- NOTE: AddBandage() and RemoveBandage() are now handled by core_medical.lua
--- Bandage tracking is now part of the centralized MedicalState
-
-function CreateForceInfection(bodyPart, stage)
-    if not Config.InfectionSystem.enabled then return false end
-    if not bodyPart or not Config.BodyParts[bodyPart] then return false end
-    if not stage or stage < 1 or stage > #Config.InfectionSystem.stages then return false end
-    
-    PlayerInfections[bodyPart] = {
-        stage = stage,
-        progressionTime = GetGameTimer(),
-        immunityEnd = 0,
-        symptoms = Config.InfectionSystem.stages[stage].symptom
-    }
-    
-    InfectionCureProgress[bodyPart] = 0
-    return true
-end
-
+-- Load global infection from database
 RegisterNetEvent('QC-AdvancedMedic:client:LoadInfections')
 AddEventHandler('QC-AdvancedMedic:client:LoadInfections', function(infectionData)
     if not infectionData then return end
-    
-    PlayerInfections = infectionData
-    
-    -- Initialize cure progress for loaded infections
-    for bodyPart, infection in pairs(PlayerInfections) do
-        if not InfectionCureProgress[bodyPart] then
-            InfectionCureProgress[bodyPart] = 0.0
-        end
-    end
-    
+
+    GlobalInfection = infectionData
+
     if Config.InfectionSystem.debugging.enabled then
-        local count = 0
-        for _ in pairs(PlayerInfections) do count = count + 1 end
-        print(string.format("[PERSISTENCE] Loaded %d infections from database", count))
+        print(string.format("[PERSISTENCE] Loaded global infection: %d%% (Stage %d)",
+            GlobalInfection.level, GlobalInfection.stage))
     end
 end)
 
+-- Use cure item (medicine/injection)
 RegisterNetEvent('QC-AdvancedMedic:client:UseCureItem')
 AddEventHandler('QC-AdvancedMedic:client:UseCureItem', function(cureType)
-    local ped = PlayerPedId()
     local cureConfig = Config.InfectionSystem.cureItems[cureType]
-    
+
     if not cureConfig then
         lib.notify({
             title = locale('cl_menu_treatment_error'),
@@ -536,15 +503,9 @@ AddEventHandler('QC-AdvancedMedic:client:UseCureItem', function(cureType)
         })
         return
     end
-    
-    -- Check if player has any infections
-    local hasInfection = false
-    for bodyPart, infection in pairs(PlayerInfections) do
-        hasInfection = true
-        break
-    end
-    
-    if not hasInfection then
+
+    -- Check if player has infection
+    if GlobalInfection.level == 0 then
         lib.notify({
             title = locale('cl_menu_no_infections'),
             description = locale('cl_desc_no_infections'),
@@ -553,11 +514,11 @@ AddEventHandler('QC-AdvancedMedic:client:UseCureItem', function(cureType)
         })
         return
     end
-    
+
     -- Start treatment animation/progress bar
     if lib.progressBar({
-        duration = cureConfig.treatmentTime,
-        label = string.format('Using %s...', cureConfig.label),
+        duration = cureConfig.treatmentTime or 5000,
+        label = string.format('Using %s...', cureConfig.label or cureType),
         useWhileDead = false,
         canCancel = true,
         disable = {
@@ -570,20 +531,8 @@ AddEventHandler('QC-AdvancedMedic:client:UseCureItem', function(cureType)
             clip = 'base'
         }
     }) then
-        -- Treatment completed - apply to most severe infection
-        local mostSevereBodyPart = nil
-        local highestStage = 0
-        
-        for bodyPart, infection in pairs(PlayerInfections) do
-            if infection.stage > highestStage then
-                highestStage = infection.stage
-                mostSevereBodyPart = bodyPart
-            end
-        end
-        
-        if mostSevereBodyPart then
-            TreatInfection(mostSevereBodyPart, cureType)
-        end
+        -- Treatment completed - cure infection
+        CureInfection(cureConfig.cureProgress or 30)
     else
         -- Treatment cancelled
         lib.notify({
