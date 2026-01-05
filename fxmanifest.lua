@@ -1,10 +1,11 @@
 fx_version 'cerulean'
 rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aware my resources *will* become incompatible once RedM ships.'
 game 'rdr3'
+lua54 'yes'
+
 author 'Quantum Projects Community'
 description 'QC-AdvancedMedic - Advanced Medical System for RedM | Dev: Artmines'
 quantum_github 'https://github.com/Quantum-Projects-RedM/QC-AdvancedMedic'
-use_experimental_fxv2_oal 'yes'
 version '0.3.1'
 
 shared_scripts {
@@ -22,53 +23,42 @@ files {
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
 
-    -- Core (kept for useable items and initialization)
-    'server/server.lua',          -- Main entry point & useable items
-    'server/database.lua',        -- Database integration layer
+    'server/server.lua',
+    'server/database.lua',
 
-    -- Helpers (load before systems)
-    'server/helpers/validators.lua',      -- NEW: Consolidated validation (IsMedicJob defined once)
-    'server/helpers/notifications.lua',   -- NEW: Centralized notifications
+    'server/helpers/validators.lua',
+    'server/helpers/notifications.lua',
 
-    -- Systems (treatments includes server-authoritative validation)
-    'server/systems/wounds.lua',          -- NEW: Wound data operations
-    'server/systems/treatments.lua',      -- NEW: Treatment system with auth (distance, rate limit, item checks)
-    'server/systems/infections.lua',      -- NEW: Infection data operations
+    'server/systems/wounds.lua',
+    'server/systems/treatments.lua',
+    'server/systems/infections.lua',
 
-    -- Handlers
-    'server/handlers/callbacks.lua',      -- NEW: Callback router system
-    'server/handlers/events.lua',         -- NEW: Network event handlers
-    'server/handlers/commands.lua',       -- NEW: Admin commands (consolidated /revive+/clearwounds)
+    'server/handlers/callbacks.lua',
+    'server/handlers/events.lua',
+    'server/handlers/commands.lua',
 
-    -- Misc
-    'server/sv_bag.lua',          -- Medical bag server logic
-    'server/versionchecker.lua',  -- Version checking
+    'server/sv_bag.lua',
+    'server/versionchecker.lua',
 }
 
 client_scripts {
-    -- Utilities (load first)
-    'client/utils/callbacks.lua',        -- Server-authoritative callback system
-    'client/utils/medical_helpers.lua',  -- NEW: Utility functions (replaces client_shared.lua)
+    'client/utils/callbacks.lua',
+    'client/utils/medical_helpers.lua',
+    'client/utils/nui_controller.lua',
+    'client/utils/menus.lua',
+    'client/utils/useable_items.lua',
 
-    -- Main entry point
-    'client/main.lua',                   -- NEW: initialization
+    'client/main.lua',
 
-    -- Core medical systems (NEW CONSOLIDATED STRUCTURE)
-    'client/medical/core_medical.lua',   -- NEW: Consolidated wound + treatment + healing
-    'client/medical/infection_system.lua', -- Infection progression (refactored)
+    'client/medical/core_medical.lua',
+    'client/medical/infection_system.lua',
+    'client/medical/death_system.lua',
+    'client/medical/envanim_system.lua',
 
-    -- Job systems
-    'client/job/medic_job.lua',          -- Job mechanics (duty, revive, treat)
-    'client/job/medic_missions.lua',     -- Mission system (ConfigMissions integration)
+    'client/job/medic_job.lua',
+    'client/job/medic_missions.lua',
 
-    -- Environmental
-    'client/environmental/envanim_system.lua', -- Environmental & animal attacks
-
-    -- Crafting
-    'client/crafting/medic_bag.lua',     -- Medical bag system
-
-    -- Legacy (TEMP: Death/revive/UI logic - to be refactored)
-    'client/client.lua',                 -- Core client functionality (death, revive, UI)
+    'client/crafting/medic_bag.lua',
 }
 
 dependencies {
@@ -77,5 +67,4 @@ dependencies {
     'ox_lib'
 }
 
-lua54 'yes'
 ui_page 'ui/build/index.html'

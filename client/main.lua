@@ -15,28 +15,21 @@ local HELPERS = nil
 -- DEPENDENCY LOADING
 --=========================================================
 
--- Wait for core systems to be ready
-AddEventHandler("Core:Shared:Ready", function()
-    -- Load medical system exports
-    MEDICAL = {
-        GetState = function(key) return exports['QC-AdvancedMedic']:GetMedicalState(key) end,
-        ApplyBandage = function(...) return exports['QC-AdvancedMedic']:ApplyBandage(...) end,
-        ApplyTourniquet = function(...) return exports['QC-AdvancedMedic']:ApplyTourniquet(...) end,
-        CreateWound = function(...) return exports['QC-AdvancedMedic']:CreateWound(...) end,
-        ProcessHealing = function() return exports['QC-AdvancedMedic']:ProcessHealing() end,
-    }
+-- Initialize medical system exports (direct initialization - no event needed)
+MEDICAL = {
+    GetState = function(key) return exports['QC-AdvancedMedic']:GetMedicalState(key) end,
+    ApplyBandage = function(...) return exports['QC-AdvancedMedic']:ApplyBandage(...) end,
+    ApplyTourniquet = function(...) return exports['QC-AdvancedMedic']:ApplyTourniquet(...) end,
+    CreateWound = function(...) return exports['QC-AdvancedMedic']:CreateWound(...) end,
+    ProcessHealing = function() return exports['QC-AdvancedMedic']:ProcessHealing() end,
+}
 
-    -- Load helper utilities
-    HELPERS = {
-        IsMedicJob = function(...) return exports['QC-AdvancedMedic']:IsMedicJob(...) end,
-        GetBodyPartLabel = function(...) return exports['QC-AdvancedMedic']:GetBodyPartLabel(...) end,
-        CalculateHealthStatus = function() return exports['QC-AdvancedMedic']:CalculateHealthStatus() end,
-    }
-
-    if Config.WoundSystem.debugging.enabled then
-        print("^2[MAIN] Core medical systems loaded^7")
-    end
-end)
+-- Load helper utilities
+HELPERS = {
+    IsMedicJob = function(...) return exports['QC-AdvancedMedic']:IsMedicJob(...) end,
+    GetBodyPartLabel = function(...) return exports['QC-AdvancedMedic']:GetBodyPartLabel(...) end,
+    CalculateHealthStatus = function() return exports['QC-AdvancedMedic']:CalculateHealthStatus() end,
+}
 
 --=========================================================
 -- CHARACTER LIFECYCLE
@@ -204,5 +197,6 @@ end)
 
 if Config.WoundSystem.debugging.enabled then
     print("^2[QC-ADVANCEDMEDIC] Main client entry point loaded^7")
+    print("^2[QC-ADVANCEDMEDIC] Medical systems initialized^7")
     print("^2[QC-ADVANCEDMEDIC] Version: 0.3.1 Refactored^7")
 end
