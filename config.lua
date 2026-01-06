@@ -911,7 +911,7 @@ Config.InfectionSystem = {
         untreated_wound_24h = 20,   -- Wound untreated for 24 hours
         swamp_water = 25,           -- Environmental contamination
         animal_bite = 30,           -- Animal attack
-    }
+    },
 
     -- ========================================
     -- GLOBAL INFECTION STAGES (0-100 LEVEL)

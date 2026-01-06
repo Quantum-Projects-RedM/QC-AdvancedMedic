@@ -344,6 +344,135 @@ AddEventHandler('QC-AdvancedMedic:client:storage', function()
 end)
 
 --=========================================================
+-- HEALTH STATUS (ACCESSIBLE TO ALL PLAYERS)
+--=========================================================
+
+RegisterNetEvent('QC-AdvancedMedic:client:ShowHealthStatus')
+AddEventHandler('QC-AdvancedMedic:client:ShowHealthStatus', function()
+    local medicalState = exports['QC-AdvancedMedic']:GetMedicalState()
+    local menuOptions = {}
+
+    -- Header with overall health
+    local currentHealth = GetEntityHealth(cache.ped)
+    local maxHealth = GetEntityMaxHealth(cache.ped)
+    local healthPercentage = math.floor((currentHealth / maxHealth) * 100)
+
+    table.insert(menuOptions, {
+        title = "Overall Health: " .. healthPercentage .. "%",
+        icon = 'fa-solid fa-heart-pulse',
+        description = string.format("Current: %d / Max: %d", currentHealth, maxHealth),
+        readOnly = true
+    })
+
+    -- Global Infection Status
+    if medicalState.infection then
+        local infectionLevel = medicalState.infection.level or 0
+        local infectionStage = medicalState.infection.stage or 0
+        local stageNames = {
+            [0] = "None",
+            [1] = "Mild",
+            [2] = "Moderate",
+            [3] = "Severe",
+            [4] = "Critical"
+        }
+
+        table.insert(menuOptions, {
+            title = "Infection: " .. (stageNames[infectionStage] or "Unknown"),
+            icon = 'fa-solid fa-virus',
+            description = string.format("Infection Level: %d%%", infectionLevel),
+            readOnly = true
+        })
+    else
+        table.insert(menuOptions, {
+            title = "Infection: None",
+            icon = 'fa-solid fa-shield-virus',
+            description = "No active infection detected",
+            readOnly = true
+        })
+    end
+
+    -- Active Wounds
+    if medicalState.wounds and next(medicalState.wounds) then
+        local woundCount = 0
+        for bodyPart, wound in pairs(medicalState.wounds) do
+            woundCount = woundCount + 1
+            local bodyPartLabel = Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label or bodyPart
+            local description = string.format("Pain: %.1f | Bleeding: %.1f | Health: %.0f%%",
+                wound.painLevel or 0,
+                wound.bleedingLevel or 0,
+                wound.healthPercentage or 100
+            )
+
+            table.insert(menuOptions, {
+                title = bodyPartLabel .. " - Wounded",
+                icon = 'fa-solid fa-band-aid',
+                description = description,
+                readOnly = true
+            })
+        end
+    else
+        table.insert(menuOptions, {
+            title = "No Active Wounds",
+            icon = 'fa-solid fa-check-circle',
+            description = "All body parts are healthy",
+            readOnly = true
+        })
+    end
+
+    -- Active Fractures
+    if medicalState.fractures and next(medicalState.fractures) then
+        for bodyPart, fracture in pairs(medicalState.fractures) do
+            local bodyPartLabel = Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label or bodyPart
+            local description = string.format("%s | Severity: %d | Healing: %.0f%%",
+                fracture.fractureType or "Fracture",
+                fracture.severity or 5,
+                fracture.healingProgress or 0
+            )
+
+            table.insert(menuOptions, {
+                title = bodyPartLabel .. " - Fractured",
+                icon = 'fa-solid fa-bone',
+                description = description,
+                readOnly = true
+            })
+        end
+    end
+
+    -- Active Treatments
+    if medicalState.treatments and next(medicalState.treatments) then
+        for bodyPart, treatment in pairs(medicalState.treatments) do
+            local bodyPartLabel = Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label or bodyPart
+            local treatmentLabel = treatment.treatmentType or "Treatment"
+
+            table.insert(menuOptions, {
+                title = bodyPartLabel .. " - " .. treatmentLabel,
+                icon = 'fa-solid fa-kit-medical',
+                description = "Active treatment applied",
+                readOnly = true
+            })
+        end
+    end
+
+    -- Global Tourniquet Status
+    if LocalPlayer.state.tourniquet and LocalPlayer.state.tourniquet > GetGameTimer() then
+        local remainingTime = math.floor((LocalPlayer.state.tourniquet - GetGameTimer()) / 1000 / 60)
+        table.insert(menuOptions, {
+            title = "Tourniquet Active",
+            icon = 'fa-solid fa-circle-notch',
+            description = string.format("Stops all bleeding | %d minutes remaining", remainingTime),
+            readOnly = true
+        })
+    end
+
+    lib.registerContext({
+        id = "health_status_menu",
+        title = "Medical Status",
+        options = menuOptions
+    })
+    lib.showContext("health_status_menu")
+end)
+
+--=========================================================
 -- JOB UPDATE HANDLER
 --=========================================================
 

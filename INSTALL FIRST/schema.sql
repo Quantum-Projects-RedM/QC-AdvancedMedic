@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS `player_fractures` (
 CREATE TABLE IF NOT EXISTS `medical_history` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `citizenid` varchar(50) NOT NULL,
-    `event_type` enum('wound_created', 'wound_change', 'treatment_applied', 'treatment_change', 'treatment_removed', 'infection_update', 'infection_cured', 'wound_healed', 'wound_scarred', 'fracture_created', 'fracture_healed', 'admin_clear_wounds', 'medical_inspection') NOT NULL,
+    `event_type` enum('wound_created', 'wound_change', 'treatment_applied', 'treatment_change', 'treatment_removed', 'infection_update', 'infection_cured', 'wound_healed', 'wound_scarred', 'fracture_created', 'fracture_healed', 'admin_clear_wounds', 'medical_inspection', 'bandage_applied', 'tourniquet_applied', 'medicine_administered', 'injection_administered') NOT NULL,
     `body_part` varchar(20) DEFAULT NULL,
     `details` json NOT NULL,
     `performed_by` varchar(50) DEFAULT NULL,
@@ -168,7 +168,7 @@ CREATE PROCEDURE IF NOT EXISTS `CleanupExpiredMedicalData`()
 BEGIN
     -- Deactivate expired medicine effects
     UPDATE `medical_treatments`
-    SET `is_active` = 0, `removed_at` = NOW()
+    SET `is_active` = 0
     WHERE `treatment_type` IN ('medicine', 'injection')
     AND `duration` IS NOT NULL
     AND TIMESTAMPADD(SECOND, `duration`, `applied_time`) < NOW()
@@ -176,7 +176,8 @@ BEGIN
 
     -- Clean up old inactive treatments (older than 24 hours)
     DELETE FROM `medical_treatments`
-    WHERE `is_active` = 0 AND `removed_at` < DATE_SUB(NOW(), INTERVAL 24 HOUR);
+    WHERE `is_active` = 0
+    AND `applied_time` < DATE_SUB(NOW(), INTERVAL 24 HOUR);
 
     -- Archive old medical history (older than 30 days)
     DELETE FROM `medical_history`

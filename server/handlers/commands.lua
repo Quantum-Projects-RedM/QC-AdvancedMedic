@@ -31,13 +31,13 @@ RSGCore.Commands.Add('revive', 'Revive player and clear all wounds', {{name = 'i
         MySQL.Async.execute('DELETE FROM player_wounds WHERE citizenid = ?', {citizenid})
         MySQL.Async.execute('DELETE FROM player_fractures WHERE citizenid = ?', {citizenid})
         MySQL.Async.execute('UPDATE medical_treatments SET is_active = 0 WHERE citizenid = ?', {citizenid})
-        MySQL.Async.execute('UPDATE player_infections SET is_active = 0, cured_at = NOW(), cured_by = ? WHERE citizenid = ?', {'admin_' .. src, citizenid})
+        MySQL.Async.execute('DELETE FROM player_infection WHERE citizenid = ?', {citizenid})
 
         -- Log medical event
         MySQL.Async.execute([[
             INSERT INTO medical_history
             (citizenid, event_type, details, performed_by)
-            VALUES (?, 'admin_revive', '{"reason": "Admin revive/clear wounds", "target_id": ?}', ?)
+            VALUES (?, 'admin_clear_wounds', '{"reason": "Admin revive/clear wounds", "target_id": ?}', ?)
         ]], {citizenid, targetId, 'admin_' .. src})
     end
 
@@ -101,6 +101,40 @@ RSGCore.Commands.Add('kill', 'Kill a player', {{name = 'id', help = 'Player ID'}
         print(string.format("^1[COMMANDS] Admin %d killed player %d^7", src, targetId))
     end
 end, 'admin')
+
+--=========================================================
+-- PLAYER COMMANDS (Accessible to all)
+--=========================================================
+
+-- Check health status (accessible to all players)
+RSGCore.Commands.Add('checkhealth', 'Check your current medical status', {}, false, function(source)
+    local src = source
+    local Player = RSGCore.Functions.GetPlayer(src)
+
+    if not Player then
+        exports['QC-AdvancedMedic']:NotifyError(src,
+            locale('sv_error'),
+            'Failed to get player data'
+        )
+        return
+    end
+
+    local citizenid = Player.PlayerData.citizenid
+    if not citizenid then
+        exports['QC-AdvancedMedic']:NotifyError(src,
+            locale('sv_error'),
+            'Invalid player data'
+        )
+        return
+    end
+
+    -- Request client to show medical status UI
+    TriggerClientEvent('QC-AdvancedMedic:client:ShowHealthStatus', src)
+
+    if Config.WoundSystem.debugging.enabled then
+        print(string.format("^2[COMMANDS] Player %d checked their health status^7", src))
+    end
+end)
 
 --=========================================================
 -- MEDIC JOB EVENTS (Not commands but related)
@@ -299,6 +333,7 @@ end)
 
 if Config.WoundSystem and Config.WoundSystem.debugging and Config.WoundSystem.debugging.enabled then
     print("^2[SERVER COMMANDS] Command handlers loaded^7")
-    print("^2[SERVER COMMANDS] /revive - Consolidated revive + clear wounds command^7")
+    print("^2[SERVER COMMANDS] /revive - Admin revive + clear wounds command^7")
     print("^2[SERVER COMMANDS] /kill - Admin kill command^7")
+    print("^2[SERVER COMMANDS] /checkhealth - Check medical status (accessible to all)^7")
 end
