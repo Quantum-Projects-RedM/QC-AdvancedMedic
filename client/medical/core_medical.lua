@@ -1,46 +1,37 @@
 --=========================================================
--- QC-ADVANCED MEDIC - CORE MEDICAL SYSTEM
+-- QC-ADVANCED MEDIC - CORE MEDICAL SYSTEM (Simplified)
 --=========================================================
--- Consolidated medical system following patterns
--- Merges: wound_system.lua + treatment_system.lua + wound_healing.lua
--- Version: 0.3.1 Refactored
+-- Global bleeding + bandage change cycle system
+-- No per-body-part tracking - everything is global
+-- Version: 0.4.0 Simplified
 --=========================================================
+
+QCMed = QCMed or {}
 
 local RSGCore = exports['rsg-core']:GetCoreObject()
 
 --============================================
--- SECTION 1: STATE MANAGEMENT (Lines 1-150)
+-- SECTION 1: STATE MANAGEMENT
 --============================================
--- Centralized medical state (eliminates scattered globals)
 local MedicalState = {
-    wounds = {},              -- Previously: PlayerWounds
-    treatments = {},          -- Previously: ActiveTreatments
-    healingTimers = {},       -- Previously: HealingTimers
-    medicineEffects = {},     -- Previously: MedicineEffects
-    injectionEffects = {},    -- Previously: InjectionEffects
-    playerHealth = nil,       -- Previously: PlayerHealth
-    bleedingLevel = 0,        -- Previously: BleedingLevel
-    infectionData = {},       -- Previously: InfectionData
-}
-
--- Limb effects tracking
-local LimbEffects = {
-    movementPenalty = 0.0,
-    onMorphine = 0,
-    wasOnMorphine = false,
-    legCount = 0,
-    armCount = 0,
-    headCount = 0
+    bleedingLevel = 0,            -- Global 0-10 bleeding (accumulated from weapon hits)
+    bandageChangesNeeded = 0,     -- Total bandage changes to fully heal (from weapon config, stacks)
+    bandageChangesApplied = 0,    -- How many bandage changes completed
+    activeBandage = nil,          -- { type, appliedTime, expirationTime, config }
+    lastWoundSource = nil,        -- Last weapon data string (for descriptions)
+    lastHitBone = 14411,          -- Last bone hit by damage (default: SKEL_Spine3/stomach)
+    woundTimestamp = 0,           -- When first wound occurred
+    medicineEffects = {},         -- Active medicine effect expirations
+    injectionEffects = {},        -- Active injection effect expirations
 }
 
 -- Damage tracking
-local LastDamageWeapon = nil
 local LastDamageTime = 0
 local ApplyingMedicalDamage = false
-local LastWeaponDamageTime = {}
 local DAMAGE_COOLDOWN = 500
+local bandageTickThread = nil     -- Reference to active bandage tick thread
 
--- Controlled state access (pattern)
+-- Controlled state access
 local function GetMedicalState(key)
     if key then
         return MedicalState[key]
@@ -48,646 +39,465 @@ local function GetMedicalState(key)
     return MedicalState
 end
 
--- Update state and sync to LocalPlayer.state for cross-file access
-local function UpdateMedicalState(key, value, replicate)
-    if not key then return end
+-- Check if player is wounded (has bleeding or needs bandage changes)
+local function IsWounded()
+    return MedicalState.bleedingLevel > 0 or MedicalState.bandageChangesNeeded > 0
+end
 
-    MedicalState[key] = value
+-- Check if fully healed
+local function IsFullyHealed()
+    return MedicalState.bandageChangesApplied >= MedicalState.bandageChangesNeeded
+        and MedicalState.bandageChangesNeeded > 0
+end
 
-    -- Optional: sync to LocalPlayer.state for server replication
-    if replicate then
-        LocalPlayer.state:set('medical_' .. key, value, true)
+-- Reset all wound state (fully healed or admin clear)
+local function ResetMedicalState()
+    MedicalState.bleedingLevel = 0
+    MedicalState.bandageChangesNeeded = 0
+    MedicalState.bandageChangesApplied = 0
+    MedicalState.activeBandage = nil
+    MedicalState.lastWoundSource = nil
+    MedicalState.lastHitBone = 14411
+    MedicalState.woundTimestamp = 0
+    bandageTickThread = nil
+
+    -- Sync to server
+    TriggerServerEvent('QC-AdvancedMedic:server:UpdateWoundData', MedicalState)
+
+    if Config.WoundSystem.debugging.enabled then
+        print("^2[CORE MEDICAL] Medical state fully reset^7")
     end
 end
 
--- Backwards compatibility globals (will be removed in future versions)
-PlayerWounds = MedicalState.wounds
-ActiveTreatments = MedicalState.treatments
-
 --============================================
--- SECTION 2: UTILITY FUNCTIONS (Lines 151-350)
+-- SECTION 2: WEAPON HASH RESOLUTION
 --============================================
 
--- Calculate body part health based on damage
-local function CalculateBodyPartHealth(bodyPart, painLevel, bleedingLevel)
-    local bodyPartConfig = Config.BodyParts[bodyPart]
-    if not bodyPartConfig then return 100.0, 100.0, 100.0 end
-
-    local maxHealth = bodyPartConfig.maxHealth
-    local totalDamage = (painLevel or 0) + (bleedingLevel or 0)
-
-    -- Scale damage: 30% health loss per 10 damage points (max 60% loss)
-    local scalingFactor = 0.3
-    local healthLoss = (totalDamage * scalingFactor * maxHealth) / 10
-    local currentHealth = math.max(0, maxHealth - healthLoss)
-    local healthPercentage = (currentHealth / maxHealth) * 100
-
-    if Config.WoundSystem and Config.WoundSystem.debugging and Config.WoundSystem.debugging.enabled then
-        print(string.format("^2[HEALTH] %s: %.1f%% (Pain:%.1f Bleed:%.1f)^7",
-            bodyPart, healthPercentage, painLevel or 0, bleedingLevel or 0))
+-- Resolve weapon hash from event data to a Config.WeaponDamage key
+-- EVENT_NETWORK_DAMAGE_ENTITY gives us the weapon hash directly (data[6])
+-- We just need to map it to our config, with animal/fall fallbacks
+local function ResolveWeaponFromEvent(weaponHash, attackerEntity, isMelee)
+    -- 1. Direct match in config
+    if weaponHash and weaponHash ~= 0 and Config.WeaponDamage[weaponHash] then
+        return weaponHash
     end
 
-    return currentHealth, maxHealth, healthPercentage
-end
-
--- Get body part health data for UI
-function GetBodyPartHealthData()
-    local healthData = {}
-
-    -- Default all body parts to 100% health
-    for bodyPart, config in pairs(Config.BodyParts) do
-        healthData[bodyPart] = {
-            current = config.maxHealth,
-            max = config.maxHealth,
-            percentage = 100.0
-        }
+    -- 2. Melee with no known weapon = unarmed
+    if isMelee then
+        local unarmedHash = GetHashKey("WEAPON_UNARMED")
+        if Config.WeaponDamage[unarmedHash] then
+            return unarmedHash
+        end
     end
 
-    -- Update with wound data if it exists
-    for bodyPart, wound in pairs(MedicalState.wounds) do
-        if not wound.isScar and wound.currentHealth then
-            healthData[bodyPart] = {
-                current = wound.currentHealth,
-                max = wound.maxHealth or Config.BodyParts[bodyPart].maxHealth,
-                percentage = wound.healthPercentage or 100.0
+    -- 3. Check if attacker is an animal
+    if attackerEntity and DoesEntityExist(attackerEntity) then
+        local isAnimal = GetIsAnimal(attackerEntity)
+        if isAnimal then
+            local model = GetEntityModel(attackerEntity)
+            local animalWeaponMap = {
+                [GetHashKey("a_c_wolf")] = GetHashKey("WEAPON_WOLF"),
+                [GetHashKey("a_c_coyote_01")] = GetHashKey("WEAPON_WOLF"),
+                [GetHashKey("a_c_cougar")] = GetHashKey("WEAPON_COUGAR"),
+                [GetHashKey("a_c_panther_01")] = GetHashKey("WEAPON_COUGAR"),
+                [GetHashKey("a_c_bear_01")] = GetHashKey("WEAPON_BEAR"),
+                [GetHashKey("a_c_bearblack_01")] = GetHashKey("WEAPON_BEAR"),
+                [GetHashKey("a_c_snake_01")] = GetHashKey("WEAPON_SNAKE"),
+                [GetHashKey("a_c_alligator_01")] = GetHashKey("WEAPON_ANIMAL"),
+                [GetHashKey("a_c_horse_01")] = GetHashKey("WEAPON_HORSE"),
             }
-        end
-    end
-
-    return healthData
-end
-
--- Wound type detection for healing system
-local function GetWoundType(wound)
-    if not wound or not wound.metadata then
-        return "default"
-    end
-
-    -- Check bullet status first
-    if wound.metadata.bulletStatus then
-        if wound.metadata.bulletStatus == "through" then
-            return "shot_through"
-        elseif wound.metadata.bulletStatus == "stuck" then
-            -- If bullet was removed surgically, it becomes post_surgery
-            if wound.metadata.surgicallyRemoved then
-                return "post_surgery"
-            else
-                -- Still has bullet lodged - cannot heal until removed
-                return nil
+            local resolved = animalWeaponMap[model]
+            if resolved and Config.WeaponDamage[resolved] then
+                return resolved
             end
-        elseif wound.metadata.bulletStatus == "fragmented" then
-            return "fragmented"
+            -- Generic animal fallback
+            local genericAnimal = GetHashKey("WEAPON_ANIMAL")
+            if Config.WeaponDamage[genericAnimal] then
+                return genericAnimal
+            end
         end
     end
 
-    -- Check weapon type
-    if wound.metadata.weaponType then
-        local weaponType = wound.metadata.weaponType:lower()
-        if weaponType:find("knife") or weaponType:find("blade") or weaponType:find("machete") then
-            return "cutting"
-        elseif weaponType:find("explosive") or weaponType:find("dynamite") or weaponType:find("fire") then
-            return "explosive"
-        elseif weaponType:find("animal") or weaponType:find("horse") or weaponType:find("deer") then
-            return "crushing"
+    -- 4. Fall damage check (ragdoll state)
+    local playerPed = PlayerPedId()
+    if IsPedRagdoll(playerPed) then
+        local fallHash = GetHashKey("WEAPON_FALL")
+        if Config.WeaponDamage[fallHash] then
+            return fallHash
         end
     end
 
-    return "default"
+    -- 5. No match found
+    return nil
 end
 
 --============================================
--- SECTION 3: DAMAGE DETECTION (Lines 351-850)
+-- SECTION 3: DAMAGE DETECTION (EVENT_NETWORK_DAMAGE_ENTITY)
 --============================================
+-- Uses RedM game event directly - no polling, no ped scanning
+-- Event data indices (0-based in event, 1-based in Lua table):
+--   data[1]  = damaged entity id (victim)
+--   data[2]  = killer/damager entity id
+--   data[3]  = damage amount
+--   data[4]  = isVictimDestroyed
+--   data[5]  = isVictimIncapacitated
+--   data[6]  = WeaponUsed hash
+--   data[7]  = AmmoUsed hash
+--   data[8]  = InstigatedWeaponUsed
+--   data[9]  = VictimSpeed
+--   data[10] = DamagerSpeed
+--   data[11] = IsResponsibleForCollision
+--   data[12] = IsHeadShot
+--   data[13] = IsWithMeleeWeapon
+--   data[14] = IsVictimExecuted
+--   data[15] = VictimBledOut
+--   data[32] = IsSuicide
 
--- Enhanced weapon detection system
-local function FindActualWeaponUsed()
-    local playerPed = PlayerPedId()
-    local playerCoords = GetEntityCoords(playerPed)
-    local weaponFound = nil
-
-    -- Check nearby peds (both players and NPCs) for actual combat actions
-    local nearbyPeds = {}
-
-    -- Add all players
-    local players = GetActivePlayers()
-    for _, playerId in ipairs(players) do
-        if playerId ~= PlayerId() then
-            local otherPed = GetPlayerPed(playerId)
-            if DoesEntityExist(otherPed) then
-                table.insert(nearbyPeds, otherPed)
-            end
-        end
-    end
-
-    -- Add nearby NPCs
-    local handle, ped = FindFirstPed()
-    local success
-    repeat
-        if DoesEntityExist(ped) and ped ~= playerPed and not IsPedAPlayer(ped) then
-            local distance = #(playerCoords - GetEntityCoords(ped))
-            if distance <= 10.0 then
-                table.insert(nearbyPeds, ped)
-            end
-        end
-        success, ped = FindNextPed(handle)
-    until not success
-    EndFindPed(handle)
-
-    -- Check all nearby peds for combat actions
-    for _, otherPed in ipairs(nearbyPeds) do
-        if DoesEntityExist(otherPed) then
-            local distance = #(playerCoords - GetEntityCoords(otherPed))
-
-            -- Only check peds within reasonable combat range
-            if distance <= 10.0 then
-                local currentWeapon = GetCurrentPedWeapon(otherPed)
-                local isShooting = IsPedShooting(otherPed)
-                local isInMelee = IsPedInMeleeCombat(otherPed)
-
-                -- Priority 1: If they're shooting with a weapon, use that weapon
-                if isShooting and currentWeapon and currentWeapon ~= GetHashKey("WEAPON_UNARMED") and currentWeapon ~= 1 then
-                    if Config.WeaponDamage[currentWeapon] then
-                        weaponFound = currentWeapon
-                        if Config.WoundSystem.debugging.enabled then
-                            print(string.format("^2[WEAPON DETECT] Found shooter with weapon: %s^7", tostring(currentWeapon)))
-                        end
-                        break
-                    end
-                end
-
-                -- Priority 2: If they're in melee combat, use unarmed or their melee weapon
-                if isInMelee then
-                    if currentWeapon == GetHashKey("WEAPON_UNARMED") or not currentWeapon or currentWeapon == 1 then
-                        weaponFound = GetHashKey("WEAPON_UNARMED")
-                    else
-                        -- Check if current weapon is a melee weapon
-                        if Config.WeaponDamage[currentWeapon] and
-                           (Config.WeaponDamage[currentWeapon].ballisticType == "melee" or
-                            string.find(Config.WeaponDamage[currentWeapon].data or "", "Knife") or
-                            string.find(Config.WeaponDamage[currentWeapon].data or "", "Hatchet")) then
-                            weaponFound = currentWeapon
-                        else
-                            weaponFound = GetHashKey("WEAPON_UNARMED")
-                        end
-                    end
-                    break
-                end
-            end
-        end
-    end
-
-    -- Check for animal attacks
-    local animalAttackDetected = false
-    for _, otherPed in ipairs(nearbyPeds) do
-        if DoesEntityExist(otherPed) then
-            local distance = #(playerCoords - GetEntityCoords(otherPed))
-            if distance <= 3.0 then
-                if not IsPedAPlayer(otherPed) then
-                    local isHuman = IsPedHuman(otherPed)
-                    local isAnimal = GetIsAnimal(otherPed)
-                    local model = GetEntityModel(otherPed)
-
-                    if not isHuman and isAnimal and IsPedInMeleeCombat(otherPed) then
-                        local animalWeapon = GetHashKey("WEAPON_ANIMAL")
-
-                        -- Animal model to weapon mapping
-                        local animalWeaponMap = {
-                            [-1392359921] = GetHashKey("WEAPON_WOLF"),
-                            [GetHashKey("a_c_wolf")] = GetHashKey("WEAPON_WOLF"),
-                            [GetHashKey("a_c_cougar")] = GetHashKey("WEAPON_COUGAR"),
-                            [GetHashKey("a_c_bear_01")] = GetHashKey("WEAPON_BEAR"),
-                            [GetHashKey("a_c_snake_01")] = GetHashKey("WEAPON_SNAKE"),
-                            [GetHashKey("a_c_horse_01")] = GetHashKey("WEAPON_HORSE"),
-                            -- Add more as needed
-                        }
-
-                        if animalWeaponMap[model] then
-                            animalWeapon = animalWeaponMap[model]
-                        end
-
-                        if animalWeapon then
-                            weaponFound = animalWeapon
-                            animalAttackDetected = true
-                            if Config.WoundSystem.debugging.enabled then
-                                print(string.format("^1[ANIMAL] Detected %s attack^7", tostring(animalWeapon)))
-                            end
-                            break
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    -- Check for ragdoll falls
-    if not weaponFound and not animalAttackDetected then
-        if IsPedRagdoll(playerPed) then
-            weaponFound = GetHashKey("WEAPON_FALL")
-            if Config.WoundSystem.debugging.enabled then
-                print("^3[RAGDOLL FALL] Detected ragdoll state - assuming fall damage^7")
-            end
-        end
-    end
-
-    -- Fallback: Check damage flags
-    if not weaponFound and not animalAttackDetected then
-        for weaponHash, weaponData in pairs(Config.WeaponDamage) do
-            if HasEntityBeenDamagedByWeapon(playerPed, weaponHash, 0) then
-                weaponFound = weaponHash
-                if Config.WoundSystem.debugging.enabled then
-                    print(string.format("^3[FALLBACK] Using damage flag: %s^7", weaponData.data or "unknown"))
-                end
-                ClearEntityLastDamageEntity(playerPed)
-                HasEntityBeenDamagedByWeapon(playerPed, weaponHash, 2)
-                break
-            end
-        end
-    end
-
-    return weaponFound
-end
-
--- Calculate damaged body part based on ped bones
-local function CalculateDamagedBodyPart()
-    local playerPed = PlayerPedId()
-    local damagedBone = GetPedLastDamageBone(playerPed)
-
-    -- Map bone to body part
-    local bodyPart = "torso" -- Default
-
-    -- Head bones
-    if damagedBone == 21030 or damagedBone == 31086 then
-        bodyPart = "head"
-    -- Arm bones
-    elseif damagedBone == 37119 or damagedBone == 40269 then
-        bodyPart = "left_arm"
-    elseif damagedBone == 28252 or damagedBone == 6442 then
-        bodyPart = "right_arm"
-    -- Leg bones  elseif damagedBone == 65478 or damagedBone == 55120 then
-        bodyPart = "left_leg"
-    elseif damagedBone == 45454 or damagedBone == 43312 then
-        bodyPart = "right_leg"
-    end
-
-    return bodyPart
-end
-
--- Process damage event and create wound
-local function DetectPlayerDamage(eventData)
+local function ProcessDamageEvent(data)
     if ApplyingMedicalDamage then return end
 
+    -- Cooldown check
     local currentTime = GetGameTimer()
-    if currentTime - LastDamageTime < DAMAGE_COOLDOWN then
-        return
-    end
+    if currentTime - LastDamageTime < DAMAGE_COOLDOWN then return end
     LastDamageTime = currentTime
 
-    local playerPed = PlayerPedId()
-    local victim = tonumber(eventData[1])
+    -- Skip self-inflicted damage
+    if data.isSuicide then return end
 
-    if victim ~= playerPed then return end
+    -- Resolve weapon hash to config entry
+    local resolvedWeapon = ResolveWeaponFromEvent(data.weaponHash, data.attacker, data.isMelee)
 
-    -- Find weapon used
-    local weaponHash = FindActualWeaponUsed()
-    if not weaponHash then return end
+    if Config.WoundSystem.debugging.enabled then
+        print(string.format("^5  Resolved weapon: %s (from hash: %d)^7",
+            resolvedWeapon and Config.WeaponDamage[resolvedWeapon] and Config.WeaponDamage[resolvedWeapon].data or "NONE",
+            data.weaponHash or 0))
+    end
 
-    -- Get weapon configuration
-    local weaponData = Config.WeaponDamage[weaponHash]
-    if not weaponData then
+    if not resolvedWeapon then
         if Config.WoundSystem.debugging.enabled then
-            print(string.format("^3[DAMAGE] Unknown weapon: %s^7", tostring(weaponHash)))
+            print(string.format("^3[DAMAGE] Unknown weapon hash %d - no medical effect^7", data.weaponHash or 0))
         end
         return
     end
 
-    -- Calculate damaged body part
-    local bodyPart = CalculateDamagedBodyPart()
+    -- Get weapon configuration
+    local weaponData = Config.WeaponDamage[resolvedWeapon]
 
-    -- Calculate pain and bleeding levels based on weapon type
-    local painLevel = weaponData.painLevel or 5
-    local bleedingLevel = weaponData.bleedingLevel or 5
-
-    -- Check if wound already exists
-    local existingWound = MedicalState.wounds[bodyPart]
-
-    if existingWound then
-        -- Increase severity on repeat hits
-        if existingWound.severity and existingWound.severity < 4 then
-            existingWound.severity = existingWound.severity + 1
+    -- Roll bleeding chance
+    local bleedChance = weaponData.chance or 0
+    if bleedChance <= 0 or math.random() > bleedChance then
+        if Config.WoundSystem.debugging.enabled then
+            print(string.format("^3[DAMAGE] %s hit - no bleeding (chance: %.0f%%, rolled fail)^7",
+                weaponData.data or "unknown", bleedChance * 100))
         end
+        return
+    end
 
-        -- Increase bleeding and pain
-        existingWound.bleedingLevel = math.min((existingWound.bleedingLevel or 0) + bleedingLevel, 10)
-        existingWound.painLevel = math.min((existingWound.painLevel or 0) + painLevel, 10)
+    -- Add global bleeding
+    local bleedingAmount = weaponData.bleeding or 1
 
-        -- Recalculate health
-        local currentHealth, maxHealth, healthPercentage = CalculateBodyPartHealth(
-            bodyPart, existingWound.painLevel, existingWound.bleedingLevel
-        )
-        existingWound.currentHealth = currentHealth
-        existingWound.maxHealth = maxHealth
-        existingWound.healthPercentage = healthPercentage
-    else
-        -- Create new wound
-        CreateWound(bodyPart, painLevel, bleedingLevel, {
-            weaponHash = weaponHash,
-            weaponType = weaponData.data,
-            timestamp = currentTime
-        })
+    -- Headshot bonus bleeding
+    if data.isHeadShot then
+        bleedingAmount = math.min(bleedingAmount * 1.5, 10)
+    end
+
+    MedicalState.bleedingLevel = math.min(MedicalState.bleedingLevel + bleedingAmount, 10)
+
+    -- Add bandage changes needed (stacks with each hit)
+    local bandageChanges = weaponData.bandageChanges or 2
+    MedicalState.bandageChangesNeeded = MedicalState.bandageChangesNeeded + bandageChanges
+
+    -- Track last hit bone for wound effects
+    local _, lastBone = GetPedLastDamageBone(PlayerPedId())
+    if lastBone and lastBone > 0 then
+        MedicalState.lastHitBone = lastBone
+    end
+
+    -- Track wound source
+    MedicalState.lastWoundSource = weaponData.data or "unknown"
+    if MedicalState.woundTimestamp == 0 then
+        MedicalState.woundTimestamp = currentTime
     end
 
     -- Sync to server
-    PlayerWounds = MedicalState.wounds
-    TriggerServerEvent('QC-AdvancedMedic:server:UpdateWoundData', MedicalState.wounds)
+    TriggerServerEvent('QC-AdvancedMedic:server:UpdateWoundData', MedicalState)
+
+    -- Notify player
+    lib.notify({
+        title = locale('cl_menu_medical_warning'),
+        description = string.format("You're bleeding! (Level: %.1f/10)", MedicalState.bleedingLevel),
+        type = 'error',
+        duration = 5000
+    })
 
     if Config.WoundSystem.debugging.enabled then
-        print(string.format("^2[DAMAGE] %s hit by %s - Pain: %.1f, Bleeding: %.1f^7",
-            bodyPart, weaponData.data or "unknown", painLevel, bleedingLevel))
+        print(string.format("^2[DAMAGE] Hit by %s%s - Bleeding: %.1f/10, Bandages needed: %d^7",
+            weaponData.data or "unknown",
+            data.isHeadShot and " (HEADSHOT)" or "",
+            MedicalState.bleedingLevel, MedicalState.bandageChangesNeeded))
     end
 end
 
--- Register damage event listener
-AddEventHandler("gameEventTriggered", function(event, eventData)
-    if event == "CEventNetworkEntityDamage" then
-        DetectPlayerDamage(eventData)
+-- ============================================================
+-- DAMAGE EVENT POLLING (EVENT_NETWORK_DAMAGE_ENTITY)
+-- ============================================================
+-- Uses native event queue (group 1 = network events)
+-- DataView library required for reading struct buffer data
+-- Event fields (32 total, each at 8-byte offset):
+--   [0]  damaged entity id (victim)      [1]  killer entity id
+--   [2]  damage amount                   [3]  isVictimDestroyed
+--   [4]  isVictimIncapacitated           [5]  WeaponUsed hash
+--   [6]  AmmoUsed hash                   [7]  InstigatedWeaponUsed
+--   [8]  VictimSpeed                     [9]  DamagerSpeed
+--   [10] IsResponsibleForCollision       [11] IsHeadShot
+--   [12] IsWithMeleeWeapon               [13] IsVictimExecuted
+--   [14] VictimBledOut                   [15] DamagerWasScopedIn
+--   [16] DamagerSpecialAbilityActive     [17] VictimHogtied
+--   [18] VictimMounted                   [19] VictimInVehicle
+--   [20] VictimInCover                   [21] DamagerShotLastBullet
+--   [22] VictimKilledByStealth           [23] VictimKilledByTakedown
+--   [24] VictimKnockedOut                [25] isVictimTranquilized
+--   [26] VictimKilledByStandardMelee     [27] VictimMissionEntity
+--   [28] VictimFleeing                   [29] VictimInCombat
+--   [30] unknown                         [31] IsSuicide
+
+local DAMAGE_EVENT_HASH = GetHashKey("EVENT_NETWORK_DAMAGE_ENTITY")
+local DAMAGE_DATA_SIZE = 32
+local DAMAGE_BUF_SIZE = 8 * DAMAGE_DATA_SIZE -- 256 bytes
+
+CreateThread(function()
+    if Config.WoundSystem.debugging.enabled then
+        print("^2[CORE MEDICAL] Damage event polling thread started (native event queue group 1)^7")
+    end
+
+    while true do
+        Wait(0)
+
+        local eventCount = GetNumberOfEvents(1)
+        if eventCount > 0 then
+            for i = 0, eventCount - 1 do
+                local eventHash = GetEventAtIndex(1, i)
+
+                if eventHash == DAMAGE_EVENT_HASH then
+                    -- Create buffer and read event data
+                    local buf = DataView.ArrayBuffer(DAMAGE_BUF_SIZE)
+                    local hasData = Citizen.InvokeNative(0x57EC5FA4D4D6AFCA, 1, i, buf:Buffer(), DAMAGE_DATA_SIZE)
+
+                    if hasData then
+                        local myPed = PlayerPedId()
+                        local victim = buf:GetInt32(0)
+
+                        -- Only process if WE are the victim
+                        if victim == myPed then
+                            local attacker   = buf:GetInt32(8)
+                            local damage     = buf:GetInt32(16)
+                            local destroyed  = buf:GetInt32(24)
+                            local incap      = buf:GetInt32(32)
+                            local weaponHash = buf:GetInt32(40)
+                            local ammoHash   = buf:GetInt32(48)
+                            local isHeadShot = buf:GetInt32(88)  -- index 11
+                            local isMelee    = buf:GetInt32(96)  -- index 12
+                            local isSuicide  = buf:GetInt32(248) -- index 31
+
+                            -- Debug output
+                            if Config.WoundSystem.debugging.enabled then
+                                print("^5=== EVENT_NETWORK_DAMAGE_ENTITY (we are victim) ===^7")
+                                print(string.format("^5  Victim: %d | Attacker: %d | Damage: %d^7", victim, attacker, damage))
+                                print(string.format("^5  WeaponHash: %d | AmmoHash: %d^7", weaponHash, ammoHash))
+                                print(string.format("^5  HeadShot: %d | Melee: %d | Suicide: %d^7", isHeadShot, isMelee, isSuicide))
+                                print(string.format("^5  Destroyed: %d | Incapacitated: %d^7", destroyed, incap))
+                            end
+
+                            -- Pass to damage processor
+                            ProcessDamageEvent({
+                                victim = victim,
+                                attacker = attacker,
+                                damage = damage,
+                                weaponHash = weaponHash,
+                                ammoHash = ammoHash,
+                                isHeadShot = isHeadShot == 1,
+                                isMelee = isMelee == 1,
+                                isSuicide = isSuicide == 1,
+                                isDestroyed = destroyed == 1,
+                                isIncapacitated = incap == 1,
+                            })
+                        end
+                    end
+                end
+            end
+        end
     end
 end)
 
 --============================================
--- SECTION 4: WOUND MANAGEMENT (Lines 801-1400)
+-- SECTION 4: BANDAGE APPLICATION (Simplified)
 --============================================
 
--- Create a new wound
-local function CreateWound(bodyPart, painLevel, bleedingLevel, metadata)
-    local currentHealth, maxHealth, healthPercentage = CalculateBodyPartHealth(bodyPart, painLevel, bleedingLevel)
-
-    MedicalState.wounds[bodyPart] = {
-        painLevel = painLevel or 0,
-        bleedingLevel = bleedingLevel or 0,
-        severity = 1,
-        timestamp = GetGameTimer(),
-        currentHealth = currentHealth,
-        maxHealth = maxHealth,
-        healthPercentage = healthPercentage,
-        metadata = metadata or {},
-        isScar = false
-    }
-
-    -- Update global for backwards compatibility
-    PlayerWounds = MedicalState.wounds
-
-    if Config.WoundSystem.debugging.enabled then
-        print(string.format("^2[WOUND CREATED] %s: Pain=%.1f, Bleeding=%.1f^7",
-            bodyPart, painLevel, bleedingLevel))
-    end
-
-    return MedicalState.wounds[bodyPart]
-end
-
--- Update an existing wound
-local function UpdateWound(bodyPart, changes)
-    local wound = MedicalState.wounds[bodyPart]
-    if not wound then return false end
-
-    -- Store original values for rollback
-    local originalPain = wound.painLevel
-    local originalBleeding = wound.bleedingLevel
-
-    -- Apply changes
-    for key, value in pairs(changes) do
-        wound[key] = value
-    end
-
-    -- Recalculate health
-    if changes.painLevel or changes.bleedingLevel then
-        local currentHealth, maxHealth, healthPercentage = CalculateBodyPartHealth(
-            bodyPart, wound.painLevel, wound.bleedingLevel
-        )
-        wound.currentHealth = currentHealth
-        wound.maxHealth = maxHealth
-        wound.healthPercentage = healthPercentage
-    end
-
-    -- Server-authoritative update with callback
-    QCMedic.Callbacks.ServerCallback('UpdateWoundData', MedicalState.wounds, function(success, errorCode)
-        if not success then
-            -- Rollback changes on failure
-            wound.painLevel = originalPain
-            wound.bleedingLevel = originalBleeding
-
-            lib.notify({
-                title = locale('cl_menu_treatment_error'),
-                description = locale('cl_desc_server_sync_failed'),
-                type = 'error',
-                duration = 5000
-            })
-
-            if Config.WoundSystem.debugging.enabled then
-                print(string.format("^1[UPDATE WOUND] Failed: %s^7", errorCode or "UNKNOWN"))
-            end
-            return
-        end
-    end)
-
-    -- Update global for backwards compatibility
-    PlayerWounds = MedicalState.wounds
-
-    return true
-end
-
--- Remove a wound
-local function RemoveWound(bodyPart)
-    if not MedicalState.wounds[bodyPart] then return false end
-
-    MedicalState.wounds[bodyPart] = nil
-
-    -- Update global for backwards compatibility
-    PlayerWounds = MedicalState.wounds
-
-    -- Stop any active healing
-    if MedicalState.healingTimers[bodyPart] then
-        MedicalState.healingTimers[bodyPart] = nil
-    end
-
-    -- Remove any treatments
-    if MedicalState.treatments[bodyPart] then
-        MedicalState.treatments[bodyPart] = nil
-        ActiveTreatments = MedicalState.treatments
-    end
-
-    -- Sync to server
-    TriggerServerEvent('QC-AdvancedMedic:server:UpdateWoundData', MedicalState.wounds)
-
-    return true
-end
-
---============================================
--- SECTION 5: TREATMENT APPLICATION (Lines 1401-2200)
---============================================
-
--- Apply bandage treatment
-function ApplyBandage(bodyPart, bandageType, appliedBy)
+-- Apply bandage (global - no body part needed)
+function ApplyBandage(bandageType, appliedBy)
     local bandageConfig = Config.BandageTypes[bandageType]
     if not bandageConfig then
         print("[ERROR] Unknown bandage type: " .. tostring(bandageType))
         return false
     end
 
-    local bodyPartConfig = Config.BodyParts[bodyPart]
-    if not bodyPartConfig then
-        print("[ERROR] Unknown body part: " .. tostring(bodyPart))
-        return false
-    end
-
-    -- Get current wound for this body part
-    local wound = MedicalState.wounds[bodyPart]
-
-    if not wound then
+    -- Check if player is wounded
+    if not IsWounded() then
         lib.notify({
             title = locale('cl_menu_treatment'),
-            description = string.format(locale('cl_desc_fmt_no_injury_detected'), bodyPartConfig.label),
+            description = "You have no wounds to bandage.",
             type = 'error',
             duration = 5000
         })
         return false
     end
 
-    -- Check if wound is bleeding
-    if not wound.bleedingLevel or wound.bleedingLevel <= 0 then
-        lib.notify({
-            title = locale('cl_menu_treatment'),
-            description = string.format(locale('cl_desc_fmt_no_bleeding_detected'), bodyPartConfig.label),
-            type = 'error',
-            duration = 5000
-        })
-        return false
-    end
-
-    -- Check if bandage already applied
-    if MedicalState.treatments[bodyPart] and MedicalState.treatments[bodyPart].treatmentType == "bandage" then
+    -- Check if bandage already active
+    if MedicalState.activeBandage then
         lib.notify({
             title = locale('cl_menu_treatment_error'),
-            description = string.format(locale('cl_desc_fmt_bandage_already_applied'), bodyPartConfig.label),
+            description = "A bandage is already active. Wait for it to expire or remove it first.",
             type = 'error',
             duration = 5000
         })
         return false
     end
 
-    -- ONE-TIME HEAL: Apply immediate health restoration
-    if bandageConfig.oneTimeHeal and bandageConfig.oneTimeHeal > 0 then
-        local ped = PlayerPedId()
-        local currentHealth = GetEntityHealth(ped)
-        local newHealth = math.min(currentHealth + bandageConfig.oneTimeHeal, Config.MaxHealth)
-        SetEntityHealth(ped, newHealth)
+    local ped = PlayerPedId()
+
+    -- 1. INSTANT HEAL: Apply immediate % health restoration
+    local healPercent = bandageConfig.instantHealPercent or 25
+    local healAmount = math.floor(Config.MaxHealth * healPercent / 100)
+    local currentHealth = GetEntityHealth(ped)
+    local newHealth = math.min(currentHealth + healAmount, Config.MaxHealth)
+    SetEntityHealth(ped, newHealth)
+
+    -- 2. REDUCE BLEEDING
+    local bleedingReduction = bandageConfig.bleedingReduction or 2
+    MedicalState.bleedingLevel = math.max(MedicalState.bleedingLevel - bleedingReduction, 0)
+
+    -- 3. TRACK BANDAGE
+    local currentTime = GetGameTimer()
+    local durationMs = (bandageConfig.duration or 5) * 60 * 1000
+    MedicalState.activeBandage = {
+        type = bandageType,
+        appliedTime = currentTime,
+        expirationTime = currentTime + durationMs,
+        config = bandageConfig,
+        appliedBy = appliedBy,
+    }
+
+    -- 4. INCREMENT BANDAGE CHANGES (by healingPower - better bandages heal more per use)
+    local healingPower = bandageConfig.healingPower or 1
+    MedicalState.bandageChangesApplied = MedicalState.bandageChangesApplied + healingPower
+
+    -- 5. CHECK IF FULLY HEALED
+    if MedicalState.bandageChangesApplied >= MedicalState.bandageChangesNeeded and MedicalState.bandageChangesNeeded > 0 then
+        -- Let the bandage tick finish its duration for the health regen,
+        -- but mark bleeding as fully stopped
+        MedicalState.bleedingLevel = 0
+
+        lib.notify({
+            title = "Wound Healed",
+            description = "Your wounds are fully treated! Keep the bandage on for continued healing.",
+            type = 'success',
+            duration = 7000
+        })
 
         if Config.WoundSystem.debugging.enabled then
-            print(string.format("^2[BANDAGE] %s: +%d heal^7",
-                bodyPartConfig.label, bandageConfig.oneTimeHeal))
+            print("^2[BANDAGE] Fully healed! All bandage changes completed.^7")
         end
     end
 
-    -- Store original wound levels for rollback
-    local originalPain = wound.painLevel
-    local originalBleeding = wound.bleedingLevel
+    -- 6. START HEALTH TICK THREAD
+    local tickInterval = (bandageConfig.tickInterval or 10) * 1000
+    local healthPerTick = bandageConfig.healthPerTick or 5
+    local bandageRef = MedicalState.activeBandage -- capture reference
 
-    -- BLEEDING REDUCTION (immediate effect)
-    local bleedingReduction = 0
-    if wound.bleedingLevel > 0 and bandageConfig.bleedingReduction then
-        bleedingReduction = bandageConfig.bleedingReduction
-        wound.bleedingLevel = math.max(wound.bleedingLevel - bleedingReduction, 1)
-    end
+    bandageTickThread = CreateThread(function()
+        while MedicalState.activeBandage == bandageRef do
+            Wait(tickInterval)
 
-    -- PAIN REDUCTION (proportional to bleeding reduction)
-    local painReduction = 0
-    if bleedingReduction > 0 and wound.painLevel > 0 then
-        painReduction = bleedingReduction
-        wound.painLevel = math.max(wound.painLevel - painReduction, 2)
-    end
+            -- Check if bandage still active
+            if MedicalState.activeBandage ~= bandageRef then break end
 
-    -- Update wound data on server (SERVER-AUTHORITATIVE WITH CALLBACK)
-    QCMedic.Callbacks.ServerCallback('UpdateWoundData', MedicalState.wounds, function(success, errorCode)
-        if not success then
-            -- Rollback wound changes on failure
-            wound.bleedingLevel = originalBleeding
-            wound.painLevel = originalPain
+            -- Check if expired
+            if GetGameTimer() >= bandageRef.expirationTime then
+                -- Bandage expired
+                MedicalState.activeBandage = nil
+                bandageTickThread = nil
 
-            lib.notify({
-                title = locale('cl_menu_treatment_error'),
-                description = locale('cl_desc_server_sync_failed'),
-                type = 'error',
-                duration = 5000
-            })
+                -- If not fully healed, notify about infection risk
+                if not IsFullyHealed() then
+                    lib.notify({
+                        title = "Bandage Expired",
+                        description = string.format("Your %s has expired! Apply a new bandage. (%d/%d changes)",
+                            bandageConfig.label, MedicalState.bandageChangesApplied, MedicalState.bandageChangesNeeded),
+                        type = 'warning',
+                        duration = 7000
+                    })
+                else
+                    -- Fully healed, bandage expired naturally - clean up
+                    ResetMedicalState()
+                    lib.notify({
+                        title = "Fully Recovered",
+                        description = "Your wounds have completely healed.",
+                        type = 'success',
+                        duration = 5000
+                    })
+                end
 
-            if Config.WoundSystem.debugging.enabled then
-                print(string.format("^1[BANDAGE CALLBACK] Failed: %s^7", errorCode or "UNKNOWN"))
+                if Config.WoundSystem.debugging.enabled then
+                    print("^3[BANDAGE] Expired - infection risk increases^7")
+                end
+                break
             end
-            return
-        end
 
-        if Config.WoundSystem.debugging.enabled then
-            print(string.format("^2[BANDAGE CALLBACK] Success^7"))
+            -- Apply health tick
+            local pedNow = PlayerPedId()
+            local currentHP = GetEntityHealth(pedNow)
+            if currentHP < Config.MaxHealth then
+                local tickHeal = math.min(healthPerTick, Config.MaxHealth - currentHP)
+                SetEntityHealth(pedNow, currentHP + tickHeal)
+            end
         end
     end)
 
-    if Config.WoundSystem.debugging.enabled then
-        print(string.format("^3[BANDAGE] Pain:%.1f→%.1f Bleed:%.1f→%.1f^7",
-            originalPain or 0, wound.painLevel or 0, originalBleeding or 0, wound.bleedingLevel or 0))
-    end
-
-    -- Track bandage treatment
-    local currentTime = GetGameTimer()
-    local expirationTime = currentTime + (bandageConfig.decayRate * 60 * 1000)
-
-    MedicalState.treatments[bodyPart] = {
-        treatmentType = "bandage",
-        itemType = bandageType,
-        appliedTime = currentTime,
-        expirationTime = expirationTime,
-        effectiveness = bandageConfig.effectiveness or 100,
-        appliedBy = appliedBy,
-        isActive = true,
-        originalPain = originalPain,
-        originalBleeding = originalBleeding,
-        painReduction = painReduction,
-        bleedingReduction = bleedingReduction
-    }
-
-    -- Update global for backwards compatibility
-    ActiveTreatments = MedicalState.treatments
-    PlayerWounds = MedicalState.wounds
+    -- Sync to server
+    TriggerServerEvent('QC-AdvancedMedic:server:UpdateWoundData', MedicalState)
 
     -- Notify player
     lib.notify({
         title = locale('cl_menu_treatment'),
-        description = string.format(locale('cl_desc_fmt_bandage_applied'), bodyPartConfig.label),
+        description = string.format("%s applied! +%d%% health. (%d/%d bandage changes)",
+            bandageConfig.label, healPercent, MedicalState.bandageChangesApplied, MedicalState.bandageChangesNeeded),
         type = 'success',
         duration = 5000
     })
 
+    if Config.WoundSystem.debugging.enabled then
+        print(string.format("^2[BANDAGE] %s applied - Bleeding: %.1f, Changes: %d/%d^7",
+            bandageConfig.label, MedicalState.bleedingLevel,
+            MedicalState.bandageChangesApplied, MedicalState.bandageChangesNeeded))
+    end
+
     return true
 end
 
--- Apply tourniquet treatment (global application, circuit-damage pattern)
+--============================================
+-- SECTION 5: TOURNIQUET (Already global - minimal changes)
+--============================================
+
+-- Apply tourniquet treatment (global application - stops all bleeding)
 function ApplyTourniquet(tourniquetType, appliedBy)
     local tourniquetConfig = Config.TourniquetTypes[tourniquetType]
-
-    -- Validation 1: Config exists
     if not tourniquetConfig then
         print("[ERROR] Unknown tourniquet type: " .. tostring(tourniquetType))
         return false
     end
 
-    -- Validation 2: Check if ANY wound has bleeding
-    local hasBleedingWounds = false
-    for _, wound in pairs(MedicalState.wounds) do
-        if wound.bleedingLevel and wound.bleedingLevel > 0 then
-            hasBleedingWounds = true
-            break
-        end
-    end
-
-    if not hasBleedingWounds then
+    -- Check if bleeding
+    if MedicalState.bleedingLevel <= 0 then
         lib.notify({
             title = locale('cl_menu_treatment'),
             description = locale('cl_desc_no_bleeding_wounds'),
@@ -697,7 +507,7 @@ function ApplyTourniquet(tourniquetType, appliedBy)
         return false
     end
 
-    -- Validation 3: Check if tourniquet already active globally
+    -- Check if tourniquet already active
     if LocalPlayer.state.tourniquet and LocalPlayer.state.tourniquet > GetGameTimer() then
         lib.notify({
             title = locale('cl_menu_treatment_error'),
@@ -708,22 +518,13 @@ function ApplyTourniquet(tourniquetType, appliedBy)
         return false
     end
 
-    -- Apply tourniquet globally - store single timestamp (circuit-damage pattern)
+    -- Apply tourniquet globally
     local currentTime = GetGameTimer()
-    local duration = (tourniquetConfig.maxDuration or 30) * 60 * 1000 -- Convert minutes to ms
+    local duration = (tourniquetConfig.maxDuration or 30) * 60 * 1000
     local expirationTime = currentTime + duration
 
-    -- Set global tourniquet timestamp
     LocalPlayer.state:set('tourniquet', expirationTime, false)
 
-    -- STOP bleeding on ALL wounds immediately
-    for bodyPart, wound in pairs(MedicalState.wounds) do
-        if wound.bleedingLevel and wound.bleedingLevel > 0 then
-            wound.isTourniqueted = true  -- Flag for NUI display
-        end
-    end
-
-    -- Notify player
     lib.notify({
         title = locale('cl_menu_tourniquet_applied'),
         description = string.format(
@@ -735,7 +536,6 @@ function ApplyTourniquet(tourniquetType, appliedBy)
         duration = 5000
     })
 
-    -- Server callback to log event
     if appliedBy then
         TriggerServerEvent('QC-AdvancedMedic:server:LogTourniquetApplication', {
             tourniquetType = tourniquetType,
@@ -753,38 +553,27 @@ function ApplyTourniquet(tourniquetType, appliedBy)
 end
 
 -- Remove tourniquet
-local function RemoveTourniquet(bodyPart, reason)
-    if not MedicalState.treatments[bodyPart] or MedicalState.treatments[bodyPart].treatmentType ~= "tourniquet" then
-        return false
-    end
+local function RemoveTourniquet(reason)
+    LocalPlayer.state:set('tourniquet', nil, false)
 
-    -- Remove from state
-    MedicalState.treatments[bodyPart] = nil
-    ActiveTreatments = MedicalState.treatments
-
-    -- Remove from LocalPlayer.state
-    local tourniquets = LocalPlayer.state.tourniquets or {}
-    tourniquets[bodyPart] = nil
-    LocalPlayer.state:set('tourniquets', tourniquets, false)
-
-    -- Notify player
-    local bodyPartConfig = Config.BodyParts[bodyPart]
     lib.notify({
         title = locale('cl_menu_treatment'),
-        description = string.format(locale('cl_desc_fmt_tourniquet_removed'),
-            bodyPartConfig and bodyPartConfig.label or bodyPart, reason or "expired"),
+        description = string.format(locale('cl_desc_fmt_tourniquet_removed'), reason or "expired"),
         type = 'inform',
         duration = 5000
     })
 
     if Config.WoundSystem.debugging.enabled then
-        print(string.format("^3[TOURNIQUET] Removed from %s: %s^7", bodyPart, reason or "expired"))
+        print(string.format("^3[TOURNIQUET] Removed: %s^7", reason or "expired"))
     end
-
     return true
 end
 
--- Administer medicine
+--============================================
+-- SECTION 6: MEDICINE & INJECTIONS (Unchanged)
+--============================================
+
+-- Administer medicine (heals HP + temporary effects)
 function AdministreMedicine(medicineType, appliedBy)
     local medicineConfig = Config.MedicineTypes[medicineType]
     if not medicineConfig then
@@ -792,8 +581,35 @@ function AdministreMedicine(medicineType, appliedBy)
         return false
     end
 
-    -- Apply medicine effects
-    -- (Implementation to be completed based on existing medicine system)
+    -- Prevent stacking same medicine
+    if MedicalState.medicineEffects[medicineType] and MedicalState.medicineEffects[medicineType] > GetGameTimer() then
+        lib.notify({
+            title = locale('cl_menu_treatment_error'),
+            description = string.format(locale('cl_desc_fmt_medicine_already_active'), medicineConfig.label or medicineType),
+            type = 'error',
+            duration = 5000
+        })
+        return false
+    end
+
+    local ped = PlayerPedId()
+    local currentTime = GetGameTimer()
+    local durationMs = (medicineConfig.duration or 300) * 1000
+
+    -- Apply immediate healing
+    if medicineConfig.healAmount and medicineConfig.healAmount > 0 then
+        local currentHealth = GetEntityHealth(ped)
+        local newHealth = math.min(currentHealth + medicineConfig.healAmount, Config.MaxHealth or 600)
+        SetEntityHealth(ped, newHealth)
+    end
+
+    -- Track medicine effect
+    MedicalState.medicineEffects[medicineType] = currentTime + durationMs
+
+    -- Morphine/laudanum bypass movement penalties
+    if medicineType == 'morphine' or medicineType == 'laudanum' then
+        MedicalState.medicineEffects.morphine_effect = currentTime + durationMs
+    end
 
     lib.notify({
         title = locale('cl_menu_treatment'),
@@ -801,6 +617,30 @@ function AdministreMedicine(medicineType, appliedBy)
         type = 'success',
         duration = 5000
     })
+
+    if Config.WoundSystem.debugging.enabled then
+        print(string.format("^2[MEDICINE] %s applied - heal:%d, duration:%ds^7",
+            medicineConfig.label, medicineConfig.healAmount or 0, medicineConfig.duration or 0))
+    end
+
+    -- Expiration thread
+    CreateThread(function()
+        Wait(durationMs)
+        MedicalState.medicineEffects[medicineType] = nil
+
+        if (medicineType == 'morphine' or medicineType == 'laudanum') then
+            if not MedicalState.medicineEffects.morphine_effect or MedicalState.medicineEffects.morphine_effect <= GetGameTimer() then
+                MedicalState.medicineEffects.morphine_effect = nil
+            end
+        end
+
+        lib.notify({
+            title = locale('cl_menu_treatment'),
+            description = string.format(locale('cl_desc_fmt_medicine_expired'), medicineConfig.label or medicineType),
+            type = 'warning',
+            duration = 5000
+        })
+    end)
 
     return true
 end
@@ -813,8 +653,50 @@ function GiveInjection(injectionType, appliedBy)
         return false
     end
 
-    -- Apply injection effects
-    -- (Implementation to be completed based on existing injection system)
+    -- Prevent stacking
+    if MedicalState.injectionEffects[injectionType] and MedicalState.injectionEffects[injectionType] > GetGameTimer() then
+        lib.notify({
+            title = locale('cl_menu_treatment_error'),
+            description = string.format(locale('cl_desc_fmt_injection_already_active'), injectionConfig.label or injectionType),
+            type = 'error',
+            duration = 5000
+        })
+        return false
+    end
+
+    local ped = PlayerPedId()
+    local currentTime = GetGameTimer()
+    local durationMs = (injectionConfig.duration or 120) * 1000
+
+    -- Overdose risk
+    local overdoseRisk = injectionConfig.overdoseRisk or 0
+    if overdoseRisk > 0 and math.random(100) <= overdoseRisk then
+        local overDmg = math.floor((injectionConfig.healAmount or 20) * 0.5)
+        ApplyDamageToPed(ped, overDmg, false)
+        PlayPain(ped, 9, 1, true, true)
+
+        lib.notify({
+            title = locale('cl_menu_medical_warning'),
+            description = string.format(locale('cl_desc_fmt_injection_overdose'), injectionConfig.label or injectionType),
+            type = 'error',
+            duration = 10000
+        })
+        return false
+    end
+
+    -- Apply healing
+    if injectionConfig.healAmount and injectionConfig.healAmount > 0 then
+        local currentHealth = GetEntityHealth(ped)
+        local newHealth = math.min(currentHealth + injectionConfig.healAmount, Config.MaxHealth or 600)
+        SetEntityHealth(ped, newHealth)
+    end
+
+    MedicalState.injectionEffects[injectionType] = currentTime + durationMs
+
+    -- Adrenaline effect
+    if injectionType == 'adrenaline' then
+        MedicalState.medicineEffects.morphine_effect = currentTime + durationMs
+    end
 
     lib.notify({
         title = locale('cl_menu_treatment'),
@@ -823,226 +705,41 @@ function GiveInjection(injectionType, appliedBy)
         duration = 5000
     })
 
-    return true
-end
-
--- Remove treatment
-local function RemoveTreatment(bodyPart)
-    if not MedicalState.treatments[bodyPart] then return false end
-
-    local treatment = MedicalState.treatments[bodyPart]
-
-    -- Special handling for tourniquets
-    if treatment.treatmentType == "tourniquet" then
-        return RemoveTourniquet(bodyPart, "manual removal")
+    if Config.WoundSystem.debugging.enabled then
+        print(string.format("^2[INJECTION] %s administered - heal:%d, duration:%ds^7",
+            injectionConfig.label, injectionConfig.healAmount or 0, injectionConfig.duration or 0))
     end
 
-    MedicalState.treatments[bodyPart] = nil
-    ActiveTreatments = MedicalState.treatments
+    -- Expiration thread
+    CreateThread(function()
+        Wait(durationMs)
+        MedicalState.injectionEffects[injectionType] = nil
+
+        if injectionType == 'adrenaline' then
+            if not MedicalState.medicineEffects.morphine_effect or MedicalState.medicineEffects.morphine_effect <= GetGameTimer() then
+                MedicalState.medicineEffects.morphine_effect = nil
+            end
+        end
+
+        lib.notify({
+            title = locale('cl_menu_treatment'),
+            description = string.format(locale('cl_desc_fmt_injection_expired'), injectionConfig.label or injectionType),
+            type = 'warning',
+            duration = 5000
+        })
+    end)
 
     return true
 end
 
 --============================================
--- SECTION 6: HEALING & PROGRESSION (Lines 2201-2600)
+-- SECTION 7: BACKGROUND THREADS
 --============================================
 
--- Start wound healing process
-local function StartHealing(bodyPart, wound)
-    if not Config.WoundHealing.enabled then return end
-
-    local woundType = GetWoundType(wound)
-    if not woundType then
-        if Config.WoundHealing.debugging.enabled then
-            print(string.format("^3[HEALING] Cannot heal %s - lodged bullet must be removed first^7", bodyPart))
-        end
-        return
-    end
-
-    local healingConfig = Config.WoundHealing.healingTimes[woundType]
-    if not healingConfig then
-        healingConfig = Config.WoundHealing.healingTimes["default"]
-    end
-
-    MedicalState.healingTimers[bodyPart] = {
-        woundType = woundType,
-        startTime = GetGameTimer(),
-        healTime = healingConfig.healTime,
-        lastCheck = GetGameTimer(),
-        scarType = healingConfig.scarType,
-        description = healingConfig.description
-    }
-
-    if Config.WoundHealing.debugging.enabled then
-        print(string.format("^2[HEALING] Started healing %s (%s) - %d minutes required^7",
-            bodyPart, woundType, healingConfig.healTime))
-    end
-
-    -- Notify player
-    lib.notify({
-        title = Config.WoundHealing.notifications.healingStarted.title,
-        description = string.format(locale('cl_desc_fmt_wound_beginning_heal'),
-            Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label:lower() or bodyPart),
-        type = Config.WoundHealing.notifications.healingStarted.type,
-        duration = Config.WoundHealing.notifications.healingStarted.duration
-    })
-end
-
--- Stop wound healing
-local function StopHealing(bodyPart, reason)
-    if not MedicalState.healingTimers[bodyPart] then return end
-
-    MedicalState.healingTimers[bodyPart] = nil
-
-    if Config.WoundHealing.debugging.enabled then
-        print(string.format("^1[HEALING] Stopped healing %s - %s^7", bodyPart, reason))
-    end
-
-    -- Notify player
-    lib.notify({
-        title = Config.WoundHealing.notifications.healingInterrupted.title,
-        description = string.format(locale('cl_desc_fmt_wound_healing_interrupted'),
-            Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label:lower() or bodyPart, reason),
-        type = Config.WoundHealing.notifications.healingInterrupted.type,
-        duration = Config.WoundHealing.notifications.healingInterrupted.duration
-    })
-end
-
--- Complete wound healing (convert to scar)
-local function CompleteHealing(bodyPart, wound)
-    if not MedicalState.healingTimers[bodyPart] then return end
-
-    local healing = MedicalState.healingTimers[bodyPart]
-
-    -- Convert wound to scar
-    wound.isScar = true
-    wound.scarTime = GetGameTimer()
-    wound.scarType = healing.scarType
-    wound.bleedingLevel = 0
-    wound.painLevel = 0
-    wound.healedDescription = healing.description
-
-    -- Remove healing timer
-    MedicalState.healingTimers[bodyPart] = nil
-
-    if Config.WoundHealing.debugging.enabled then
-        print(string.format("^2[HEALING] Completed healing %s to %s^7", bodyPart, healing.scarType))
-    end
-
-    -- Notify player
-    lib.notify({
-        title = Config.WoundHealing.notifications.healingComplete.title,
-        description = string.format(locale('cl_desc_fmt_wound_healed_scar'),
-            Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label:lower() or bodyPart),
-        type = Config.WoundHealing.notifications.healingComplete.type,
-        duration = Config.WoundHealing.notifications.healingComplete.duration
-    })
-
-    -- Update server with scar data
-    PlayerWounds = MedicalState.wounds
-    TriggerServerEvent('QC-AdvancedMedic:server:UpdateWoundData', MedicalState.wounds)
-end
-
--- Process wound healing (called periodically)
-function ProcessWoundHealing()
-    if not Config.WoundHealing.enabled then return end
-
-    local currentTime = GetGameTimer()
-
-    for bodyPart, wound in pairs(MedicalState.wounds) do
-        if wound.isScar then goto continue end
-
-        local treatment = MedicalState.treatments[bodyPart]
-        local hasBandage = treatment and treatment.treatmentType == "bandage" and treatment.isActive
-        local isBleedingMinimal = wound.bleedingLevel == 1
-
-        -- Check if healing conditions are met
-        local canHeal = hasBandage and isBleedingMinimal
-
-        if Config.WoundHealing.debugging.showRequirementChecks then
-            print(string.format("^6[HEALING] %s: bandaged=%s, bleeding=%.1f, canHeal=%s^7",
-                bodyPart, tostring(hasBandage), wound.bleedingLevel or 0, tostring(canHeal)))
-        end
-
-        local isCurrentlyHealing = MedicalState.healingTimers[bodyPart] ~= nil
-
-        if canHeal and not isCurrentlyHealing then
-            -- Start healing process
-            StartHealing(bodyPart, wound)
-
-        elseif not canHeal and isCurrentlyHealing then
-            -- Stop healing - conditions no longer met
-            local reason = ""
-            if not hasBandage then
-                reason = "bandage removed or expired"
-            elseif not isBleedingMinimal then
-                reason = string.format("bleeding increased to level %d", wound.bleedingLevel)
-            end
-            StopHealing(bodyPart, reason)
-
-        elseif canHeal and isCurrentlyHealing then
-            -- Continue healing - check if complete
-            local healing = MedicalState.healingTimers[bodyPart]
-            local elapsedMinutes = (currentTime - healing.startTime) / 1000 / 60
-
-            if Config.WoundHealing.debugging.showHealingProgress then
-                print(string.format("^2[HEALING] %s: %.1f/%.1f minutes (%.1f%%)^7",
-                    bodyPart, elapsedMinutes, healing.healTime, (elapsedMinutes / healing.healTime) * 100))
-            end
-
-            if elapsedMinutes >= healing.healTime then
-                CompleteHealing(bodyPart, wound)
-            end
-        end
-
-        ::continue::
-    end
-end
-
---=========================================================
--- MOVEMENT & LIMB EFFECTS
---=========================================================
-
--- Process movement penalties from leg injuries
-local function ProcessMovementEffects()
-    local ped = PlayerPedId()
-    local hasLegInjury = false
-    local maxSeverity = 0
-
-    -- Check for leg injuries that cause limping (severity-based)
-    for bodyPart, wound in pairs(MedicalState.wounds) do
-        local bodyPartConfig = Config.BodyParts[bodyPart]
-        if bodyPartConfig and bodyPartConfig.limp and not wound.isScar then
-            hasLegInjury = true
-            -- Use severity level (1-4) for granular movement penalties
-            if wound.severity and wound.severity > maxSeverity then
-                maxSeverity = wound.severity
-            end
-        end
-    end
-
-    -- Apply movement penalties based on severity
-    local onMorphine = MedicalState.medicineEffects and MedicalState.medicineEffects.morphine_effect and MedicalState.medicineEffects.morphine_effect > GetGameTimer()
-
-    if hasLegInjury and not onMorphine then
-        -- Severity-based movement rate: 1=98%, 2=96%, 3=94%, 4=92%
-        local movementRates = { 0.98, 0.96, 0.94, 0.92 }
-        local movementRate = movementRates[maxSeverity] or 0.92
-        SetPedMoveRateOverride(ped, math.max(movementRate, 0.3)) -- Minimum 30% speed
-    else
-        SetPedMoveRateOverride(ped, 1.0)
-    end
-end
-
---=========================================================
--- BACKGROUND THREADS
---=========================================================
-
--- Bleeding damage loop (applies damage from untreated wounds every 30 seconds)
+-- Bleeding damage loop (applies damage from untreated bleeding every 30 seconds)
 CreateThread(function()
-    -- Wait for player to be fully loaded
     repeat Wait(1000) until LocalPlayer.state.isLoggedIn
-    Wait(5000) -- Additional delay to ensure sync
+    Wait(5000)
 
     if Config.WoundSystem.debugging.enabled then
         print("^2[CORE MEDICAL] Bleeding damage loop started (30s intervals)^7")
@@ -1051,102 +748,71 @@ CreateThread(function()
     while true do
         Wait(30000) -- 30 seconds
 
-        -- Check if player is logged in and alive
-        if not LocalPlayer.state.isLoggedIn then goto continue_bleeding_loop end
+        if not LocalPlayer.state.isLoggedIn then goto continue_loop end
 
         local playerData = RSGCore.Functions.GetPlayerData()
-        if not playerData or playerData.metadata.isdead then goto continue_bleeding_loop end
+        if not playerData or playerData.metadata.isdead then goto continue_loop end
 
-        local totalBleedingDamage = 0
-        local bleedingWounds = {}
+        -- No bleeding = no damage
+        if MedicalState.bleedingLevel <= 0 then goto continue_loop end
 
-        -- Early exit if no wounds
-        if not next(MedicalState.wounds) then goto continue_bleeding_loop end
-
-        -- Global tourniquet check (circuit-damage pattern)
-        -- If tourniquet is active, it COMPLETELY HALTS all bleeding - no damage, no progression
+        -- Tourniquet active = no bleeding damage
         local tourniquetActive = LocalPlayer.state.tourniquet and LocalPlayer.state.tourniquet > GetGameTimer()
-        if tourniquetActive then
-            goto continue_bleeding_loop
-        end
+        if tourniquetActive then goto continue_loop end
 
-        -- Calculate bleeding damage from untreated wounds
-        for bodyPart, wound in pairs(MedicalState.wounds) do
-            if not wound.isScar and wound.bleedingLevel and tonumber(wound.bleedingLevel) > 0 then
-                local hasBandage = false
+        -- Active bandage = no bleeding damage (bandage is protecting)
+        if MedicalState.activeBandage then goto continue_loop end
 
-                -- Check for active bandage
-                if MedicalState.treatments[bodyPart] and
-                   MedicalState.treatments[bodyPart].treatmentType == "bandage" and
-                   MedicalState.treatments[bodyPart].isActive then
-                    hasBandage = true
-                end
+        -- Apply bleeding damage based on level
+        local bleedLevel = math.floor(MedicalState.bleedingLevel)
+        bleedLevel = math.max(1, math.min(bleedLevel, 10))
+        local injuryState = Config.InjuryStates[bleedLevel]
 
-                -- Apply bleeding damage if not protected by bandage
-                if not hasBandage then
-                    local injuryState = Config.InjuryStates[wound.bleedingLevel]
-                    if injuryState and injuryState.bleedingDamagePerTick then
-                        totalBleedingDamage = totalBleedingDamage + injuryState.bleedingDamagePerTick
-                        table.insert(bleedingWounds, {
-                            bodyPart = bodyPart,
-                            level = wound.bleedingLevel,
-                            damage = injuryState.bleedingDamagePerTick
-                        })
-                    end
-                end
-            end
-        end
-
-        -- Apply total bleeding damage
-        if totalBleedingDamage > 0 then
+        if injuryState and injuryState.bleedingDamagePerTick then
             local ped = PlayerPedId()
+            ApplyingMedicalDamage = true
             PlayPain(ped, 9, 1, true, true)
-            ApplyDamageToPed(ped, 10, false) -- Scaled damage to prevent instant death
+            ApplyDamageToPed(ped, math.floor(injuryState.bleedingDamagePerTick), false)
+            ApplyingMedicalDamage = false
 
-            -- Notification
-            if #bleedingWounds > 1 then
-                lib.notify({
-                    title = locale('cl_menu_medical_warning'),
-                    description = string.format("Bleeding from %d wounds - you need medical treatment!", #bleedingWounds),
-                    type = 'error',
-                    duration = 7000
-                })
-            else
-                local wound = bleedingWounds[1]
-                lib.notify({
-                    title = locale('cl_menu_medical_warning'),
-                    description = string.format("%s is bleeding - apply bandage!", exports['QC-AdvancedMedic']:GetBodyPartLabel(wound.bodyPart)),
-                    type = 'error',
-                    duration = 7000
-                })
+            -- Stomach blood effect for heavy bleeding (level 4+)
+            -- _SET_PED_ACTIVATE_WOUND_EFFECT(ped, unk, 2, boneId, moveWoundLR, pressure, yaw, yaw2, fountainPressure, p9, p10)
+            if bleedLevel >= 4 then
+                local pressure = 0.1 + (bleedLevel - 4) * 0.05   -- 0.1 at lv4 → 0.4 at lv10
+                local fountain = 3.0 + (bleedLevel - 4) * 1.0    -- 3.0 at lv4 → 9.0 at lv10
+                Citizen.InvokeNative(0xFFD54D9FE71B966A, ped, 0, 2, 14411, 0.0, pressure, 0.0, 0.0, fountain, -1.0, 1.0)
             end
+
+            lib.notify({
+                title = locale('cl_menu_medical_warning'),
+                description = string.format("You're bleeding! (Level %.1f/10) - Apply a bandage!", MedicalState.bleedingLevel),
+                type = 'error',
+                duration = 7000
+            })
         end
 
-        ::continue_bleeding_loop::
+        -- Bleeding worsens over time if untreated
+        if Config.WoundProgression and Config.WoundProgression.bleedingProgressAmount then
+            MedicalState.bleedingLevel = math.min(
+                MedicalState.bleedingLevel + Config.WoundProgression.bleedingProgressAmount,
+                10
+            )
+        end
+
+        ::continue_loop::
     end
 end)
 
--- Tourniquet expiration handler (global tourniquet pattern)
+-- Tourniquet expiration handler
 CreateThread(function()
     repeat Wait(1000) until LocalPlayer.state.isLoggedIn
 
-    while LocalPlayer.state.loggedIn do
-        Wait(5000) -- Check every 5 seconds
+    while true do
+        Wait(5000)
 
-        local currentTime = GetGameTimer()
         local tourniquetExpiry = LocalPlayer.state.tourniquet
-
-        -- Check if tourniquet expired
-        if tourniquetExpiry and tourniquetExpiry <= currentTime then
-            -- Clear expired tourniquet
+        if tourniquetExpiry and tourniquetExpiry <= GetGameTimer() then
             LocalPlayer.state:set('tourniquet', nil, false)
-
-            -- Remove isTourniqueted flags from all wounds
-            for bodyPart, wound in pairs(MedicalState.wounds) do
-                if wound.isTourniqueted then
-                    wound.isTourniqueted = false
-                end
-            end
 
             lib.notify({
                 title = locale('cl_menu_tourniquet_expired'),
@@ -1156,56 +822,46 @@ CreateThread(function()
             })
 
             if Config.WoundSystem.debugging.enabled then
-                print("^3[TOURNIQUET] Tourniquet expired - bleeding may resume^7")
+                print("^3[TOURNIQUET] Expired - bleeding may resume^7")
             end
         end
     end
 end)
 
--- Movement-based bleeding acceleration (wounds worsen when moving)
+-- Movement-based bleeding acceleration
 CreateThread(function()
     repeat Wait(1000) until LocalPlayer.state.isLoggedIn
 
     local prevPos = GetEntityCoords(PlayerPedId())
 
-    while LocalPlayer.state.loggedIn do
-        Wait(3000) -- Check every 3 seconds
+    while true do
+        Wait(3000)
 
-        -- Calculate total bleeding
-        local totalBleeding = 0
-        for _, wound in pairs(MedicalState.wounds) do
-            if not wound.isScar and wound.bleedingLevel then
-                totalBleeding = totalBleeding + wound.bleedingLevel
-            end
+        if MedicalState.bleedingLevel <= 0 then
+            prevPos = GetEntityCoords(PlayerPedId())
+            goto continue_movement
         end
 
-        -- Only accelerate if significant bleeding and not in vehicle
-        if totalBleeding > 2 and not IsPedInAnyVehicle(PlayerPedId()) then
+        if not IsPedInAnyVehicle(PlayerPedId()) then
             local currPos = GetEntityCoords(PlayerPedId())
             local distance = #(vector2(prevPos.x, prevPos.y) - vector2(currPos.x, currPos.y))
 
-            -- Player has moved more than 1 meter
             if distance > 1.0 then
-                -- Accelerate wound progression
-                for bodyPart, wound in pairs(MedicalState.wounds) do
-                    if not wound.isScar and wound.bleedingLevel and wound.bleedingLevel > 0 then
-                        -- Small chance to increase bleeding level
-                        if math.random() < 0.05 then -- 5% chance per check
-                            wound.bleedingLevel = math.min(wound.bleedingLevel + 0.5, 10)
+                local moveChance = Config.WoundProgression and Config.WoundProgression.movementBleedingChance or 0.05
+                local moveAmount = Config.WoundProgression and Config.WoundProgression.movementBleedingAmount or 0.5
 
-                            if Config.WoundSystem.debugging.enabled then
-                                print(string.format("^1[MOVEMENT BLEEDING] %s bleeding worsened (%.1f)^7",
-                                    bodyPart, wound.bleedingLevel))
-                            end
-                        end
+                if math.random() < moveChance then
+                    MedicalState.bleedingLevel = math.min(MedicalState.bleedingLevel + moveAmount, 10)
+
+                    if Config.WoundSystem.debugging.enabled then
+                        print(string.format("^1[MOVEMENT] Bleeding worsened to %.1f^7", MedicalState.bleedingLevel))
                     end
                 end
 
-                -- Show warning periodically
-                if math.random() < 0.1 then -- 10% chance
+                if math.random() < 0.1 then
                     lib.notify({
                         title = locale('cl_menu_medical_warning'),
-                        description = "Moving with severe bleeding is making your wounds worse!",
+                        description = locale('cl_desc_movement_bleeding_warning'),
                         type = 'error',
                         duration = 5000
                     })
@@ -1216,70 +872,61 @@ CreateThread(function()
         else
             prevPos = GetEntityCoords(PlayerPedId())
         end
-    end
-end)
 
--- Wound progression loop (movement effects + scar conversion)
-CreateThread(function()
-    repeat Wait(1000) until LocalPlayer.state.isLoggedIn
-
-    while true do
-        -- Use shortest interval from config
-        local minInterval = math.min(
-            (Config.WoundProgression.bandageHealingInterval or 1) * 60000,
-            (Config.WoundProgression.bleedingProgressionInterval or 2) * 60000,
-            (Config.WoundProgression.painProgressionInterval or 3) * 60000
-        )
-
-        Wait(minInterval)
-
-        if not IsEntityDead(PlayerPedId()) then
-            ProcessMovementEffects()
-            -- Note: CheckAndConvertToScars is part of ProcessHealing in healing section
-        end
+        ::continue_movement::
     end
 end)
 
 --============================================
--- SECTION 7: EXPORTS (Lines 2601-2800)
+-- SECTION 8: ADDITIONAL FUNCTIONS
 --============================================
--- Single export point (pattern)
 
-MEDICAL = {
+-- Add bleeding from environmental sources (falls, etc.)
+local function AddFallBleeding(amount)
+    if not amount or amount <= 0 then return end
+    MedicalState.bleedingLevel = math.min(MedicalState.bleedingLevel + amount, 10)
+    MedicalState.bandageChangesNeeded = MedicalState.bandageChangesNeeded + 1
+    if MedicalState.woundTimestamp == 0 then
+        MedicalState.woundTimestamp = GetGameTimer()
+    end
+    MedicalState.lastWoundSource = "Fall"
+    TriggerServerEvent('QC-AdvancedMedic:server:UpdateWoundData', MedicalState)
+end
+
+--============================================
+-- SECTION 9: EXPORTS
+--============================================
+
+local MEDICAL = {
     -- State access
     GetState = GetMedicalState,
-    GetBodyPartHealthData = GetBodyPartHealthData,
-
-    -- Wound operations
-    CreateWound = CreateWound,
-    UpdateWound = UpdateWound,
-    RemoveWound = RemoveWound,
+    GetMedicalState = GetMedicalState,
+    IsWounded = IsWounded,
+    IsFullyHealed = IsFullyHealed,
+    ResetMedicalState = ResetMedicalState,
 
     -- Treatment operations
     ApplyBandage = ApplyBandage,
     ApplyTourniquet = ApplyTourniquet,
     AdministreMedicine = AdministreMedicine,
     GiveInjection = GiveInjection,
-    RemoveTreatment = RemoveTreatment,
     RemoveTourniquet = RemoveTourniquet,
 
-    -- Healing operations
-    ProcessHealing = ProcessWoundHealing,
-    StartHealing = StartHealing,
-    StopHealing = StopHealing,
-    CompleteHealing = CompleteHealing,
+    -- Environmental
+    AddFallBleeding = AddFallBleeding,
 }
 
--- Auto-export all methods (pattern)
+-- Register all methods on QCMed global table (zero-overhead intra-resource calls)
 for key, value in pairs(MEDICAL) do
     if type(value) == "function" then
-        exports(key, value)
+        QCMed[key] = value
     end
 end
 
--- Individual function exports for backwards compatibility
-ProcessWoundHealing = ProcessWoundHealing
+-- Keep external exports for cross-resource access
+exports('IsWounded', IsWounded)
+exports('GetMedicalState', GetMedicalState)
 
 if Config.WoundSystem.debugging.enabled then
-    print("^2[CORE MEDICAL] System initialized - State consolidated^7")
+    print("^2[CORE MEDICAL] Simplified system initialized - Global bleeding + bandage cycles^7")
 end

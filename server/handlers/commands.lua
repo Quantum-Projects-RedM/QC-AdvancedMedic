@@ -6,6 +6,7 @@
 --=========================================================
 
 local RSGCore = exports['rsg-core']:GetCoreObject()
+QCMedServer = QCMedServer or {}
 
 --=========================================================
 -- ADMIN COMMANDS
@@ -18,7 +19,7 @@ RSGCore.Commands.Add('revive', 'Revive player and clear all wounds', {{name = 'i
 
     local Player = RSGCore.Functions.GetPlayer(targetId)
     if not Player then
-        exports['QC-AdvancedMedic']:NotifyError(src,
+        QCMedServer.NotifyError(src,
             locale('sv_error'),
             locale('sv_player_not_online')
         )
@@ -47,17 +48,17 @@ RSGCore.Commands.Add('revive', 'Revive player and clear all wounds', {{name = 'i
 
     -- Notifications
     if targetId == src then
-        exports['QC-AdvancedMedic']:NotifySuccess(src,
+        QCMedServer.NotifySuccess(src,
             locale('sv_medical_system'),
             locale('sv_wounds_cleared')
         )
     else
-        exports['QC-AdvancedMedic']:NotifySuccess(src,
+        QCMedServer.NotifySuccess(src,
             locale('sv_medical_system'),
             string.format(locale('sv_wounds_cleared_player'), targetId)
         )
 
-        exports['QC-AdvancedMedic']:NotifyInfo(Player.PlayerData.source,
+        QCMedServer.NotifyInfo(Player.PlayerData.source,
             locale('sv_medical_system'),
             locale('sv_wounds_cleared_admin')
         )
@@ -74,7 +75,7 @@ RSGCore.Commands.Add('kill', 'Kill a player', {{name = 'id', help = 'Player ID'}
     local targetId = tonumber(args[1])
 
     if not targetId then
-        exports['QC-AdvancedMedic']:NotifyError(src,
+        QCMedServer.NotifyError(src,
             locale('sv_error'),
             "Invalid player ID"
         )
@@ -83,7 +84,7 @@ RSGCore.Commands.Add('kill', 'Kill a player', {{name = 'id', help = 'Player ID'}
 
     local Player = RSGCore.Functions.GetPlayer(targetId)
     if not Player then
-        exports['QC-AdvancedMedic']:NotifyError(src,
+        QCMedServer.NotifyError(src,
             locale('sv_error'),
             locale('sv_player_not_online')
         )
@@ -92,7 +93,7 @@ RSGCore.Commands.Add('kill', 'Kill a player', {{name = 'id', help = 'Player ID'}
 
     TriggerClientEvent('QC-AdvancedMedic:client:KillPlayer', Player.PlayerData.source)
 
-    exports['QC-AdvancedMedic']:NotifySuccess(src,
+    QCMedServer.NotifySuccess(src,
         locale('sv_medical_system'),
         string.format("Killed player %d", targetId)
     )
@@ -112,7 +113,7 @@ RSGCore.Commands.Add('checkhealth', 'Check your current medical status', {}, fal
     local Player = RSGCore.Functions.GetPlayer(src)
 
     if not Player then
-        exports['QC-AdvancedMedic']:NotifyError(src,
+        QCMedServer.NotifyError(src,
             locale('sv_error'),
             'Failed to get player data'
         )
@@ -121,7 +122,7 @@ RSGCore.Commands.Add('checkhealth', 'Check your current medical status', {}, fal
 
     local citizenid = Player.PlayerData.citizenid
     if not citizenid then
-        exports['QC-AdvancedMedic']:NotifyError(src,
+        QCMedServer.NotifyError(src,
             locale('sv_error'),
             'Invalid player data'
         )
@@ -146,22 +147,22 @@ AddEventHandler('QC-AdvancedMedic:server:RevivePlayer', function(playerId)
     local src = source
 
     -- Validate medic
-    local Medic, err = exports['QC-AdvancedMedic']:ValidateMedic(src)
+    local Medic, err = QCMedServer.ValidateMedic(src)
     if not Medic then
-        exports['QC-AdvancedMedic']:NotifyValidationError(src, err)
+        QCMedServer.NotifyValidationError(src, err)
         return
     end
 
     -- Validate patient
-    local Patient, err2 = exports['QC-AdvancedMedic']:ValidatePlayer(playerId)
+    local Patient, err2 = QCMedServer.ValidatePlayer(playerId)
     if not Patient then
-        exports['QC-AdvancedMedic']:NotifyValidationError(src, err2)
+        QCMedServer.NotifyValidationError(src, err2)
         return
     end
 
     -- Check if medic has firstaid kit
-    if not exports['QC-AdvancedMedic']:HasItem(src, 'firstaid') then
-        exports['QC-AdvancedMedic']:NotifyError(src,
+    if not QCMedServer.HasItem(src, 'firstaid') then
+        QCMedServer.NotifyError(src,
             locale('sv_error'),
             "You need a first aid kit to revive"
         )
@@ -175,7 +176,7 @@ AddEventHandler('QC-AdvancedMedic:server:RevivePlayer', function(playerId)
         -- Revive patient
         TriggerClientEvent('QC-AdvancedMedic:client:playerRevive', Patient.PlayerData.source)
 
-        exports['QC-AdvancedMedic']:NotifySuccess(src,
+        QCMedServer.NotifySuccess(src,
             locale('sv_medical_system'),
             string.format("Revived %s", Patient.PlayerData.charinfo.firstname)
         )
@@ -192,16 +193,16 @@ AddEventHandler('QC-AdvancedMedic:server:HealInjuries', function(playerId)
     local src = source
 
     -- Validate medic
-    local Medic, err = exports['QC-AdvancedMedic']:ValidateMedic(src)
+    local Medic, err = QCMedServer.ValidateMedic(src)
     if not Medic then
-        exports['QC-AdvancedMedic']:NotifyValidationError(src, err)
+        QCMedServer.NotifyValidationError(src, err)
         return
     end
 
     -- Validate patient
-    local Patient, err2 = exports['QC-AdvancedMedic']:ValidatePlayer(playerId)
+    local Patient, err2 = QCMedServer.ValidatePlayer(playerId)
     if not Patient then
-        exports['QC-AdvancedMedic']:NotifyValidationError(src, err2)
+        QCMedServer.NotifyValidationError(src, err2)
         return
     end
 
@@ -215,12 +216,12 @@ AddEventHandler('QC-AdvancedMedic:server:HealInjuries', function(playerId)
     TriggerClientEvent('QC-AdvancedMedic:client:ClearAllWounds', Patient.PlayerData.source)
     TriggerClientEvent('QC-AdvancedMedic:client:RestoreHealth', Patient.PlayerData.source)
 
-    exports['QC-AdvancedMedic']:NotifySuccess(src,
+    QCMedServer.NotifySuccess(src,
         locale('sv_medical_system'),
         string.format("Healed all injuries on %s", Patient.PlayerData.charinfo.firstname)
     )
 
-    exports['QC-AdvancedMedic']:NotifyInfo(playerId,
+    QCMedServer.NotifyInfo(playerId,
         locale('sv_medical_system'),
         string.format("Dr. %s healed your injuries", Medic.PlayerData.charinfo.lastname)
     )
@@ -234,7 +235,7 @@ end)
 RegisterNetEvent('QC-AdvancedMedic:server:MissionReward')
 AddEventHandler('QC-AdvancedMedic:server:MissionReward', function(missionType)
     local src = source
-    local Player, err = exports['QC-AdvancedMedic']:ValidatePlayer(src)
+    local Player, err = QCMedServer.ValidatePlayer(src)
     if not Player then return end
 
     -- Determine reward based on mission type
@@ -248,7 +249,7 @@ AddEventHandler('QC-AdvancedMedic:server:MissionReward', function(missionType)
     -- Give reward
     Player.Functions.AddMoney('cash', rewardAmount)
 
-    exports['QC-AdvancedMedic']:NotifySuccess(src,
+    QCMedServer.NotifySuccess(src,
         locale('cl_menu_mission_complete'),
         string.format("Mission completed! Earned $%d", rewardAmount)
     )
@@ -266,14 +267,14 @@ end)
 RegisterNetEvent('QC-AdvancedMedic:server:deathactions')
 AddEventHandler('QC-AdvancedMedic:server:deathactions', function()
     local src = source
-    local Player, err = exports['QC-AdvancedMedic']:ValidatePlayer(src)
+    local Player, err = QCMedServer.ValidatePlayer(src)
     if not Player then return end
 
     if Config.WipeInventoryOnRespawn then
         Player.Functions.ClearInventory()
         MySQL.Async.execute('UPDATE players SET inventory = ? WHERE citizenid = ?',
             {json.encode({}), Player.PlayerData.citizenid})
-        exports['QC-AdvancedMedic']:NotifyInfo(src,
+        QCMedServer.NotifyInfo(src,
             locale('sv_death'),
             locale('sv_lost_all_items')
         )
@@ -281,7 +282,7 @@ AddEventHandler('QC-AdvancedMedic:server:deathactions', function()
 
     if Config.WipeCashOnRespawn then
         Player.Functions.SetMoney('cash', 0)
-        exports['QC-AdvancedMedic']:NotifyInfo(src,
+        QCMedServer.NotifyInfo(src,
             locale('sv_death'),
             locale('sv_lost_cash')
         )
@@ -289,7 +290,7 @@ AddEventHandler('QC-AdvancedMedic:server:deathactions', function()
 
     if Config.WipeBloodmoneyOnRespawn then
         Player.Functions.SetMoney('bloodmoney', 0)
-        exports['QC-AdvancedMedic']:NotifyInfo(src,
+        QCMedServer.NotifyInfo(src,
             locale('sv_death'),
             locale('sv_lost_bloodmoney')
         )
@@ -300,7 +301,7 @@ end)
 RegisterNetEvent('QC-AdvancedMedic:server:SetHealth')
 AddEventHandler('QC-AdvancedMedic:server:SetHealth', function(amount)
     local src = source
-    local Player, err = exports['QC-AdvancedMedic']:ValidatePlayer(src)
+    local Player, err = QCMedServer.ValidatePlayer(src)
     if not Player then return end
 
     amount = tonumber(amount)
@@ -317,7 +318,7 @@ end)
 
 -- Get player health callback
 RSGCore.Functions.CreateCallback('QC-AdvancedMedic:server:getplayerhealth', function(source, cb)
-    local Player, err = exports['QC-AdvancedMedic']:ValidatePlayer(source)
+    local Player, err = QCMedServer.ValidatePlayer(source)
     if not Player then
         cb(0)
         return

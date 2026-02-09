@@ -6,6 +6,7 @@
 --=========================================================
 
 local RSGCore = exports['rsg-core']:GetCoreObject()
+QCMedServer = QCMedServer or {}
 
 --=========================================================
 -- RATE LIMITING
@@ -36,7 +37,7 @@ end
 -- Comprehensive treatment authorization (integrated validation)
 local function AuthorizeTreatment(medicSource, patientSource, treatmentType, itemName)
     -- Check if medic exists and has medic job
-    local Medic, err = exports['QC-AdvancedMedic']:ValidateMedic(medicSource)
+    local Medic, err = QCMedServer.ValidateMedic(medicSource)
     if not Medic then
         if Config.WoundSystem.debugging.enabled then
             print(string.format("^1[TREATMENT AUTH] Medic validation failed for %d: %s^7", medicSource, err))
@@ -45,7 +46,7 @@ local function AuthorizeTreatment(medicSource, patientSource, treatmentType, ite
     end
 
     -- Check if patient exists
-    local Patient, err2 = exports['QC-AdvancedMedic']:ValidatePlayer(patientSource)
+    local Patient, err2 = QCMedServer.ValidatePlayer(patientSource)
     if not Patient then
         if Config.WoundSystem.debugging.enabled then
             print(string.format("^1[TREATMENT AUTH] Patient validation failed for %d: %s^7", patientSource, err2))
@@ -54,7 +55,7 @@ local function AuthorizeTreatment(medicSource, patientSource, treatmentType, ite
     end
 
     -- Check distance (within 5 meters)
-    if not exports['QC-AdvancedMedic']:CheckDistance(medicSource, patientSource, 5.0) then
+    if not QCMedServer.CheckDistance(medicSource, patientSource, 5.0) then
         if Config.WoundSystem.debugging.enabled then
             print(string.format("^1[TREATMENT AUTH] Distance check failed: medic %d too far from patient %d^7",
                 medicSource, patientSource))
@@ -73,7 +74,7 @@ local function AuthorizeTreatment(medicSource, patientSource, treatmentType, ite
     end
 
     -- Check item possession
-    if not exports['QC-AdvancedMedic']:HasItem(medicSource, itemName) then
+    if not QCMedServer.HasItem(medicSource, itemName) then
         if Config.WoundSystem.debugging.enabled then
             print(string.format("^1[TREATMENT AUTH] Medic %d missing item: %s^7", medicSource, itemName))
         end
@@ -104,7 +105,7 @@ local function ApplyBandageToPlayer(medicSource, patientSource, bandageData)
 
     if not authorized then
         -- MedicOrErr contains error code
-        exports['QC-AdvancedMedic']:NotifyValidationError(medicSource, MedicOrErr)
+        QCMedServer.NotifyValidationError(medicSource, MedicOrErr)
         return false, MedicOrErr
     end
 
@@ -112,7 +113,7 @@ local function ApplyBandageToPlayer(medicSource, patientSource, bandageData)
 
     -- Remove item from medic's inventory
     if not Medic.Functions.RemoveItem(bandageData.itemName or bandageData.bandageType, 1) then
-        exports['QC-AdvancedMedic']:NotifyError(medicSource, locale('sv_error'), "Failed to remove item")
+        QCMedServer.NotifyError(medicSource, locale('sv_error'), "Failed to remove item")
         return false, "FAILED_REMOVE_ITEM"
     end
 
@@ -125,7 +126,7 @@ local function ApplyBandageToPlayer(medicSource, patientSource, bandageData)
 
     -- Log event
     pcall(function()
-        exports['QC-AdvancedMedic']:LogMedicalEvent(
+        QCMedServer.LogMedicalEvent(
             Patient.PlayerData.citizenid,
             'bandage_applied',
             bandageData.bodyPart,
@@ -138,7 +139,7 @@ local function ApplyBandageToPlayer(medicSource, patientSource, bandageData)
     end)
 
     -- Success notification
-    exports['QC-AdvancedMedic']:NotifyTreatmentApplied(medicSource, 'bandage', bandageData.bodyPart)
+    QCMedServer.NotifyTreatmentApplied(medicSource, 'bandage', bandageData.bodyPart)
 
     if Config.WoundSystem.debugging.enabled then
         print(string.format("^2[TREATMENT] Bandage applied: %s on %s (medic: %d, patient: %d)^7",
@@ -160,7 +161,7 @@ local function ApplyTourniquetToPlayer(medicSource, patientSource, tourniquetDat
     )
 
     if not authorized then
-        exports['QC-AdvancedMedic']:NotifyValidationError(medicSource, MedicOrErr)
+        QCMedServer.NotifyValidationError(medicSource, MedicOrErr)
         return false, MedicOrErr
     end
 
@@ -168,7 +169,7 @@ local function ApplyTourniquetToPlayer(medicSource, patientSource, tourniquetDat
 
     -- Remove item from inventory
     if not Medic.Functions.RemoveItem(tourniquetData.itemName or tourniquetData.tourniquetType, 1) then
-        exports['QC-AdvancedMedic']:NotifyError(medicSource, locale('sv_error'), "Failed to remove item")
+        QCMedServer.NotifyError(medicSource, locale('sv_error'), "Failed to remove item")
         return false, "FAILED_REMOVE_ITEM"
     end
 
@@ -180,7 +181,7 @@ local function ApplyTourniquetToPlayer(medicSource, patientSource, tourniquetDat
 
     -- Log event (global application)
     pcall(function()
-        exports['QC-AdvancedMedic']:LogMedicalEvent(
+        QCMedServer.LogMedicalEvent(
             Patient.PlayerData.citizenid,
             'tourniquet_applied',
             nil, -- No body part - global application
@@ -192,7 +193,7 @@ local function ApplyTourniquetToPlayer(medicSource, patientSource, tourniquetDat
         )
     end)
 
-    exports['QC-AdvancedMedic']:NotifyTreatmentApplied(medicSource, 'tourniquet', nil)
+    QCMedServer.NotifyTreatmentApplied(medicSource, 'tourniquet', nil)
 
     if Config.WoundSystem.debugging.enabled then
         print(string.format("^2[TREATMENT] Global tourniquet applied: %s (stops ALL bleeding)^7",
@@ -213,7 +214,7 @@ local function AdministreMedicineToPlayer(medicSource, patientSource, medicineDa
     )
 
     if not authorized then
-        exports['QC-AdvancedMedic']:NotifyValidationError(medicSource, MedicOrErr)
+        QCMedServer.NotifyValidationError(medicSource, MedicOrErr)
         return false, MedicOrErr
     end
 
@@ -221,7 +222,7 @@ local function AdministreMedicineToPlayer(medicSource, patientSource, medicineDa
 
     -- Remove item from inventory
     if not Medic.Functions.RemoveItem(medicineData.itemName or medicineData.medicineType, 1) then
-        exports['QC-AdvancedMedic']:NotifyError(medicSource, locale('sv_error'), "Failed to remove item")
+        QCMedServer.NotifyError(medicSource, locale('sv_error'), "Failed to remove item")
         return false, "FAILED_REMOVE_ITEM"
     end
 
@@ -230,7 +231,7 @@ local function AdministreMedicineToPlayer(medicSource, patientSource, medicineDa
 
     -- Log event
     pcall(function()
-        exports['QC-AdvancedMedic']:LogMedicalEvent(
+        QCMedServer.LogMedicalEvent(
             Patient.PlayerData.citizenid,
             'medicine_administered',
             nil,
@@ -241,7 +242,7 @@ local function AdministreMedicineToPlayer(medicSource, patientSource, medicineDa
         )
     end)
 
-    exports['QC-AdvancedMedic']:NotifyTreatmentApplied(medicSource, 'medicine', nil)
+    QCMedServer.NotifyTreatmentApplied(medicSource, 'medicine', nil)
 
     if Config.WoundSystem.debugging.enabled then
         print(string.format("^2[TREATMENT] Medicine administered: %s^7", medicineData.medicineType))
@@ -261,7 +262,7 @@ local function AdministerInjectionToPlayer(medicSource, patientSource, injection
     )
 
     if not authorized then
-        exports['QC-AdvancedMedic']:NotifyValidationError(medicSource, MedicOrErr)
+        QCMedServer.NotifyValidationError(medicSource, MedicOrErr)
         return false, MedicOrErr
     end
 
@@ -269,7 +270,7 @@ local function AdministerInjectionToPlayer(medicSource, patientSource, injection
 
     -- Remove item from inventory
     if not Medic.Functions.RemoveItem(injectionData.itemName or injectionData.injectionType, 1) then
-        exports['QC-AdvancedMedic']:NotifyError(medicSource, locale('sv_error'), "Failed to remove item")
+        QCMedServer.NotifyError(medicSource, locale('sv_error'), "Failed to remove item")
         return false, "FAILED_REMOVE_ITEM"
     end
 
@@ -278,7 +279,7 @@ local function AdministerInjectionToPlayer(medicSource, patientSource, injection
 
     -- Log event
     pcall(function()
-        exports['QC-AdvancedMedic']:LogMedicalEvent(
+        QCMedServer.LogMedicalEvent(
             Patient.PlayerData.citizenid,
             'injection_administered',
             nil,
@@ -289,7 +290,7 @@ local function AdministerInjectionToPlayer(medicSource, patientSource, injection
         )
     end)
 
-    exports['QC-AdvancedMedic']:NotifyTreatmentApplied(medicSource, 'injection', nil)
+    QCMedServer.NotifyTreatmentApplied(medicSource, 'injection', nil)
 
     if Config.WoundSystem.debugging.enabled then
         print(string.format("^2[TREATMENT] Injection administered: %s^7", injectionData.injectionType))
@@ -304,13 +305,13 @@ end
 
 -- Handle treatment data update
 local function HandleTreatmentUpdate(source, treatmentData)
-    local Player, err = exports['QC-AdvancedMedic']:ValidatePlayer(source)
+    local Player, err = QCMedServer.ValidatePlayer(source)
     if not Player then
         return false, err
     end
 
     local success = pcall(function()
-        exports['QC-AdvancedMedic']:SaveTreatmentData(
+        QCMedServer.SaveTreatmentData(
             Player.PlayerData.citizenid,
             treatmentData
         )
@@ -323,12 +324,12 @@ end
 -- EXPORTS
 --=========================================================
 
-exports('ApplyBandageToPlayer', ApplyBandageToPlayer)
-exports('ApplyTourniquetToPlayer', ApplyTourniquetToPlayer)
-exports('AdministreMedicineToPlayer', AdministreMedicineToPlayer)
-exports('AdministerInjectionToPlayer', AdministerInjectionToPlayer)
-exports('HandleTreatmentUpdate', HandleTreatmentUpdate)
-exports('AuthorizeTreatment', AuthorizeTreatment)
+QCMedServer.ApplyBandageToPlayer = ApplyBandageToPlayer
+QCMedServer.ApplyTourniquetToPlayer = ApplyTourniquetToPlayer
+QCMedServer.AdministreMedicineToPlayer = AdministreMedicineToPlayer
+QCMedServer.AdministerInjectionToPlayer = AdministerInjectionToPlayer
+QCMedServer.HandleTreatmentUpdate = HandleTreatmentUpdate
+QCMedServer.AuthorizeTreatment = AuthorizeTreatment
 
 if Config.WoundSystem and Config.WoundSystem.debugging and Config.WoundSystem.debugging.enabled then
     print("^2[SERVER TREATMENTS] Treatment system with server-authoritative validation loaded^7")

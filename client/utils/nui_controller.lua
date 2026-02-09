@@ -3,7 +3,10 @@
 --=========================================================
 -- Handles all NUI (UI) updates and synchronization
 -- Sends medical data to the React UI
+-- Version: 0.4.0 Simplified (global bleeding, no body parts)
 --=========================================================
+
+QCMed = QCMed or {}
 
 local nuiFocusEnabled = false
 
@@ -11,54 +14,31 @@ local nuiFocusEnabled = false
 -- HELPER FUNCTIONS
 --=========================================================
 
--- Get body part health data for NUI
-local function GetBodyPartHealthData()
-    local bodyPartHealth = {}
+-- Get global medical state for NUI
+local function GetMedicalNUIData()
+    local medicalState = QCMed.GetMedicalState()
+    local infectionData = QCMed.GetGlobalInfection()
+    local fractures = QCMed.GetPlayerFractures()
 
-    for bodyPart, config in pairs(Config.BodyParts) do
-        local health = config.maxHealth or 100
-
-        -- Reduce health based on wounds
-        local wounds = exports['QC-AdvancedMedic']:GetMedicalState('wounds')
-        if wounds and wounds[bodyPart] and not wounds[bodyPart].isScar then
-            local wound = wounds[bodyPart]
-            health = health - (wound.painLevel or 0) - (wound.bleedingLevel or 0)
-        end
-
-        bodyPartHealth[bodyPart] = math.max(0, health)
-    end
-
-    return bodyPartHealth
+    return {
+        bleedingLevel = medicalState.bleedingLevel or 0,
+        bandageChangesNeeded = medicalState.bandageChangesNeeded or 0,
+        bandageChangesApplied = medicalState.bandageChangesApplied or 0,
+        activeBandage = medicalState.activeBandage,
+        lastWoundSource = medicalState.lastWoundSource,
+        infection = infectionData,
+        fractures = fractures or {},
+        tourniquet = LocalPlayer.state.tourniquet,
+    }
 end
 
 -- Update NUI with latest medical data
 local function UpdateMedicalNUI()
-    local wounds = exports['QC-AdvancedMedic']:GetMedicalState('wounds') or {}
-    local treatments = exports['QC-AdvancedMedic']:GetMedicalState('treatments') or {}
-    local infections = exports['QC-AdvancedMedic']:GetMedicalState('infections') or {}
-    local bodyPartHealth = GetBodyPartHealthData()
-
-    -- Convert treatments to array for NUI
-    local treatmentsArray = {}
-    for bodyPart, treatment in pairs(treatments) do
-        table.insert(treatmentsArray, {
-            bodyPart = bodyPart,
-            type = treatment.treatmentType,
-            itemType = treatment.itemType,
-            appliedTime = treatment.appliedTime,
-            effectiveness = treatment.effectiveness,
-            appliedBy = treatment.appliedBy
-        })
-    end
+    local data = GetMedicalNUIData()
 
     SendNUIMessage({
         type = 'update-medical-data',
-        data = {
-            wounds = wounds,
-            treatments = treatmentsArray,
-            infections = infections,
-            bodyPartHealth = bodyPartHealth
-        }
+        data = data
     })
 end
 
@@ -66,25 +46,13 @@ end
 -- EVENT HANDLERS
 --=========================================================
 
--- Load treatments from server
-RegisterNetEvent('QC-AdvancedMedic:client:LoadTreatments')
-AddEventHandler('QC-AdvancedMedic:client:LoadTreatments', function(treatments)
-    if not treatments then
-        if Config.WoundSystem.debugging.enabled then
-            print("^1[NUI] Received nil treatments data^7")
-        end
-        return
-    end
+-- Load medical state from server (replaces per-body-part wound loading)
+RegisterNetEvent('QC-AdvancedMedic:client:LoadMedicalState')
+AddEventHandler('QC-AdvancedMedic:client:LoadMedicalState', function(stateData)
+    if not stateData then return end
 
-    -- Update MedicalState
-    local state = exports['QC-AdvancedMedic']:GetMedicalState()
-    state.treatments = treatments
-
-    if Config.WoundSystem.debugging.enabled then
-        print("^2[NUI] Received treatments data from server^7")
-        local treatmentCount = 0
-        for _ in pairs(treatments) do treatmentCount = treatmentCount + 1 end
-        print("^3[NUI] Loaded " .. treatmentCount .. " active treatments^7")
+    if Config.WoundSystem and Config.WoundSystem.debugging and Config.WoundSystem.debugging.enabled then
+        print("^2[NUI] Received medical state data from server^7")
     end
 
     -- Update NUI
@@ -94,22 +62,15 @@ AddEventHandler('QC-AdvancedMedic:client:LoadTreatments', function(treatments)
     end)
 end)
 
--- Load wounds from server
+-- Legacy wound loading handler (redirects to new system)
 RegisterNetEvent('QC-AdvancedMedic:client:LoadWounds')
-AddEventHandler('QC-AdvancedMedic:client:LoadWounds', function(wounds)
-    if not wounds then return end
+AddEventHandler('QC-AdvancedMedic:client:LoadWounds', function(woundData)
+    if not woundData then return end
 
-    -- Update MedicalState
-    local state = exports['QC-AdvancedMedic']:GetMedicalState()
-    state.wounds = wounds
-
-    if Config.WoundSystem.debugging.enabled then
-        local woundCount = 0
-        for _ in pairs(wounds) do woundCount = woundCount + 1 end
-        print("^2[NUI] Loaded " .. woundCount .. " wounds^7")
+    if Config.WoundSystem and Config.WoundSystem.debugging and Config.WoundSystem.debugging.enabled then
+        print("^2[NUI] Loaded wound data from server^7")
     end
 
-    -- Update NUI
     UpdateMedicalNUI()
 end)
 
@@ -118,15 +79,10 @@ RegisterNetEvent('QC-AdvancedMedic:client:LoadInfections')
 AddEventHandler('QC-AdvancedMedic:client:LoadInfections', function(infections)
     if not infections then return end
 
-    -- Update MedicalState
-    local state = exports['QC-AdvancedMedic']:GetMedicalState()
-    state.infections = infections
-
-    if Config.WoundSystem.debugging.enabled then
+    if Config.WoundSystem and Config.WoundSystem.debugging and Config.WoundSystem.debugging.enabled then
         print("^2[NUI] Received infections data from server^7")
     end
 
-    -- Update NUI
     UpdateMedicalNUI()
 end)
 
@@ -173,12 +129,11 @@ RegisterNUICallback('closeInspection', function(data, cb)
 end)
 
 RegisterNUICallback('applyTreatment', function(data, cb)
-    -- data contains: { bodyPart, treatmentType, itemType }
+    -- data contains: { targetPlayerId, treatmentType, itemType }
     TriggerServerEvent('QC-AdvancedMedic:server:ApplyTreatment',
         data.targetPlayerId,
         data.treatmentType,
-        data.itemType,
-        data.bodyPart
+        data.itemType
     )
     cb('ok')
 end)
@@ -187,6 +142,6 @@ end)
 -- EXPORTS
 --=========================================================
 
-exports('UpdateMedicalNUI', UpdateMedicalNUI)
-exports('GetBodyPartHealthData', GetBodyPartHealthData)
-exports('IsNUIFocused', function() return nuiFocusEnabled end)
+QCMed.UpdateMedicalNUI = UpdateMedicalNUI
+QCMed.GetMedicalNUIData = GetMedicalNUIData
+QCMed.IsNUIFocused = function() return nuiFocusEnabled end

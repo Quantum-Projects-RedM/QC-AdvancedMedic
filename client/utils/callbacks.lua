@@ -119,15 +119,8 @@ end)
 --=========================================================
 -- EXPORTED FUNCTIONS
 --=========================================================
-exports('ServerCallback', ServerCallback)
-
--- Global namespace for easy access
-QCMedic = QCMedic or {}
-QCMedic.Callbacks = {
-    ServerCallback = ServerCallback
-}
-
--- Return module
+QCMed = QCMed or {}
+QCMed.ServerCallback = ServerCallback
 return {
     ServerCallback = ServerCallback
 }

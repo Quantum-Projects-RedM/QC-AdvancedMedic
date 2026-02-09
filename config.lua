@@ -26,7 +26,7 @@ Config.WoundSystem = {
         enabled = true,  -- Enable wound system debugging (set to false for production)
         printDamageDetection = true,
         printWoundCreation = true,
-        printBodyPartMapping = true
+        printBodyPartMapping = false
     }
 }
 
@@ -43,7 +43,6 @@ Config.UseScreenEffects = true                  -- Enable bleeding/injury screen
 
 -- Inventory Integration
 Config.ImagePath = 'rsg-inventory/html/images/' -- Image path for inventory icons
-Config.Image = "rsg-inventory/html/images/"     -- Alternative image path
 
 -- Death Camera Settings
 Config.DeadMoveCam = true  -- true = 360° free-look camera (WARNING: High performance impact ~0.10-0.14ms)
@@ -95,27 +94,16 @@ Config.FallDamage = {
 }
 
 --=========================================================
--- WOUND PROGRESSION & HEALING TIMERS (All values in MINUTES)
+-- WOUND PROGRESSION (Simplified - Global Bleeding)
 --=========================================================
 Config.WoundProgression = {
-    
-    -- SERVER-SIDE REALISTIC TIME-BASED PROGRESSION (No RNG)
-    -- All intervals in MINUTES - server authoritative for anti-cheat
-    
-    -- Wound progression (guaranteed if conditions met - no chance involved)
-    bleedingProgressionInterval = 1,           -- 1 minute - bleeding ALWAYS increases if: bleeding > 0 AND not bandaged
-    painProgressionInterval = 1,               -- 1 minute - pain ALWAYS increases if: bleeding > 0 AND not bandaged (only bleeding wounds get more painful)
-    
-    -- Natural healing (guaranteed if conditions met)
-    painNaturalHealingInterval = 5,            -- 5 minutes - pain ALWAYS decreases if: bleeding = 0 AND not bandaged
-    
-    -- Bandage healing (guaranteed - handled separately in treatment system)
-    bandageHealingInterval = 1,                -- 1 minute - how often bandages reduce bleeding/pain
-    
-    -- Progression amounts (fixed amounts, no randomness)
+    -- Bleeding worsens over time if untreated (no bandage)
+    bleedingProgressionInterval = 2,           -- Minutes between bleeding increases (if no bandage active)
     bleedingProgressAmount = 0.5,              -- Fixed bleeding increase per interval
-    painProgressAmount = 0.5,                  -- Fixed pain increase per interval  
-    painNaturalHealAmount = 0.5,               -- Fixed pain decrease per natural healing
+
+    -- Movement worsens bleeding (unchanged)
+    movementBleedingChance = 0.05,             -- 5% chance per movement check to increase bleeding
+    movementBleedingAmount = 0.5,              -- How much bleeding increases from movement
 }
 
 --=========================================================
@@ -159,20 +147,41 @@ Config.Blip = {
 }
 
 Config.MedicJobLocations = {
-    { -- Valentine
-        name = 'Valentine Medic',
+    { -- Valentine Physician's Office
+        name = 'Valentine Physician',
         prompt = 'valmedic',
         coords = vector3(-289.46, 806.82, 119.39 - 0.08),
         showblip = true,
         job = 'valmedic'
     },
-    {
-        name = 'Saint Denis',
+    { -- Saint Denis General Hospital
+        name = 'Saint Denis Hospital',
         prompt = 'sdmedic',
-        coords = vector3(0.0, 0.0, 0.0 - 0.08),
+        coords = vector3(2725.89, -1225.73, 50.47 - 0.08),
         showblip = true,
         job = 'sdmedic'
-    }
+    },
+    { -- Blackwater County Infirmary
+        name = 'Blackwater Infirmary',
+        prompt = 'bwmedic',
+        coords = vector3(-733.28, -1242.97, 44.73 - 0.08),
+        showblip = true,
+        job = 'bwmedic'
+    },
+    { -- Rhodes Township Doctor
+        name = 'Rhodes Practitioner',
+        prompt = 'rhmedic',
+        coords = vector3(1291.85, -1236.22, 80.93 - 0.08),
+        showblip = true,
+        job = 'rhmedic'
+    },
+    { -- Strawberry Frontier Doctor
+        name = 'Strawberry Doctor',
+        prompt = 'sbmedic',
+        coords = vector3(-1801.98, -366.95, 161.66 - 0.08),
+        showblip = true,
+        job = 'sbmedic'
+    },
 }
 
 -- Respawn Locations
@@ -208,128 +217,131 @@ Config.InjuryStates = {
         painDesc = 'Rest and basic comfort measures',
         bleedDesc = 'Apply light pressure or basic bandage',
         unifiedDesc = 'Rest and apply light bandage for comfort',
-        painDamagePerTick = 1.5,        -- FIXED: Low pain damage per tick (2 min intervals)
-        bleedingDamagePerTick = 3.0     -- FIXED: Low bleeding damage per tick
+        painDamagePerTick = 1.5,
+        bleedingDamagePerTick = 6.0
     },
-    [2] = { 
-        pain = 'mild discomfort', 
-        bleeding = 'light bleeding', 
+    [2] = {
+        pain = 'mild discomfort',
+        bleeding = 'light bleeding',
         urgency = 'low',
         treatment = 'Apply salve or liniment',
         painDesc = 'Apply liniment or mild pain relief',
         bleedDesc = 'Clean wound and apply basic bandage',
         unifiedDesc = 'Apply liniment and bandage for comfort and healing',
         painDamagePerTick = 1.5,
-        bleedingDamagePerTick = 5.0
+        bleedingDamagePerTick = 10.0
     },
-    [3] = { 
-        pain = 'noticeable ache', 
-        bleeding = 'moderate bleeding', 
+    [3] = {
+        pain = 'noticeable ache',
+        bleeding = 'moderate bleeding',
         urgency = 'low',
         treatment = 'Use basic bandage or poultice',
         painDesc = 'Use poultice or mild pain tonic',
         bleedDesc = 'Apply firm bandage to control bleeding',
         unifiedDesc = 'Use poultice and firm bandage for pain relief and bleeding control',
         painDamagePerTick = 2.5,
-        bleedingDamagePerTick = 7.0
+        bleedingDamagePerTick = 15.0
     },
-    [4] = { 
-        pain = 'persistent pain', 
-        bleeding = 'steady bleeding', 
+    [4] = {
+        pain = 'persistent pain',
+        bleeding = 'steady bleeding',
         urgency = 'medium',
         treatment = 'Apply bandage and pain tonic',
         painDesc = 'Apply pain tonic or laudanum for relief',
         bleedDesc = 'Apply pressure bandage to stop bleeding',
         unifiedDesc = 'Apply pressure bandage and pain tonic for comprehensive treatment',
         painDamagePerTick = 3.0,
-        bleedingDamagePerTick = 10.0
+        bleedingDamagePerTick = 22.0
     },
-    [5] = { 
-        pain = 'sharp pain', 
-        bleeding = 'significant bleeding', 
+    [5] = {
+        pain = 'sharp pain',
+        bleeding = 'significant bleeding',
         urgency = 'medium',
         treatment = 'Bandage immediately, consider medical attention',
         painDesc = 'Strong pain medication recommended - laudanum or morphine',
         bleedDesc = 'Multiple bandages needed to control significant bleeding',
         unifiedDesc = 'Immediate bandaging and strong pain medication required',
         painDamagePerTick = 4.5,
-        bleedingDamagePerTick = 14.0
+        bleedingDamagePerTick = 30.0
     },
-    [6] = { 
-        pain = 'intense throbbing', 
-        bleeding = 'heavy bleeding', 
+    [6] = {
+        pain = 'intense throbbing',
+        bleeding = 'heavy bleeding',
         urgency = 'high',
         treatment = 'Emergency bandaging and pain relief required',
         painDesc = 'Emergency pain management - morphine injection required',
         bleedDesc = 'Apply tourniquet or multiple pressure bandages immediately',
         unifiedDesc = 'EMERGENCY: Tourniquet application and morphine injection required',
         painDamagePerTick = 6.0,
-        bleedingDamagePerTick = 16.0
+        bleedingDamagePerTick = 38.0
     },
-    [7] = { 
-        pain = 'severe agony', 
-        bleeding = 'severe bleeding', 
+    [7] = {
+        pain = 'severe agony',
+        bleeding = 'severe bleeding',
         urgency = 'high',
         treatment = 'Immediate medical intervention needed',
         painDesc = 'CRITICAL: High-dose morphine and medical supervision required',
         bleedDesc = 'CRITICAL: Emergency tourniquet and immediate surgical intervention',
         unifiedDesc = 'LIFE-THREATENING: Emergency surgery and intensive pain management required',
         painDamagePerTick = 8.0,
-        bleedingDamagePerTick = 18.0
+        bleedingDamagePerTick = 48.0
     },
-    [8] = { 
-        pain = 'excruciating pain', 
-        bleeding = 'critical bleeding', 
+    [8] = {
+        pain = 'excruciating pain',
+        bleeding = 'critical bleeding',
         urgency = 'critical',
         treatment = 'Life-threatening - urgent medical care',
         painDesc = 'URGENT: Maximum morphine dosage and immediate sedation required',
         bleedDesc = 'URGENT: Arterial compression and emergency blood transfusion needed',
         unifiedDesc = 'CRITICAL EMERGENCY: Life-saving intervention required immediately',
         painDamagePerTick = 10.0,
-        bleedingDamagePerTick = 22.0
+        bleedingDamagePerTick = 60.0
     },
-    [9] = { 
-        pain = 'overwhelming agony', 
-        bleeding = 'massive bleeding', 
+    [9] = {
+        pain = 'overwhelming agony',
+        bleeding = 'massive bleeding',
         urgency = 'critical',
         treatment = 'Emergency medical attention - near death',
         painDesc = 'FATAL: Patient near unconsciousness from pain - emergency sedation',
         bleedDesc = 'FATAL: Massive blood loss - emergency transfusion and surgical repair',
         unifiedDesc = 'IMMINENT DEATH: Emergency resuscitation and trauma surgery required',
         painDamagePerTick = 12.0,
-        bleedingDamagePerTick = 26.0
+        bleedingDamagePerTick = 75.0
     },
-    [10] = { 
-        pain = 'unbearable torture', 
-        bleeding = 'arterial bleeding', 
+    [10] = {
+        pain = 'unbearable torture',
+        bleeding = 'arterial bleeding',
         urgency = 'fatal',
         treatment = 'Immediate life-saving intervention required',
         painDesc = 'DEATH IMMINENT: Patient unconscious from shock - emergency intervention',
         bleedDesc = 'DEATH IMMINENT: Arterial rupture - emergency surgery or death within minutes',
         unifiedDesc = 'CERTAIN DEATH: Immediate trauma surgery and resuscitation required to prevent death',
-        painDamagePerTick = 14.0,        -- FIXED: Maximum pain damage
-        bleedingDamagePerTick = 35.0    -- FIXED: Maximum bleeding damage (deadly)
+        painDamagePerTick = 14.0,
+        bleedingDamagePerTick = 100.0
     }
 }
---========================================================
--- Body Part Definitions (Production Ready)
 --=========================================================
-Config.BodyParts = {
-    HEAD       = { label = 'Head',       maxHealth = 100 , limp = false },
-    NECK       = { label = 'Neck',       maxHealth = 80 , limp = false  },
-    SPINE      = { label = 'Spine',      maxHealth = 120 , limp = true },
-    UPPER_BODY = { label = 'Upper Body', maxHealth = 150 , limp = false },
-    LOWER_BODY = { label = 'Lower Body', maxHealth = 150 , limp = true },
-    LARM       = { label = 'Left Arm',   maxHealth = 90 , limp = false  },
-    LHAND      = { label = 'Left Hand',  maxHealth = 60 , limp = false  },
-    LFINGER    = { label = 'Left Fingers', maxHealth = 40 , limp = false },
-    LLEG       = { label = 'Left Leg',   maxHealth = 110 , limp = true },
-    LFOOT      = { label = 'Left Foot',  maxHealth = 70 , limp = true  },
-    RARM       = { label = 'Right Arm',  maxHealth = 90 , limp = false  },
-    RHAND      = { label = 'Right Hand', maxHealth = 60 , limp = false  },
-    RFINGER    = { label = 'Right Fingers', maxHealth = 40 , limp = false },
-    RLEG       = { label = 'Right Leg',  maxHealth = 110 , limp = true },
-    RFOOT      = { label = 'Right Foot', maxHealth = 70 , limp = true  },
+-- NOTE: Body parts removed from WOUND system - bleeding is now GLOBAL
+-- The wound system uses a single bleedingLevel (0-10) instead
+-- of per-body-part tracking. This simplifies gameplay and config.
+-- Body part LABELS kept for fracture system display only.
+--=========================================================
+Config.BodyPartLabels = {
+    HEAD = 'Head',
+    NECK = 'Neck',
+    CHEST = 'Chest',
+    STOMACH = 'Stomach',
+    LARM = 'Left Arm',
+    RARM = 'Right Arm',
+    LLEG = 'Left Leg',
+    RLEG = 'Right Leg',
+    LFOOT = 'Left Foot',
+    RFOOT = 'Right Foot',
+    LOWER_BODY = 'Lower Body',
+    UPPER_BODY = 'Upper Body',
+    SPINE = 'Spine',
+    LHAND = 'Left Hand',
+    RHAND = 'Right Hand',
 }
 
 
@@ -343,134 +355,138 @@ Config.BodyParts = {
 -- data: Weapon category for medical treatment decisions
 
 Config.WeaponDamage = {
-    --=========================================================
-    -- PISTOLS & SMALL REVOLVERS (Pain calculated as bleeding + 1)
-    --=========================================================
-    [GetHashKey("WEAPON_PISTOL_MAUSER")] = { bleeding = 1, chance = 0.3, data = ".32 ACP", ballisticType = "pistol", status = "bullet" },
-    [GetHashKey("WEAPON_PISTOL_MAUSER_DRUNK")] = { bleeding = 1, chance = 0.3, data = ".32 ACP", ballisticType = "pistol", status = "bullet" },
-    [GetHashKey("WEAPON_PISTOL_SEMIAUTO")] = { bleeding = 1, chance = 0.35, data = ".32 ACP", ballisticType = "pistol", status = "bullet" },
-    [GetHashKey("WEAPON_PISTOL_M1899")] = { bleeding = 1, chance = 0.4, data = ".30 Luger", ballisticType = "pistol", status = "bullet" },
-    [GetHashKey("WEAPON_PISTOL_VOLCANIC")] = { bleeding = 1, chance = 0.45, data = ".41 Short", ballisticType = "pistol", status = "bullet" },
-    
-    --=========================================================
-    -- REVOLVERS (Moderate-high pain, good bleeding chance)
-    --=========================================================
-    [GetHashKey("WEAPON_REVOLVER_CATTLEMAN")] = { bleeding = 2, chance = 0.5, data = ".45 Colt", ballisticType = "revolver", status = "bullet" },
-    [GetHashKey("WEAPON_REVOLVER_CATTLEMAN_JOHN")] = { bleeding = 2, chance = 0.5, data = ".45 Colt", ballisticType = "revolver", status = "bullet" },
-    [GetHashKey("WEAPON_REVOLVER_CATTLEMAN_MEXICAN")] = { bleeding = 2, chance = 0.5, data = ".45 Colt", ballisticType = "revolver", status = "bullet" },
-    [GetHashKey("WEAPON_REVOLVER_CATTLEMAN_PIG")] = { bleeding = 2, chance = 0.5, data = ".45 Colt", ballisticType = "revolver", status = "bullet" },
-    [GetHashKey("WEAPON_REVOLVER_SCHOFIELD")] = { bleeding = 2, chance = 0.55, data = ".45 Schofield", ballisticType = "revolver", status = "bullet" },
-    [GetHashKey("WEAPON_REVOLVER_LEMAT")] = { bleeding = 2, chance = 0.6, data = ".44 Caliber", ballisticType = "revolver", status = "bullet" },
+    -- bandageChanges = wound units (cloth-equivalent). Better bandages heal more per use:
+    -- Cloth(1), Cotton(2), Linen(3), Sterile(5) healingPower
+    -- Example: Revolver=5 → Cloth:5 uses, Cotton:3, Linen:2, Sterile:1
 
     --=========================================================
-    -- RIFLES & REPEATERS (High bleeding chance - rifle rounds)
+    -- PISTOLS & SMALL REVOLVERS (Light wounds - 3 cloth bandages)
     --=========================================================
-    [GetHashKey("WEAPON_RIFLE_VARMINT")] = { bleeding = 1, chance = 0.65, data = ".22 Caliber", ballisticType = "rifle", status = "bullet" },
-    [GetHashKey("WEAPON_REPEATER_CARBINE")] = { bleeding = 2, chance = 0.75, data = ".44-40 Winchester", ballisticType = "rifle", status = "bullet" },
-    [GetHashKey("WEAPON_REPEATER_CARBINE_SADIE")] = { bleeding = 2, chance = 0.75, data = ".44-40 Winchester", ballisticType = "rifle", status = "bullet" },
-    [GetHashKey("WEAPON_REPEATER_WINCHESTER")] = { bleeding = 2, chance = 0.8, data = ".44-40 Winchester", ballisticType = "rifle", status = "bullet" },
-    [GetHashKey("WEAPON_REPEATER_WINCHESTER_JOHN")] = { bleeding = 2, chance = 0.8, data = ".44-40 Winchester", ballisticType = "rifle", status = "bullet" },
-    [GetHashKey("WEAPON_REPEATER_EVANS")] = { bleeding = 2, chance = 0.75, data = ".44 Evans", ballisticType = "rifle", status = "bullet" },
-    [GetHashKey("WEAPON_RIFLE_SPRINGFIELD")] = { bleeding = 3, chance = 0.85, data = ".45-70 Government", ballisticType = "rifle", status = "bullet" },
+    [GetHashKey("WEAPON_PISTOL_MAUSER")] = { bleeding = 1, chance = 0.3, data = ".32 ACP", ballisticType = "pistol", status = "bullet", bandageChanges = 3 },
+    [GetHashKey("WEAPON_PISTOL_MAUSER_DRUNK")] = { bleeding = 1, chance = 0.3, data = ".32 ACP", ballisticType = "pistol", status = "bullet", bandageChanges = 3 },
+    [GetHashKey("WEAPON_PISTOL_SEMIAUTO")] = { bleeding = 1, chance = 0.35, data = ".32 ACP", ballisticType = "pistol", status = "bullet", bandageChanges = 3 },
+    [GetHashKey("WEAPON_PISTOL_M1899")] = { bleeding = 1, chance = 0.4, data = ".30 Luger", ballisticType = "pistol", status = "bullet", bandageChanges = 3 },
+    [GetHashKey("WEAPON_PISTOL_VOLCANIC")] = { bleeding = 1, chance = 0.45, data = ".41 Short", ballisticType = "pistol", status = "bullet", bandageChanges = 4 },
 
     --=========================================================
-    -- SNIPER RIFLES (Very high bleeding chance - high velocity)
+    -- REVOLVERS (Moderate wounds - 5 cloth bandages)
     --=========================================================
-    [GetHashKey("WEAPON_RIFLE_BOLTACTION")] = { bleeding = 4, chance = 0.9, data = ".270 Winchester", ballisticType = "sniper", status = "bullet" },
-    [GetHashKey("WEAPON_RIFLE_BOLTACTION_BILL")] = { bleeding = 4, chance = 0.9, data = ".270 Winchester", ballisticType = "sniper", status = "bullet" },
-    [GetHashKey("WEAPON_SNIPERRIFLE_CARCANO")] = { bleeding = 4, chance = 0.9, data = "6.5mm Carcano", ballisticType = "sniper", status = "bullet" },
-    [GetHashKey("WEAPON_SNIPERRIFLE_ROLLINGBLOCK")] = { bleeding = 4, chance = 0.95, data = ".45-70 Government", ballisticType = "sniper", status = "bullet" },
-    [GetHashKey("WEAPON_SNIPERRIFLE_ROLLINGBLOCK_EXOTIC")] = { bleeding = 4, chance = 0.95, data = ".45-70 Government", ballisticType = "sniper", status = "bullet" },
-    [GetHashKey("WEAPON_SNIPERRIFLE_ROLLINGBLOCK_LENNY")] = { bleeding = 4, chance = 0.95, data = ".45-70 Government", ballisticType = "sniper", status = "bullet" },
-    [GetHashKey("WEAPON_RIFLE_ELEPHANT")] = { bleeding = 5, chance = 0.95, data = ".600 Nitro Express", ballisticType = "sniper", status = "bullet" },
+    [GetHashKey("WEAPON_REVOLVER_CATTLEMAN")] = { bleeding = 2, chance = 0.5, data = ".45 Colt", ballisticType = "revolver", status = "bullet", bandageChanges = 5 },
+    [GetHashKey("WEAPON_REVOLVER_CATTLEMAN_JOHN")] = { bleeding = 2, chance = 0.5, data = ".45 Colt", ballisticType = "revolver", status = "bullet", bandageChanges = 5 },
+    [GetHashKey("WEAPON_REVOLVER_CATTLEMAN_MEXICAN")] = { bleeding = 2, chance = 0.5, data = ".45 Colt", ballisticType = "revolver", status = "bullet", bandageChanges = 5 },
+    [GetHashKey("WEAPON_REVOLVER_CATTLEMAN_PIG")] = { bleeding = 2, chance = 0.5, data = ".45 Colt", ballisticType = "revolver", status = "bullet", bandageChanges = 5 },
+    [GetHashKey("WEAPON_REVOLVER_SCHOFIELD")] = { bleeding = 2, chance = 0.55, data = ".45 Schofield", ballisticType = "revolver", status = "bullet", bandageChanges = 5 },
+    [GetHashKey("WEAPON_REVOLVER_LEMAT")] = { bleeding = 2, chance = 0.6, data = ".44 Caliber", ballisticType = "revolver", status = "bullet", bandageChanges = 6 },
 
     --=========================================================
-    -- SHOTGUNS (Almost always bleed - multiple pellets)
+    -- RIFLES & REPEATERS (Serious wounds - 7 cloth bandages)
     --=========================================================
-    [GetHashKey("WEAPON_SHOTGUN_DOUBLEBARREL")] = { bleeding = 4, chance = 0.9, data = "12 Gauge", ballisticType = "shotgun", status = "pellets" },
-    [GetHashKey("WEAPON_SHOTGUN_DOUBLEBARREL_EXOTIC")] = { bleeding = 4, chance = 0.9, data = "12 Gauge", ballisticType = "shotgun", status = "pellets" },
-    [GetHashKey("WEAPON_SHOTGUN_DOUBLEBARREL_UNCLE")] = { bleeding = 4, chance = 0.9, data = "12 Gauge", ballisticType = "shotgun", status = "pellets" },
-    [GetHashKey("WEAPON_SHOTGUN_PUMP")] = { bleeding = 4, chance = 0.85, data = "12 Gauge", ballisticType = "shotgun", status = "pellets" },
-    [GetHashKey("WEAPON_SHOTGUN_REPEATING")] = { bleeding = 4, chance = 0.85, data = "12 Gauge", ballisticType = "shotgun", status = "pellets" },
-    [GetHashKey("WEAPON_SHOTGUN_SEMIAUTO")] = { bleeding = 3, chance = 0.85, data = "12 Gauge", ballisticType = "shotgun", status = "pellets" },
-    [GetHashKey("WEAPON_SHOTGUN_SEMIAUTO_HOSEA")] = { bleeding = 3, chance = 0.85, data = "12 Gauge", ballisticType = "shotgun", status = "pellets" },
-    [GetHashKey("WEAPON_SHOTGUN_SAWEDOFF")] = { bleeding = 4, chance = 0.95, data = "12 Gauge Sawed-Off", ballisticType = "shotgun", status = "pellets" },
-    [GetHashKey("WEAPON_SHOTGUN_SAWEDOFF_CHARLES")] = { bleeding = 4, chance = 0.95, data = "12 Gauge Sawed-Off", ballisticType = "shotgun", status = "pellets" },
+    [GetHashKey("WEAPON_RIFLE_VARMINT")] = { bleeding = 1, chance = 0.65, data = ".22 Caliber", ballisticType = "rifle", status = "bullet", bandageChanges = 4 },
+    [GetHashKey("WEAPON_REPEATER_CARBINE")] = { bleeding = 2, chance = 0.75, data = ".44-40 Winchester", ballisticType = "rifle", status = "bullet", bandageChanges = 7 },
+    [GetHashKey("WEAPON_REPEATER_CARBINE_SADIE")] = { bleeding = 2, chance = 0.75, data = ".44-40 Winchester", ballisticType = "rifle", status = "bullet", bandageChanges = 7 },
+    [GetHashKey("WEAPON_REPEATER_WINCHESTER")] = { bleeding = 2, chance = 0.8, data = ".44-40 Winchester", ballisticType = "rifle", status = "bullet", bandageChanges = 7 },
+    [GetHashKey("WEAPON_REPEATER_WINCHESTER_JOHN")] = { bleeding = 2, chance = 0.8, data = ".44-40 Winchester", ballisticType = "rifle", status = "bullet", bandageChanges = 7 },
+    [GetHashKey("WEAPON_REPEATER_EVANS")] = { bleeding = 2, chance = 0.75, data = ".44 Evans", ballisticType = "rifle", status = "bullet", bandageChanges = 7 },
+    [GetHashKey("WEAPON_RIFLE_SPRINGFIELD")] = { bleeding = 3, chance = 0.85, data = ".45-70 Government", ballisticType = "rifle", status = "bullet", bandageChanges = 8 },
 
     --=========================================================
-    -- CUTTING WEAPONS (High pain, always bleed - sharp edges)
+    -- SNIPER RIFLES (Devastating wounds - 10 cloth bandages)
     --=========================================================
-    [GetHashKey("WEAPON_MELEE_KNIFE")] = { bleeding = 3, chance = 0.95, data = "Knife", ballisticType = "melee", status = "deep_cut" },
-    [GetHashKey("WEAPON_MELEE_MACHETE")] = { bleeding = 4, chance = 0.95, data = "LargeBlade", ballisticType = "melee", status = "deep_cut" },
-    [GetHashKey("WEAPON_MELEE_CLEAVER")] = { bleeding = 4, chance = 0.9, data = "LargeBlade", ballisticType = "melee", status = "deep_cut" },
-    [GetHashKey("WEAPON_MELEE_BROKEN_SWORD")] = { bleeding = 3, chance = 0.85, data = "BrokenBlade", ballisticType = "melee", status = "deep_cut" },
-    [GetHashKey("WEAPON_THROWN_TOMAHAWK")] = { bleeding = 4, chance = 0.9, data = "Steel Tomahawk", ballisticType = "thrown", status = "embedded_hatchet" },
-    
-    -- Hatchets/Axes (Heavy cutting tools)
-    [GetHashKey("WEAPON_MELEE_HATCHET")] = { bleeding = 4, chance = 0.85, data = "Hatchet", ballisticType = "melee", status = "deep_cut" },
-    [GetHashKey("WEAPON_MELEE_HATCHET_HUNTER")] = { bleeding = 4, chance = 0.85, data = "Hatchet", ballisticType = "melee", status = "deep_cut" },
-    [GetHashKey("WEAPON_MELEE_HATCHET_HUNTER_RUSTED")] = { bleeding = 4, chance = 0.9, data = "RustedHatchet", ballisticType = "melee", status = "deep_cut" },
-    [GetHashKey("WEAPON_MELEE_HATCHET_HEWING")] = { bleeding = 4, chance = 0.9, data = "HeavyHatchet", ballisticType = "melee", status = "deep_cut" },
-    [GetHashKey("WEAPON_MELEE_HATCHET_DOUBLE_BIT")] = { bleeding = 5, chance = 0.95, data = "HeavyHatchet", ballisticType = "melee", status = "deep_cut" },
-    [GetHashKey("WEAPON_MELEE_HATCHET_DOUBLE_BIT_RUSTED")] = { bleeding = 5, chance = 0.95, data = "RustedHatchet", ballisticType = "melee", status = "deep_cut" },
-    [GetHashKey("WEAPON_MELEE_HATCHET_VIKING")] = { bleeding = 4, chance = 0.9, data = "HeavyHatchet", ballisticType = "melee", status = "deep_cut" },
-    [GetHashKey("WEAPON_MELEE_ANCIENT_HATCHET")] = { bleeding = 4, chance = 0.85, data = "Hatchet", ballisticType = "melee", status = "deep_cut" },
+    [GetHashKey("WEAPON_RIFLE_BOLTACTION")] = { bleeding = 4, chance = 0.9, data = ".270 Winchester", ballisticType = "sniper", status = "bullet", bandageChanges = 10 },
+    [GetHashKey("WEAPON_RIFLE_BOLTACTION_BILL")] = { bleeding = 4, chance = 0.9, data = ".270 Winchester", ballisticType = "sniper", status = "bullet", bandageChanges = 10 },
+    [GetHashKey("WEAPON_SNIPERRIFLE_CARCANO")] = { bleeding = 4, chance = 0.9, data = "6.5mm Carcano", ballisticType = "sniper", status = "bullet", bandageChanges = 10 },
+    [GetHashKey("WEAPON_SNIPERRIFLE_ROLLINGBLOCK")] = { bleeding = 4, chance = 0.95, data = ".45-70 Government", ballisticType = "sniper", status = "bullet", bandageChanges = 10 },
+    [GetHashKey("WEAPON_SNIPERRIFLE_ROLLINGBLOCK_EXOTIC")] = { bleeding = 4, chance = 0.95, data = ".45-70 Government", ballisticType = "sniper", status = "bullet", bandageChanges = 10 },
+    [GetHashKey("WEAPON_SNIPERRIFLE_ROLLINGBLOCK_LENNY")] = { bleeding = 4, chance = 0.95, data = ".45-70 Government", ballisticType = "sniper", status = "bullet", bandageChanges = 10 },
+    [GetHashKey("WEAPON_RIFLE_ELEPHANT")] = { bleeding = 5, chance = 0.95, data = ".600 Nitro Express", ballisticType = "sniper", status = "bullet", bandageChanges = 12 },
 
     --=========================================================
-    -- ANIMAL ATTACKS (Claws/teeth - high bleeding chance)
+    -- SHOTGUNS (Nasty wounds - 8 cloth bandages, pellet spread)
     --=========================================================
-    [GetHashKey("WEAPON_BEAR")] = { bleeding = 5, chance = 0.95, data = "LargeAnimal", ballisticType = "animal", status = "claw_marks" },
-    [GetHashKey("WEAPON_COUGAR")] = { bleeding = 4, chance = 0.9, data = "Predator", ballisticType = "animal", status = "claw_marks" },
-    [GetHashKey("WEAPON_WOLF")] = { bleeding = 3, chance = 0.8, data = "Predator", ballisticType = "animal", status = "claw_marks" },
-    [GetHashKey("WEAPON_WOLF_MEDIUM")] = { bleeding = 3, chance = 0.8, data = "Predator", ballisticType = "animal", status = "claw_marks" },
-    [GetHashKey("WEAPON_WOLF_SMALL")] = { bleeding = 2, chance = 0.7, data = "SmallPredator", ballisticType = "animal", status = "claw_marks" },
-    [GetHashKey("WEAPON_ALLIGATOR")] = { bleeding = 5, chance = 0.95, data = "LargeAnimal", ballisticType = "animal", status = "claw_marks" },
-    [GetHashKey("WEAPON_COYOTE")] = { bleeding = 2, chance = 0.6, data = "SmallPredator", ballisticType = "animal", status = "claw_marks" },
-    [GetHashKey("WEAPON_FOX")] = { bleeding = 1, chance = 0.4, data = "SmallAnimal", ballisticType = "animal", status = "claw_marks" },
-    [GetHashKey("WEAPON_BADGER")] = { bleeding = 1, chance = 0.5, data = "SmallAnimal", ballisticType = "animal", status = "claw_marks" },
-    [GetHashKey("WEAPON_SNAKE")] = { bleeding = 1, chance = 0.3, data = "Venomous", ballisticType = "animal", status = "claw_marks" },
-    
-    -- Non-aggressive animals (low bleeding, more trauma)
-    [GetHashKey("WEAPON_HORSE")] = { bleeding = 1, chance = 0.2, data = "LargeAnimal", ballisticType = "animal", status = "claw_marks" },
-    [GetHashKey("WEAPON_DEER")] = { bleeding = 1, chance = 0.15, data = "LargeAnimal", ballisticType = "animal", status = "claw_marks" },
-    [GetHashKey("WEAPON_MUSKRAT")] = { bleeding = 0, chance = 0.05, data = "SmallAnimal", ballisticType = "animal", status = "claw_marks" },
-    [GetHashKey("WEAPON_RACCOON")] = { bleeding = 0, chance = 0.1, data = "SmallAnimal", ballisticType = "animal", status = "claw_marks" },
-    [GetHashKey("WEAPON_ANIMAL")] = { bleeding = 1, chance = 0.3, data = "Animal", ballisticType = "animal", status = "claw_marks" },
+    [GetHashKey("WEAPON_SHOTGUN_DOUBLEBARREL")] = { bleeding = 4, chance = 0.9, data = "12 Gauge", ballisticType = "shotgun", status = "pellets", bandageChanges = 8 },
+    [GetHashKey("WEAPON_SHOTGUN_DOUBLEBARREL_EXOTIC")] = { bleeding = 4, chance = 0.9, data = "12 Gauge", ballisticType = "shotgun", status = "pellets", bandageChanges = 8 },
+    [GetHashKey("WEAPON_SHOTGUN_DOUBLEBARREL_UNCLE")] = { bleeding = 4, chance = 0.9, data = "12 Gauge", ballisticType = "shotgun", status = "pellets", bandageChanges = 8 },
+    [GetHashKey("WEAPON_SHOTGUN_PUMP")] = { bleeding = 4, chance = 0.85, data = "12 Gauge", ballisticType = "shotgun", status = "pellets", bandageChanges = 8 },
+    [GetHashKey("WEAPON_SHOTGUN_REPEATING")] = { bleeding = 4, chance = 0.85, data = "12 Gauge", ballisticType = "shotgun", status = "pellets", bandageChanges = 8 },
+    [GetHashKey("WEAPON_SHOTGUN_SEMIAUTO")] = { bleeding = 3, chance = 0.85, data = "12 Gauge", ballisticType = "shotgun", status = "pellets", bandageChanges = 7 },
+    [GetHashKey("WEAPON_SHOTGUN_SEMIAUTO_HOSEA")] = { bleeding = 3, chance = 0.85, data = "12 Gauge", ballisticType = "shotgun", status = "pellets", bandageChanges = 7 },
+    [GetHashKey("WEAPON_SHOTGUN_SAWEDOFF")] = { bleeding = 4, chance = 0.95, data = "12 Gauge Sawed-Off", ballisticType = "shotgun", status = "pellets", bandageChanges = 9 },
+    [GetHashKey("WEAPON_SHOTGUN_SAWEDOFF_CHARLES")] = { bleeding = 4, chance = 0.95, data = "12 Gauge Sawed-Off", ballisticType = "shotgun", status = "pellets", bandageChanges = 9 },
+
+    --=========================================================
+    -- CUTTING WEAPONS (Sharp wounds - 4 cloth bandages)
+    --=========================================================
+    [GetHashKey("WEAPON_MELEE_KNIFE")] = { bleeding = 3, chance = 0.95, data = "Knife", ballisticType = "melee", status = "deep_cut", bandageChanges = 4 },
+    [GetHashKey("WEAPON_MELEE_MACHETE")] = { bleeding = 4, chance = 0.95, data = "LargeBlade", ballisticType = "melee", status = "deep_cut", bandageChanges = 5 },
+    [GetHashKey("WEAPON_MELEE_CLEAVER")] = { bleeding = 4, chance = 0.9, data = "LargeBlade", ballisticType = "melee", status = "deep_cut", bandageChanges = 5 },
+    [GetHashKey("WEAPON_MELEE_BROKEN_SWORD")] = { bleeding = 3, chance = 0.85, data = "BrokenBlade", ballisticType = "melee", status = "deep_cut", bandageChanges = 4 },
+    [GetHashKey("WEAPON_THROWN_TOMAHAWK")] = { bleeding = 4, chance = 0.9, data = "Steel Tomahawk", ballisticType = "thrown", status = "embedded_hatchet", bandageChanges = 6 },
+
+    -- Hatchets/Axes (Heavy cutting - 6 cloth bandages)
+    [GetHashKey("WEAPON_MELEE_HATCHET")] = { bleeding = 4, chance = 0.85, data = "Hatchet", ballisticType = "melee", status = "deep_cut", bandageChanges = 6 },
+    [GetHashKey("WEAPON_MELEE_HATCHET_HUNTER")] = { bleeding = 4, chance = 0.85, data = "Hatchet", ballisticType = "melee", status = "deep_cut", bandageChanges = 6 },
+    [GetHashKey("WEAPON_MELEE_HATCHET_HUNTER_RUSTED")] = { bleeding = 4, chance = 0.9, data = "RustedHatchet", ballisticType = "melee", status = "deep_cut", bandageChanges = 7 },
+    [GetHashKey("WEAPON_MELEE_HATCHET_HEWING")] = { bleeding = 4, chance = 0.9, data = "HeavyHatchet", ballisticType = "melee", status = "deep_cut", bandageChanges = 7 },
+    [GetHashKey("WEAPON_MELEE_HATCHET_DOUBLE_BIT")] = { bleeding = 5, chance = 0.95, data = "HeavyHatchet", ballisticType = "melee", status = "deep_cut", bandageChanges = 8 },
+    [GetHashKey("WEAPON_MELEE_HATCHET_DOUBLE_BIT_RUSTED")] = { bleeding = 5, chance = 0.95, data = "RustedHatchet", ballisticType = "melee", status = "deep_cut", bandageChanges = 8 },
+    [GetHashKey("WEAPON_MELEE_HATCHET_VIKING")] = { bleeding = 4, chance = 0.9, data = "HeavyHatchet", ballisticType = "melee", status = "deep_cut", bandageChanges = 6 },
+    [GetHashKey("WEAPON_MELEE_ANCIENT_HATCHET")] = { bleeding = 4, chance = 0.85, data = "Hatchet", ballisticType = "melee", status = "deep_cut", bandageChanges = 6 },
+
+    --=========================================================
+    -- ANIMAL ATTACKS (Claws/teeth)
+    --=========================================================
+    [GetHashKey("WEAPON_BEAR")] = { bleeding = 5, chance = 0.95, data = "LargeAnimal", ballisticType = "animal", status = "claw_marks", bandageChanges = 8 },
+    [GetHashKey("WEAPON_COUGAR")] = { bleeding = 4, chance = 0.9, data = "Predator", ballisticType = "animal", status = "claw_marks", bandageChanges = 6 },
+    [GetHashKey("WEAPON_WOLF")] = { bleeding = 3, chance = 0.8, data = "Predator", ballisticType = "animal", status = "claw_marks", bandageChanges = 5 },
+    [GetHashKey("WEAPON_WOLF_MEDIUM")] = { bleeding = 3, chance = 0.8, data = "Predator", ballisticType = "animal", status = "claw_marks", bandageChanges = 4 },
+    [GetHashKey("WEAPON_WOLF_SMALL")] = { bleeding = 2, chance = 0.7, data = "SmallPredator", ballisticType = "animal", status = "claw_marks", bandageChanges = 3 },
+    [GetHashKey("WEAPON_ALLIGATOR")] = { bleeding = 5, chance = 0.95, data = "LargeAnimal", ballisticType = "animal", status = "claw_marks", bandageChanges = 8 },
+    [GetHashKey("WEAPON_COYOTE")] = { bleeding = 2, chance = 0.6, data = "SmallPredator", ballisticType = "animal", status = "claw_marks", bandageChanges = 3 },
+    [GetHashKey("WEAPON_FOX")] = { bleeding = 1, chance = 0.4, data = "SmallAnimal", ballisticType = "animal", status = "claw_marks", bandageChanges = 2 },
+    [GetHashKey("WEAPON_BADGER")] = { bleeding = 1, chance = 0.5, data = "SmallAnimal", ballisticType = "animal", status = "claw_marks", bandageChanges = 2 },
+    [GetHashKey("WEAPON_SNAKE")] = { bleeding = 1, chance = 0.3, data = "Venomous", ballisticType = "animal", status = "claw_marks", bandageChanges = 2 },
+
+    -- Non-aggressive animals (minor wounds)
+    [GetHashKey("WEAPON_HORSE")] = { bleeding = 1, chance = 0.2, data = "LargeAnimal", ballisticType = "animal", status = "claw_marks", bandageChanges = 3 },
+    [GetHashKey("WEAPON_DEER")] = { bleeding = 1, chance = 0.15, data = "LargeAnimal", ballisticType = "animal", status = "claw_marks", bandageChanges = 2 },
+    [GetHashKey("WEAPON_MUSKRAT")] = { bleeding = 0, chance = 0.05, data = "SmallAnimal", ballisticType = "animal", status = "claw_marks", bandageChanges = 1 },
+    [GetHashKey("WEAPON_RACCOON")] = { bleeding = 0, chance = 0.1, data = "SmallAnimal", ballisticType = "animal", status = "claw_marks", bandageChanges = 1 },
+    [GetHashKey("WEAPON_ANIMAL")] = { bleeding = 1, chance = 0.3, data = "Animal", ballisticType = "animal", status = "claw_marks", bandageChanges = 2 },
 
     --=========================================================
     -- IMPACT WEAPONS (Trauma, minimal bleeding)
     --=========================================================
-    [GetHashKey("WEAPON_UNARMED")] = { bleeding = 0, chance = 0.0, data = "Unarmed", ballisticType = "melee", status = "bruise" },
-    [GetHashKey("WEAPON_MELEE_HAMMER")] = { bleeding = 1, chance = 0.2, data = "BluntWeapon", ballisticType = "melee", status = "deep_cut" },
+    [GetHashKey("WEAPON_UNARMED")] = { bleeding = 0, chance = 0.0, data = "Unarmed", ballisticType = "melee", status = "bruise", bandageChanges = 1 },
+    [GetHashKey("WEAPON_MELEE_HAMMER")] = { bleeding = 1, chance = 0.2, data = "BluntWeapon", ballisticType = "melee", status = "deep_cut", bandageChanges = 2 },
 
     --=========================================================
-    -- EXPLOSIVES & FIRE (Severe trauma, high bleeding)
+    -- EXPLOSIVES & FIRE (Devastating - 10 cloth bandages)
     --=========================================================
-    [GetHashKey("WEAPON_DYNAMITE")] = { bleeding = 5, chance = 0.9, data = "Explosive", ballisticType = "explosive", status = "shrapnel" },
-    [GetHashKey("WEAPON_THROWN_DYNAMITE")] = { bleeding = 5, chance = 0.9, data = "Explosive", ballisticType = "explosive", status = "shrapnel" },
-    [GetHashKey("WEAPON_EXPLOSION")] = { bleeding = 6, chance = 0.95, data = "Explosion", ballisticType = "explosive", status = "shrapnel" },
-    [GetHashKey("WEAPON_MOLOTOV")] = { bleeding = 3, chance = 0.7, data = "Fire", ballisticType = "fire", status = "deep_cut" },
-    [GetHashKey("WEAPON_THROWN_MOLOTOV")] = { bleeding = 3, chance = 0.7, data = "Fire", ballisticType = "fire", status = "deep_cut" },
-    [GetHashKey("WEAPON_FIRE")] = { bleeding = 2, chance = 0.4, data = "Fire", ballisticType = "fire", status = "deep_cut" },
+    [GetHashKey("WEAPON_DYNAMITE")] = { bleeding = 5, chance = 0.9, data = "Explosive", ballisticType = "explosive", status = "shrapnel", bandageChanges = 10 },
+    [GetHashKey("WEAPON_THROWN_DYNAMITE")] = { bleeding = 5, chance = 0.9, data = "Explosive", ballisticType = "explosive", status = "shrapnel", bandageChanges = 10 },
+    [GetHashKey("WEAPON_EXPLOSION")] = { bleeding = 6, chance = 0.95, data = "Explosion", ballisticType = "explosive", status = "shrapnel", bandageChanges = 12 },
+    [GetHashKey("WEAPON_MOLOTOV")] = { bleeding = 3, chance = 0.7, data = "Fire", ballisticType = "fire", status = "deep_cut", bandageChanges = 6 },
+    [GetHashKey("WEAPON_THROWN_MOLOTOV")] = { bleeding = 3, chance = 0.7, data = "Fire", ballisticType = "fire", status = "deep_cut", bandageChanges = 6 },
+    [GetHashKey("WEAPON_FIRE")] = { bleeding = 2, chance = 0.4, data = "Fire", ballisticType = "fire", status = "deep_cut", bandageChanges = 4 },
 
     --=========================================================
-    -- ENVIRONMENTAL DAMAGE (Low pain, minimal bleeding - heals naturally)
+    -- ENVIRONMENTAL DAMAGE
     --=========================================================
-    [GetHashKey("WEAPON_FALL")] = { bleeding = 0, chance = 0.1, data = "Fall", ballisticType = "environmental", status = "bruise", pain = 3 },
-    [GetHashKey("WEAPON_RAMMED_BY_CAR")] = { bleeding = 1, chance = 0.15, data = "VehicleImpact", ballisticType = "environmental", status = "deep_cut" },
-    [GetHashKey("WEAPON_RUN_OVER_BY_CAR")] = { bleeding = 2, chance = 0.3, data = "VehicleImpact", ballisticType = "environmental", status = "deep_cut" },
+    [GetHashKey("WEAPON_FALL")] = { bleeding = 0, chance = 0.1, data = "Fall", ballisticType = "environmental", status = "bruise", bandageChanges = 2 },
+    [GetHashKey("WEAPON_RAMMED_BY_CAR")] = { bleeding = 1, chance = 0.15, data = "VehicleImpact", ballisticType = "environmental", status = "deep_cut", bandageChanges = 3 },
+    [GetHashKey("WEAPON_RUN_OVER_BY_CAR")] = { bleeding = 2, chance = 0.3, data = "VehicleImpact", ballisticType = "environmental", status = "deep_cut", bandageChanges = 5 },
 
     --=========================================================
-    -- SUFFOCATION (No bleeding, pure trauma)
+    -- SUFFOCATION (No bleeding, no bandages needed)
     --=========================================================
-    [GetHashKey("WEAPON_DROWNING")] = { bleeding = 0, chance = 0.0, data = "Suffocation", ballisticType = "environmental", status = "deep_cut" },
-    [GetHashKey("WEAPON_DROWNING_IN_VEHICLE")] = { bleeding = 0, chance = 0.0, data = "Suffocation", ballisticType = "environmental", status = "deep_cut" },
+    [GetHashKey("WEAPON_DROWNING")] = { bleeding = 0, chance = 0.0, data = "Suffocation", ballisticType = "environmental", status = "deep_cut", bandageChanges = 0 },
+    [GetHashKey("WEAPON_DROWNING_IN_VEHICLE")] = { bleeding = 0, chance = 0.0, data = "Suffocation", ballisticType = "environmental", status = "deep_cut", bandageChanges = 0 },
 
     --=========================================================
-    -- BOW & ARROW SPECIAL CASE (Almost always lodge)
+    -- BOW & ARROW (Embedded projectile - 7 cloth bandages)
     --=========================================================
-    [GetHashKey("WEAPON_BOW")] = { bleeding = 3, chance = 0.8, data = "Arrow", ballisticType = "bow", status = "arrow", lodgingChance = 95 },
-    [GetHashKey("WEAPON_ARROW")] = { bleeding = 3, chance = 0.8, data = "Arrow", ballisticType = "bow", status = "arrow", lodgingChance = 95 },
+    [GetHashKey("WEAPON_BOW")] = { bleeding = 3, chance = 0.8, data = "Arrow", ballisticType = "bow", status = "arrow", lodgingChance = 95, bandageChanges = 7 },
+    [GetHashKey("WEAPON_ARROW")] = { bleeding = 3, chance = 0.8, data = "Arrow", ballisticType = "bow", status = "arrow", lodgingChance = 95, bandageChanges = 7 },
 }
 
 --=========================================================
@@ -564,53 +580,68 @@ Config.Ballistics = {
 }
 
 --=========================================================
--- BANDAGE SYSTEM - 4 Types with Time-Based Expiration
--- IMPORTANT: You can change the key names to match your item names!
--- Example: Change ['cotton'] to ['cotton_bandage'] and it will work automatically
+-- BANDAGE SYSTEM - Simplified Global Bandages
+--=========================================================
+-- HOW IT WORKS:
+-- 1. Player uses bandage → instant 25% max health restored
+-- 2. Bandage ticks health over its duration (+X HP every Y seconds)
+-- 3. Bleeding reduced by bleedingReduction amount
+-- 4. When bandage expires → infection risk starts
+-- 5. Player must apply new bandage (restarts timer)
+-- 6. Wound type determines total bandage changes needed to fully heal
+-- 7. After enough bandage changes → fully healed
 --
--- SIMPLIFIED TIME-BASED MECHANICS:
--- - bleedingReduction: Immediate bleeding reduction when applied (minimum level 1 remains)
--- - Pain reduces proportionally to bleeding (since pain = bleeding + tissue damage)
--- - oneTimeHeal: Immediate health restoration when applied  
--- - decayRate: Minutes until bandage expires and 50% of reductions return
---
--- EXAMPLE TIMELINE (Cotton Bandage -4 reduction):
--- - Apply: Bleeding 8 -> 4, Pain 9 -> 5 (both reduce by 4, minimums: bleeding 1, pain 2)
--- - 5 minutes later: Bandage expires, bleeding 4 -> 6, pain 5 -> 7 (50% returns)
--- - 1 minute later: Infection risk begins if still bleeding
+-- EXAMPLE: Shot by revolver (bandageChanges = 2, bleeding = 2)
+-- - Apply cloth bandage: +25% HP, bleeding 2→0, ticks +3 HP/10s for 3 min
+-- - 3 min later: bandage expires, infection risk
+-- - Apply another bandage: +25% HP again, bandageChangesApplied = 2 → FULLY HEALED
 --=========================================================
 Config.BandageTypes = {
-    -- Basic cloth bandage - Low quality frontier treatment
+    -- healingPower = how many "wound units" each application heals
+    -- Weapons deal wound units in bandageChanges (cloth-equivalent)
+    -- Example: Revolver = 5 units → cloth(1) = 5 uses, sterile(5) = 1 use
     ['cloth'] = {
         label = 'Cloth Strip',
-        itemName = 'cloth_band',     -- Actual item name in inventory (can be changed)
-        decayRate = 3.0,                -- Minutes until bandage expires
-        oneTimeHeal = 8,                -- Immediate health restored when applied
-        bleedingReduction = 2,          -- Reduces bleeding level by 2 points (minimum 1 remains)
+        itemName = 'cloth_band',
+        duration = 0.5,                 -- 30 seconds
+        instantHealPercent = 25,
+        healthPerTick = 3,
+        tickInterval = 10,
+        bleedingReduction = 1,
+        healingPower = 1,               -- Weakest: 1 unit per use
         description = 'Basic cloth strip - crude but available'
     },
     ['cotton'] = {
         label = 'Cotton Bandage',
-        itemName = 'cotton_band',           -- Uses default RSG bandage item
-        decayRate = 5.0,                -- Lasts 5 minutes before expiring
-        oneTimeHeal = 12,               -- Decent immediate healing
-        bleedingReduction = 4,          -- Reduces bleeding level by 4 points (minimum 1 remains)
+        itemName = 'cotton_band',
+        duration = 0.75,                -- 45 seconds
+        instantHealPercent = 25,
+        healthPerTick = 5,
+        tickInterval = 10,
+        bleedingReduction = 2,
+        healingPower = 2,               -- Standard: 2 units per use
         description = 'Standard cotton bandage - reliable frontier medicine'
     },
     ['linen'] = {
         label = 'Linen Wrap',
-        itemName = 'linen_band',     -- Custom linen bandage item
-        decayRate = 8.0,                -- Lasts 8 minutes before expiring
-        oneTimeHeal = 18,               -- Good healing properties
-        bleedingReduction = 6,          -- Reduces bleeding level by 6 points (minimum 1 remains)
+        itemName = 'linen_band',
+        duration = 1.0,                 -- 1 minute
+        instantHealPercent = 25,
+        healthPerTick = 4,
+        tickInterval = 10,
+        bleedingReduction = 3,
+        healingPower = 3,               -- Good: 3 units per use
         description = 'Quality linen wrap - superior absorbency and durability'
     },
     ['sterile'] = {
         label = 'Sterilized Gauze',
-        itemName = 'sterile_band',   -- Medical grade bandage item
-        decayRate = 12.0,               -- Lasts 12 minutes before expiring
-        oneTimeHeal = 25,               -- Excellent healing
-        bleedingReduction = 8,          -- Reduces bleeding level by 8 points (minimum 1 remains)
+        itemName = 'sterile_band',
+        duration = 1.5,                 -- 1.5 minutes (best)
+        instantHealPercent = 25,
+        healthPerTick = 3,
+        tickInterval = 10,
+        bleedingReduction = 4,
+        healingPower = 5,               -- Best: 5 units per use
         description = 'Professional medical gauze - sterile and highly effective'
     }
 }
@@ -624,45 +655,45 @@ Config.TourniquetTypes = {
         label = 'Rope Tourniquet',
         itemName = 'tourniquet_rope',    -- Actual item name in inventory
         effectiveness = 70,
-        maxDuration = 20,            -- 20 minutes max (rough material causes damage)
+        maxDuration = 4,             -- 4 minutes max (rough material causes damage)
         damageAmount = 3,            -- Higher damage from coarse rope
         bleedingStopChance = 85,     -- Decent bleeding control
         oneTimeHeal = 0,             -- No healing, only bleeding control
         painIncrease = 15,           -- Causes significant pain
-        description = 'Stops ALL bleeding for 20 minutes. Improvised rope - rough but effective.'
+        description = 'Stops ALL bleeding for 8 minutes. Improvised rope - rough but effective.'
     },
     ['leather'] = {
         label = 'Leather Strap',
         itemName = 'tourniquet_leather', -- Actual item name in inventory
         effectiveness = 75,
-        maxDuration = 23,            -- 23 minutes max
+        maxDuration = 5,             -- 5 minutes max
         damageAmount = 2,            -- Moderate damage
         bleedingStopChance = 88,     -- Good bleeding control
         oneTimeHeal = 2,             -- Slight comfort benefit
         painIncrease = 12,           -- Moderate pain increase
-        description = 'Stops ALL bleeding for 23 minutes. Durable frontier solution.'
+        description = 'Stops ALL bleeding for 10 minutes. Durable frontier solution.'
     },
     ['cloth'] = {
         label = 'Cloth Tourniquet',
         itemName = 'tourniquet_cloth',   -- Actual item name in inventory
         effectiveness = 65,
-        maxDuration = 16,            -- 16 minutes max (stretches out)
+        maxDuration = 3,             -- 3 minutes max (stretches out)
         damageAmount = 2,            -- Lower pressure damage
         bleedingStopChance = 80,     -- Basic bleeding control
         oneTimeHeal = 0,             -- No healing benefit
         painIncrease = 10,           -- Lower pain increase
-        description = 'Stops ALL bleeding for 16 minutes. Basic emergency bleeding control.'
+        description = 'Stops ALL bleeding for 6 minutes. Basic emergency bleeding control.'
     },
     ['medical'] = {
         label = 'Medical Tourniquet',
         itemName = 'tourniquet_medical', -- Actual item name in inventory
         effectiveness = 95,
-        maxDuration = 30,            -- 30 minutes max (professional grade)
+        maxDuration = 7,             -- 7 minutes max (professional grade)
         damageAmount = 1,            -- Minimal damage when used properly
         bleedingStopChance = 98,     -- Excellent bleeding control
         oneTimeHeal = 5,             -- Professional application provides comfort
         painIncrease = 8,            -- Minimal additional pain
-        description = 'Stops ALL bleeding for 30 minutes. Professional hospital-grade equipment.'
+        description = 'Stops ALL bleeding for 15 minutes. Professional hospital-grade equipment.'
     }
 }
 
@@ -1020,11 +1051,11 @@ Config.InfectionSystem = {
     -- DEBUGGING CONFIGURATION
     -- ========================================
     debugging = {
-        enabled = true,                     -- Enable/disable debug prints (SET TO FALSE FOR PRODUCTION)
-        printPercentages = true,            -- Show infection chance percentages
-        printProgression = true,            -- Show stage progression
-        printCureProgress = true,           -- Show cure progress
-        verboseLogging = true               -- Detailed debug output
+        enabled = false,                    -- Enable/disable debug prints (SET TO FALSE FOR PRODUCTION)
+        printPercentages = false,           -- Show infection chance percentages
+        printProgression = false,           -- Show stage progression
+        printCureProgress = false,          -- Show cure progress
+        verboseLogging = false              -- Detailed debug output
     },
     
     -- Notification Settings
@@ -1054,93 +1085,11 @@ Config.InfectionSystem = {
 }
 
 --=========================================================
--- WOUND HEALING SYSTEM CONFIGURATION
+-- NOTE: WoundHealing removed - healing now based on bandage change cycles
+-- Each weapon has a 'bandageChanges' value (1-5) in Config.WeaponDamage
+-- Player must apply that many bandages total to fully heal
+-- Different bandage qualities only affect duration (time between changes)
 --=========================================================
--- Wounds heal to scars when properly cared for (bandaged + bleeding level 1)
--- If conditions are broken (bandage expires, bleeding increases), timer resets
-
-Config.WoundHealing = {
-    enabled = true,                     -- Enable wound healing to scars system
-    
-    -- Healing times for different wound types (in minutes)
-    -- Requirements: bandaged + bleeding level 1 + maintained for full duration
-    healingTimes = {
-        -- Shot-through wounds (bullet passed through cleanly)
-        ["shot_through"] = {
-            healTime = 15,  -- 15 minutes of proper care
-            description = "Clean bullet wound - heals relatively quickly with proper care",
-            scarType = "entry_exit_scar"
-        },
-        
-        -- Post-surgery wounds (bullet was lodged but surgically removed)  
-        ["post_surgery"] = {
-            healTime = 25,  -- 25 minutes of proper care
-            description = "Surgical wound from bullet removal - needs extended care", 
-            scarType = "surgical_scar"
-        },
-        
-        -- Fragmented wounds (bullet broke apart, multiple fragments)
-        ["fragmented"] = {
-            healTime = 35,  -- 35 minutes of proper care
-            description = "Complex fragmented wound - requires intensive care",
-            scarType = "complex_scar"
-        },
-        
-        -- Cutting wounds (knives, blades, claws)
-        ["cutting"] = {
-            healTime = 10,  -- 10 minutes of proper care
-            description = "Clean cut wound - heals quickly when properly sutured",
-            scarType = "linear_scar"
-        },
-        
-        -- Crushing wounds (blunt trauma, animal attacks)
-        ["crushing"] = {
-            healTime = 20,  -- 20 minutes of proper care
-            description = "Blunt trauma wound - tissue damage requires time to heal",
-            scarType = "irregular_scar"
-        },
-        
-        -- Explosive wounds (shrapnel, burns)
-        ["explosive"] = {
-            healTime = 40,  -- 40 minutes of proper care
-            description = "Severe explosive trauma - extensive healing time required",
-            scarType = "burn_scar"
-        },
-        
-        -- Default fallback for unknown wound types
-        ["default"] = {
-            healTime = 20,  -- 20 minutes default
-            description = "Unknown wound type - standard healing time",
-            scarType = "standard_scar"
-        }
-    },
-    
-    -- Healing notifications
-    notifications = {
-        healingStarted = {
-            title = "Wound Healing",
-            type = "inform", 
-            duration = 6000
-        },
-        healingInterrupted = {
-            title = "Healing Interrupted",
-            type = "warning",
-            duration = 8000  
-        },
-        healingComplete = {
-            title = "Wound Healed",
-            type = "success",
-            duration = 10000
-        }
-    },
-    
-    -- Debugging settings
-    debugging = {
-        enabled = true,                    -- Enable healing debug messages
-        showHealingProgress = true,        -- Show healing timer progress
-        showRequirementChecks = true      -- Show when requirements are checked
-    }
-}
 
 Config.Strings = {}
 

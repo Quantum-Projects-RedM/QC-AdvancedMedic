@@ -42,6 +42,7 @@ server_scripts {
 }
 
 client_scripts {
+    'client/utils/dataview.lua',
     'client/utils/callbacks.lua',
     'client/utils/medical_helpers.lua',
     'client/utils/nui_controller.lua',

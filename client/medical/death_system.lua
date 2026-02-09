@@ -5,6 +5,8 @@
 -- Uses CFX GLM for camera math
 --=========================================================
 
+QCMed = QCMed or {}
+
 local glm = require 'glm'
 local RSGCore = exports['rsg-core']:GetCoreObject()
 local sharedWeapons = exports['rsg-core']:GetWeapons()
@@ -344,6 +346,17 @@ end)
 -- EXPORTS
 --=========================================================
 
-exports('IsPlayerDead', function() return deathactive end)
-exports('GetDeathTimeRemaining', function() return deathSecondsRemaining end)
-exports('GetClosestRespawn', function() return closestRespawn end)
+QCMed.IsPlayerDead = function() return deathactive end
+exports('IsPlayerDead', QCMed.IsPlayerDead) -- Keep export for external resource access
+QCMed.GetDeathTimeRemaining = function() return deathSecondsRemaining end
+QCMed.GetClosestRespawn = function() return closestRespawn end
+
+-- Reset death state (used by admin revive to clean up death cam/NUI/state)
+AddEventHandler('QC-AdvancedMedic:client:ResetDeathState', function()
+    deathactive = false
+    deathTimerStarted = false
+    deathSecondsRemaining = 0
+    Dead = false
+    EndDeathCam()
+    SendNUIMessage({ type = 'hide-death-screen' })
+end)

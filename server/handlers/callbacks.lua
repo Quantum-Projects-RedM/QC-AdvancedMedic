@@ -6,6 +6,7 @@
 --=========================================================
 
 local RSGCore = exports['rsg-core']:GetCoreObject()
+QCMedServer = QCMedServer or {}
 
 --=========================================================
 -- CALLBACK RESPONSE HELPER
@@ -54,7 +55,7 @@ end)
 
 -- Handle wound data update callback
 function HandleUpdateWoundDataCallback(source, callbackId, woundData)
-    local success, err = exports['QC-AdvancedMedic']:HandleWoundUpdate(source, woundData)
+    local success, err = QCMedServer.HandleWoundUpdate(source, woundData)
 
     if success then
         SendCallbackResponse(source, callbackId, true)
@@ -68,7 +69,7 @@ end
 
 -- Handle treatment data update callback
 function HandleUpdateTreatmentDataCallback(source, callbackId, treatmentData)
-    local success, err = exports['QC-AdvancedMedic']:HandleTreatmentUpdate(source, treatmentData)
+    local success, err = QCMedServer.HandleTreatmentUpdate(source, treatmentData)
 
     if success then
         SendCallbackResponse(source, callbackId, true)
@@ -82,7 +83,7 @@ end
 
 -- Handle infection data update callback
 function HandleUpdateInfectionDataCallback(source, callbackId, infectionData)
-    local success, err = exports['QC-AdvancedMedic']:HandleInfectionUpdate(source, infectionData)
+    local success, err = QCMedServer.HandleInfectionUpdate(source, infectionData)
 
     if success then
         SendCallbackResponse(source, callbackId, true)
@@ -96,7 +97,7 @@ end
 
 -- Handle wound removal callback
 function HandleRemoveWoundCallback(source, callbackId, data)
-    local success, err = exports['QC-AdvancedMedic']:HandleWoundRemoval(source, data.bodyPart)
+    local success, err = QCMedServer.HandleWoundRemoval(source, data.bodyPart)
 
     if success then
         SendCallbackResponse(source, callbackId, true)
@@ -110,7 +111,7 @@ end
 
 -- Handle scar data save callback
 function HandleSaveScarDataCallback(source, callbackId, scarData)
-    local success, err = exports['QC-AdvancedMedic']:HandleScarSave(source, scarData)
+    local success, err = QCMedServer.HandleScarSave(source, scarData)
 
     if success then
         SendCallbackResponse(source, callbackId, true)
@@ -124,7 +125,7 @@ end
 
 -- Handle bullet removal callback
 function HandleSaveBulletRemovalCallback(source, callbackId, data)
-    local Player, err = exports['QC-AdvancedMedic']:ValidatePlayer(source)
+    local Player, err = QCMedServer.ValidatePlayer(source)
     if not Player then
         SendCallbackResponse(source, callbackId, false, err)
         return
@@ -132,7 +133,7 @@ function HandleSaveBulletRemovalCallback(source, callbackId, data)
 
     -- Save bullet removal to database
     local success, dbErr = pcall(function()
-        exports['QC-AdvancedMedic']:SaveBulletRemoval(
+        QCMedServer.SaveBulletRemoval(
             Player.PlayerData.citizenid,
             data.bodyPart,
             data.woundData

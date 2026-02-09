@@ -1200,8 +1200,9 @@ end)
 -- EXPORTS
 --=========================================================
 
-exports('startPatientTransport', startPatientTransport)
-exports('checkMissionTreatmentProgress', checkMissionTreatmentProgress)
+QCMed = QCMed or {}
+QCMed.startPatientTransport = startPatientTransport
+QCMed.checkMissionTreatmentProgress = checkMissionTreatmentProgress
 
 if Config.WoundSystem and Config.WoundSystem.debugging and Config.WoundSystem.debugging.enabled then
     print("^2[MEDIC MISSIONS] Mission system loaded^7")

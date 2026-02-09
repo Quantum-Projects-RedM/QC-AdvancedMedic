@@ -1,26 +1,35 @@
-    --
-    -- QC-AdvancedMedic
-    --
-    cotton_band                         = {name = 'cotton_band', label = 'Cotton Bandage', weight = 0, type = 'item', image = 'cotton_band.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'A medical bandage for treating wounds' },
-    cloth_band                          = {name = 'cloth_band', label = 'Cloth Strip', weight = 0, type = 'item', image = 'cloth_strip.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'A medical bandage for treating wounds'},
-    linen_band                          = {name = 'linen_band', label = 'Linen Wrap', weight = 0, type = 'item', image = 'linen_wrap.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'A medical bandage for treating wounds' },
-    sterile_band                        = {name = 'sterile_band', label = 'Sterilized Gauze', weight = 0, type = 'item', image = 'steril_gauze.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'A medical bandage for treating wounds' },
-    -- TOURNIQUET TYPES - Wild West 1899 Emergency Control
+    -- =============================================
+    -- QC-AdvancedMedic - Items
+    -- Add these to rsg-core/shared/items.lua
+    -- Remove default 'bandage' and 'fieldbandage' items
+    -- =============================================
+
+    -- BANDAGE TYPES
+    cloth_band                          = {name = 'cloth_band', label = 'Cloth Strip', weight = 0, type = 'item', image = 'cloth_strip.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'A basic cloth strip for treating wounds'},
+    cotton_band                         = {name = 'cotton_band', label = 'Cotton Bandage', weight = 0, type = 'item', image = 'cotton_band.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'A standard cotton bandage for treating wounds' },
+    linen_band                          = {name = 'linen_band', label = 'Linen Wrap', weight = 0, type = 'item', image = 'linen_wrap.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'A quality linen wrap for treating wounds' },
+    sterile_band                        = {name = 'sterile_band', label = 'Sterilized Gauze', weight = 0, type = 'item', image = 'steril_gauze.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'Professional medical gauze for treating wounds' },
+    -- TOURNIQUET TYPES
     tourniquet_rope                     = {name = 'tourniquet_rope', label = 'Rope Tourniquet', weight = 100, type = 'item', image = 'rope_tourniquet.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'Emergency rope tourniquet for controlling severe bleeding' },
     tourniquet_leather                  = {name = 'tourniquet_leather', label = 'Leather Tourniquet', weight = 100, type = 'item', image = 'leather_tourniquet.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'Emergency leather tourniquet for controlling severe bleeding' },
     tourniquet_cloth                    = {name = 'tourniquet_cloth', label = 'Cloth Tourniquet', weight = 100, type = 'item', image = 'cloth_tourniquet.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'Emergency cloth tourniquet for controlling severe bleeding' },
     tourniquet_medical                  = {name = 'tourniquet_medical', label = 'Medical Tourniquet', weight = 100, type = 'item', image = 'medical_tourniquet.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'Emergency medical tourniquet for controlling severe bleeding' },
-    -- MEDICINE TYPES - Wild West 1899 Pharmaceutical Treatment
+    -- MEDICINE TYPES
     medicine_laudanum                   = {name = 'medicine_laudanum', label = 'Medicine Laudanum', weight = 100, type = 'item', image = 'medicine_laudanum.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'Opium-based painkiller - powerful but addictive' },
     medicine_morphine                   = {name = 'medicine_morphine', label = 'Medicine Morphine', weight = 100, type = 'item', image = 'medicine_morphine.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'Powerful opiate analgesic - strongest painkiller available' },
     medicine_whiskey                    = {name = 'medicine_whiskey', label = 'Medicine Whiskey', weight = 100, type = 'item', image = 'medicine_whiskey.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'Alcohol-based antiseptic and anesthetic - frontier medicine' },
     medicine_quinine                    = {name = 'medicine_quinine', label = 'Medicine Quinine', weight = 100, type = 'item', image = 'medicine_quinine.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'Antimalarial and fever reducer - specialized treatment' },
-    -- INJECTION TYPES - Wild West 1899 Experimental Medical Injections
-    injection_adrenaline                = {name = 'injection_adrenaline', label = 'Rope Tourniquet', weight = 100, type = 'item', image = 'rope_tourniquet.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'Cardiac stimulant for emergency resuscitation - use with extreme caution' },
-    injection_cocaine                   = {name = 'injection_cocaine', label = 'Rope Tourniquet', weight = 100, type = 'item', image = 'rope_tourniquet.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'Local anesthetic for surgical procedures - numbs pain effectively' },
-    injection_strychnine                = {name = 'injection_strychnine', label = 'Rope Tourniquet', weight = 100, type = 'item', image = 'rope_tourniquet.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'Stimulant for paralysis and respiratory failure - extremely dangerous' },
-    injection_saline                    = {name = 'injection_saline', label = 'Rope Tourniquet', weight = 100, type = 'item', image = 'rope_tourniquet.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'Hydration and blood volume replacement - safe basic treatment' },
-    -- DOCTOR BAG TOOLS - Wild West 1899 Diagnostic & Emergency Tools (v0.2.9+)
+    -- INJECTION TYPES
+    injection_adrenaline                = {name = 'injection_adrenaline', label = 'Adrenaline Injection', weight = 100, type = 'item', image = 'injection_adrenaline.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'Cardiac stimulant for emergency resuscitation - use with extreme caution' },
+    injection_cocaine                   = {name = 'injection_cocaine', label = 'Cocaine Injection', weight = 100, type = 'item', image = 'injection_cocaine.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'Local anesthetic for surgical procedures - numbs pain effectively' },
+    injection_strychnine                = {name = 'injection_strychnine', label = 'Strychnine Injection', weight = 100, type = 'item', image = 'injection_strychnine.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'Stimulant for paralysis and respiratory failure - extremely dangerous' },
+    injection_saline                    = {name = 'injection_saline', label = 'Saline Injection', weight = 100, type = 'item', image = 'injection_saline.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'Hydration and blood volume replacement - safe basic treatment' },
+    injection_antibiotic                = {name = 'injection_antibiotic', label = 'Antibiotic Injection', weight = 100, type = 'item', image = 'injection_antibiotic.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'Modern injection - completely cures infection' },
+    -- INFECTION CURE ITEMS
+    antibiotics                         = {name = 'antibiotics', label = 'Antibiotics', weight = 50, type = 'item', image = 'antibiotics.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'Modern medicine - full cure for any infection' },
+    medicine_basic                      = {name = 'medicine_basic', label = 'Basic Medicine', weight = 50, type = 'item', image = 'medicine_basic.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'Frontier medicine - moderate effectiveness against infection' },
+    -- DOCTOR BAG & TOOLS
+    medicbag                            = {name = 'medicbag', label = 'Medical Bag', weight = 500, type = 'item', image = 'medicbag.png', unique = true, useable = true, shouldClose = true, combinable = nil, description = 'A doctors medical bag containing essential tools and supplies' },
     smelling_salts                      = {name = 'smelling_salts', label = 'Smelling Salts', weight = 50, type = 'item', image = 'smelling_salts.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'Ammonia compound for reviving unconscious patients' },
     stethoscope                         = {name = 'stethoscope', label = 'Stethoscope', weight = 150, type = 'item', image = 'stethoscope.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'Medical instrument for listening to heart and lung sounds' },
     thermometer                         = {name = 'thermometer', label = 'Thermometer', weight = 75, type = 'item', image = 'thermometer.png', unique = false, useable = true, shouldClose = true, combinable = nil, description = 'Mercury thermometer for measuring body temperature' },

@@ -3,9 +3,11 @@
 --=========================================================
 -- Handles duty management, medical supplies shop, pharmaceutical shop
 -- All ox_lib context menus
+-- Version: 0.4.0 Simplified (global bleeding, no body parts)
 --=========================================================
 
 local RSGCore = exports['rsg-core']:GetCoreObject()
+QCMed = QCMed or {}
 
 --=========================================================
 -- STATE VARIABLES
@@ -150,7 +152,7 @@ AddEventHandler('QC-AdvancedMedic:client:OpenDutyMenu', function()
     local sessionTimeMs = GetSessionDutyTime()
     local sessionTimeFormatted = FormatTime(math.floor(sessionTimeMs / 1000))
 
-    local dutyStatusText = onDuty and "✅ ON DUTY" or "❌ OFF DUTY"
+    local dutyStatusText = onDuty and "ON DUTY" or "OFF DUTY"
 
     lib.registerContext({
         id = "medic_duty_menu",
@@ -345,11 +347,12 @@ end)
 
 --=========================================================
 -- HEALTH STATUS (ACCESSIBLE TO ALL PLAYERS)
+-- Simplified: Shows global bleeding + bandage progress
 --=========================================================
 
 RegisterNetEvent('QC-AdvancedMedic:client:ShowHealthStatus')
 AddEventHandler('QC-AdvancedMedic:client:ShowHealthStatus', function()
-    local medicalState = exports['QC-AdvancedMedic']:GetMedicalState()
+    local medicalState = QCMed.GetMedicalState()
     local menuOptions = {}
 
     -- Header with overall health
@@ -364,10 +367,64 @@ AddEventHandler('QC-AdvancedMedic:client:ShowHealthStatus', function()
         readOnly = true
     })
 
+    -- Global Bleeding Status
+    if medicalState.bleedingLevel and medicalState.bleedingLevel > 0 then
+        table.insert(menuOptions, {
+            title = string.format("Bleeding: %.1f/10", medicalState.bleedingLevel),
+            icon = 'fa-solid fa-droplet',
+            description = medicalState.bleedingLevel >= 7 and "SEVERE - Seek immediate treatment!" or
+                          medicalState.bleedingLevel >= 4 and "Moderate bleeding - Apply bandage" or
+                          "Minor bleeding",
+            readOnly = true
+        })
+    else
+        table.insert(menuOptions, {
+            title = "Bleeding: None",
+            icon = 'fa-solid fa-droplet',
+            description = "No active bleeding",
+            readOnly = true
+        })
+    end
+
+    -- Bandage Progress
+    if medicalState.bandageChangesNeeded and medicalState.bandageChangesNeeded > 0 then
+        local progress = string.format("%d/%d bandage changes",
+            medicalState.bandageChangesApplied or 0, medicalState.bandageChangesNeeded)
+        local isHealed = (medicalState.bandageChangesApplied or 0) >= medicalState.bandageChangesNeeded
+
+        table.insert(menuOptions, {
+            title = isHealed and "Wound: Fully Treated" or "Wound: Needs Treatment",
+            icon = isHealed and 'fa-solid fa-check-circle' or 'fa-solid fa-band-aid',
+            description = progress .. (medicalState.lastWoundSource and (" | Cause: " .. medicalState.lastWoundSource) or ""),
+            readOnly = true
+        })
+    else
+        table.insert(menuOptions, {
+            title = "No Active Wounds",
+            icon = 'fa-solid fa-check-circle',
+            description = "No wounds requiring treatment",
+            readOnly = true
+        })
+    end
+
+    -- Active Bandage
+    if medicalState.activeBandage then
+        local bandage = medicalState.activeBandage
+        local remainingMs = (bandage.expirationTime or 0) - GetGameTimer()
+        local remainingMin = math.max(0, math.floor(remainingMs / 1000 / 60))
+        local remainingSec = math.max(0, math.floor((remainingMs / 1000) % 60))
+
+        table.insert(menuOptions, {
+            title = string.format("Active Bandage: %s", bandage.config and bandage.config.label or bandage.type or "Unknown"),
+            icon = 'fa-solid fa-bandage',
+            description = string.format("%d:%02d remaining | Healing active", remainingMin, remainingSec),
+            readOnly = true
+        })
+    end
+
     -- Global Infection Status
-    if medicalState.infection then
-        local infectionLevel = medicalState.infection.level or 0
-        local infectionStage = medicalState.infection.stage or 0
+    local infectionData = QCMed.GetGlobalInfection()
+    if infectionData and infectionData.level > 0 then
         local stageNames = {
             [0] = "None",
             [1] = "Mild",
@@ -377,9 +434,9 @@ AddEventHandler('QC-AdvancedMedic:client:ShowHealthStatus', function()
         }
 
         table.insert(menuOptions, {
-            title = "Infection: " .. (stageNames[infectionStage] or "Unknown"),
+            title = "Infection: " .. (stageNames[infectionData.stage] or "Unknown"),
             icon = 'fa-solid fa-virus',
-            description = string.format("Infection Level: %d%%", infectionLevel),
+            description = string.format("Infection Level: %d%%", infectionData.level),
             readOnly = true
         })
     else
@@ -391,40 +448,24 @@ AddEventHandler('QC-AdvancedMedic:client:ShowHealthStatus', function()
         })
     end
 
-    -- Active Wounds
-    if medicalState.wounds and next(medicalState.wounds) then
-        local woundCount = 0
-        for bodyPart, wound in pairs(medicalState.wounds) do
-            woundCount = woundCount + 1
-            local bodyPartLabel = Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label or bodyPart
-            local description = string.format("Pain: %.1f | Bleeding: %.1f | Health: %.0f%%",
-                wound.painLevel or 0,
-                wound.bleedingLevel or 0,
-                wound.healthPercentage or 100
-            )
-
-            table.insert(menuOptions, {
-                title = bodyPartLabel .. " - Wounded",
-                icon = 'fa-solid fa-band-aid',
-                description = description,
-                readOnly = true
-            })
-        end
-    else
+    -- Global Tourniquet Status
+    if LocalPlayer.state.tourniquet and LocalPlayer.state.tourniquet > GetGameTimer() then
+        local remainingTime = math.floor((LocalPlayer.state.tourniquet - GetGameTimer()) / 1000 / 60)
         table.insert(menuOptions, {
-            title = "No Active Wounds",
-            icon = 'fa-solid fa-check-circle',
-            description = "All body parts are healthy",
+            title = "Tourniquet Active",
+            icon = 'fa-solid fa-circle-notch',
+            description = string.format("Stops all bleeding | %d minutes remaining", remainingTime),
             readOnly = true
         })
     end
 
     -- Active Fractures
-    if medicalState.fractures and next(medicalState.fractures) then
-        for bodyPart, fracture in pairs(medicalState.fractures) do
-            local bodyPartLabel = Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label or bodyPart
+    local fractures = QCMed.GetPlayerFractures()
+    if fractures and next(fractures) then
+        for bodyPart, fracture in pairs(fractures) do
+            local bodyPartLabel = Config.BodyPartLabels[bodyPart] or bodyPart
             local description = string.format("%s | Severity: %d | Healing: %.0f%%",
-                fracture.fractureType or "Fracture",
+                fracture.type or "Fracture",
                 fracture.severity or 5,
                 fracture.healingProgress or 0
             )
@@ -436,32 +477,6 @@ AddEventHandler('QC-AdvancedMedic:client:ShowHealthStatus', function()
                 readOnly = true
             })
         end
-    end
-
-    -- Active Treatments
-    if medicalState.treatments and next(medicalState.treatments) then
-        for bodyPart, treatment in pairs(medicalState.treatments) do
-            local bodyPartLabel = Config.BodyParts[bodyPart] and Config.BodyParts[bodyPart].label or bodyPart
-            local treatmentLabel = treatment.treatmentType or "Treatment"
-
-            table.insert(menuOptions, {
-                title = bodyPartLabel .. " - " .. treatmentLabel,
-                icon = 'fa-solid fa-kit-medical',
-                description = "Active treatment applied",
-                readOnly = true
-            })
-        end
-    end
-
-    -- Global Tourniquet Status
-    if LocalPlayer.state.tourniquet and LocalPlayer.state.tourniquet > GetGameTimer() then
-        local remainingTime = math.floor((LocalPlayer.state.tourniquet - GetGameTimer()) / 1000 / 60)
-        table.insert(menuOptions, {
-            title = "Tourniquet Active",
-            icon = 'fa-solid fa-circle-notch',
-            description = string.format("Stops all bleeding | %d minutes remaining", remainingTime),
-            readOnly = true
-        })
     end
 
     lib.registerContext({

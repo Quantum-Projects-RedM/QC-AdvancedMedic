@@ -4,6 +4,8 @@
 -- Centralized notification patterns for consistent UI feedback
 --=========================================================
 
+QCMedServer = QCMedServer or {}
+
 --=========================================================
 -- NOTIFICATION HELPERS
 --=========================================================
@@ -55,33 +57,33 @@ end
 -- Notify about treatment application
 local function NotifyTreatmentApplied(source, treatmentType, bodyPart)
     local messages = {
-        bandage = string.format("Bandage applied to %s", bodyPart),
-        tourniquet = string.format("Tourniquet applied to %s", bodyPart),
-        medicine = "Medicine administered successfully",
-        injection = "Injection administered successfully"
+        bandage = string.format(locale('sv_notify_bandage_applied'), bodyPart),
+        tourniquet = string.format(locale('sv_notify_tourniquet_applied'), bodyPart),
+        medicine = locale('sv_notify_medicine_administered'),
+        injection = locale('sv_notify_injection_administered')
     }
 
-    NotifySuccess(source, locale('cl_menu_treatment_success'), messages[treatmentType] or "Treatment applied")
+    NotifySuccess(source, locale('cl_menu_treatment_success'), messages[treatmentType] or locale('sv_notify_treatment_applied_generic'))
 end
 
 -- Notify about validation errors
 local function NotifyValidationError(source, errorCode)
     local errorMessages = {
-        PLAYER_NOT_FOUND = "Player not found",
-        NO_CITIZENID = "Player has no citizen ID",
-        NOT_MEDIC = "You must be a medic to perform this action",
-        INVALID_WOUND_DATA = "Invalid wound data",
-        INVALID_BODY_PART = "Invalid body part",
-        INVALID_PAIN_LEVEL = "Invalid pain level",
-        INVALID_BLEEDING_LEVEL = "Invalid bleeding level",
-        INVALID_TREATMENT = "Invalid treatment type",
-        NO_ARTERY = "This body part doesn't have an artery for tourniquet",
-        TOO_FAR = "You are too far from the patient",
-        MISSING_ITEM = "You don't have the required item",
-        TREATMENT_COOLDOWN = "Please wait before applying another treatment"
+        PLAYER_NOT_FOUND = locale('sv_notify_player_not_found'),
+        NO_CITIZENID = locale('sv_notify_no_citizenid'),
+        NOT_MEDIC = locale('sv_notify_not_medic'),
+        INVALID_WOUND_DATA = locale('sv_notify_invalid_wound_data'),
+        INVALID_BODY_PART = locale('sv_notify_invalid_body_part'),
+        INVALID_PAIN_LEVEL = locale('sv_notify_invalid_pain_level'),
+        INVALID_BLEEDING_LEVEL = locale('sv_notify_invalid_bleeding_level'),
+        INVALID_TREATMENT = locale('sv_notify_invalid_treatment'),
+        NO_ARTERY = locale('sv_notify_no_artery'),
+        TOO_FAR = locale('sv_notify_too_far'),
+        MISSING_ITEM = locale('sv_notify_missing_item'),
+        TREATMENT_COOLDOWN = locale('sv_notify_treatment_cooldown')
     }
 
-    local message = errorMessages[errorCode] or "An error occurred"
+    local message = errorMessages[errorCode] or locale('sv_notify_unknown_error')
     NotifyError(source, locale('sv_error'), message)
 end
 
@@ -89,12 +91,12 @@ end
 -- EXPORTS
 --=========================================================
 
-exports('NotifyError', NotifyError)
-exports('NotifySuccess', NotifySuccess)
-exports('NotifyInfo', NotifyInfo)
-exports('NotifyWarning', NotifyWarning)
-exports('NotifyTreatmentApplied', NotifyTreatmentApplied)
-exports('NotifyValidationError', NotifyValidationError)
+QCMedServer.NotifyError = NotifyError
+QCMedServer.NotifySuccess = NotifySuccess
+QCMedServer.NotifyInfo = NotifyInfo
+QCMedServer.NotifyWarning = NotifyWarning
+QCMedServer.NotifyTreatmentApplied = NotifyTreatmentApplied
+QCMedServer.NotifyValidationError = NotifyValidationError
 
 if Config.WoundSystem and Config.WoundSystem.debugging and Config.WoundSystem.debugging.enabled then
     print("^2[SERVER NOTIFICATIONS] Notification helpers loaded^7")

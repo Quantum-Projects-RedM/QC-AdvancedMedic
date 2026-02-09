@@ -5,6 +5,7 @@
 --=========================================================
 
 local RSGCore = exports['rsg-core']:GetCoreObject()
+QCMedServer = QCMedServer or {}
 
 --=========================================================
 -- INFECTION DATA OPERATIONS
@@ -13,13 +14,13 @@ local RSGCore = exports['rsg-core']:GetCoreObject()
 -- Handle infection update with validation
 local function HandleInfectionUpdate(source, infectionData)
     -- Validate player
-    local Player, err = exports['QC-AdvancedMedic']:ValidatePlayer(source)
+    local Player, err = QCMedServer.ValidatePlayer(source)
     if not Player then
         return false, err
     end
 
     -- Validate infection data structure
-    local valid, validErr = exports['QC-AdvancedMedic']:ValidateInfectionData(infectionData)
+    local valid, validErr = QCMedServer.ValidateInfectionData(infectionData)
     if not valid then
         if Config.WoundSystem.debugging.enabled then
             print(string.format("^1[INFECTIONS] Invalid infection data from player %d: %s^7", source, validErr))
@@ -29,7 +30,7 @@ local function HandleInfectionUpdate(source, infectionData)
 
     -- Save to database
     local success = pcall(function()
-        exports['QC-AdvancedMedic']:SaveInfectionData(
+        QCMedServer.SaveInfectionData(
             Player.PlayerData.citizenid,
             infectionData
         )
@@ -47,7 +48,7 @@ end
 
 -- Handle infection cure
 local function HandleInfectionCure(source, bodyPart, cureType)
-    local Player, err = exports['QC-AdvancedMedic']:ValidatePlayer(source)
+    local Player, err = QCMedServer.ValidatePlayer(source)
     if not Player then
         return false, err
     end
@@ -63,7 +64,7 @@ local function HandleInfectionCure(source, bodyPart, cureType)
         return false, "INVALID_CURE_TYPE"
     end
 
-    if not exports['QC-AdvancedMedic']:HasItem(source, cureConfig.itemName) then
+    if not QCMedServer.HasItem(source, cureConfig.itemName) then
         return false, "MISSING_ITEM"
     end
 
@@ -77,7 +78,7 @@ local function HandleInfectionCure(source, bodyPart, cureType)
 
     -- Log event
     pcall(function()
-        exports['QC-AdvancedMedic']:LogMedicalEvent(
+        QCMedServer.LogMedicalEvent(
             Player.PlayerData.citizenid,
             'infection_cured',
             bodyPart,
@@ -87,7 +88,7 @@ local function HandleInfectionCure(source, bodyPart, cureType)
         )
     end)
 
-    exports['QC-AdvancedMedic']:NotifySuccess(source,
+    QCMedServer.NotifySuccess(source,
         locale('cl_menu_infection_cured'),
         string.format("Infection on %s has been cured", bodyPart)
     )
@@ -103,8 +104,8 @@ end
 -- EXPORTS
 --=========================================================
 
-exports('HandleInfectionUpdate', HandleInfectionUpdate)
-exports('HandleInfectionCure', HandleInfectionCure)
+QCMedServer.HandleInfectionUpdate = HandleInfectionUpdate
+QCMedServer.HandleInfectionCure = HandleInfectionCure
 
 if Config.WoundSystem and Config.WoundSystem.debugging and Config.WoundSystem.debugging.enabled then
     print("^2[SERVER INFECTIONS] Infection system loaded^7")

@@ -6,6 +6,7 @@
 --=========================================================
 
 local RSGCore = exports['rsg-core']:GetCoreObject()
+QCMedServer = QCMedServer or {}
 
 --=========================================================
 -- JOB VALIDATION
@@ -222,20 +223,21 @@ local Logger = {
 -- EXPORTS
 --=========================================================
 
--- Validation helpers
-exports('IsMedicJob', IsMedicJob)
-exports('ValidatePlayer', ValidatePlayer)
-exports('ValidateMedic', ValidateMedic)
-exports('ValidateWoundData', ValidateWoundData)
-exports('ValidateTreatment', ValidateTreatment)
-exports('ValidateBodyPartForTreatment', ValidateBodyPartForTreatment)
-exports('ValidateInfectionData', ValidateInfectionData)
-exports('CheckDistance', CheckDistance)
-exports('HasItem', HasItem)
+-- Global module table (internal zero-overhead access)
+QCMedServer.IsMedicJob = IsMedicJob
+QCMedServer.ValidatePlayer = ValidatePlayer
+QCMedServer.ValidateMedic = ValidateMedic
+QCMedServer.ValidateWoundData = ValidateWoundData
+QCMedServer.ValidateTreatment = ValidateTreatment
+QCMedServer.ValidateBodyPartForTreatment = ValidateBodyPartForTreatment
+QCMedServer.ValidateInfectionData = ValidateInfectionData
+QCMedServer.CheckDistance = CheckDistance
+QCMedServer.HasItem = HasItem
+QCMedServer.GetLogger = function() return Logger end
+QCMedServer.Log = Logger
 
--- Logger
-exports('GetLogger', function() return Logger end)
-exports('Log', Logger)
+-- Keep IsMedicJob as export for external resource access
+exports('IsMedicJob', IsMedicJob)
 
 --=========================================================
 -- INITIALIZATION

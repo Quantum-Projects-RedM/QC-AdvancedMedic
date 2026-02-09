@@ -44,29 +44,18 @@ end)
 RegisterServerEvent('QC-AdvancedMedic:server:finishcrafting', function(data)
     local src = source
     local Player = RSGCore.Functions.GetPlayer(src)
-    if not Player then 
-        print("[DEBUG] Player not found on finish crafting.") -- Debug
-        return 
-    end
-    print("[DEBUG] Finalizing crafting for player: " .. Player.PlayerData.citizenid) -- Debug
-    print("[DEBUG] Crafting data received: " .. json.encode(data))
+    if not Player then return end
     for _, ingredient in pairs(data.ingredients) do
         local removed = Player.Functions.RemoveItem(ingredient.item, ingredient.amount)
         if removed then
-            print("[DEBUG] Removed " .. ingredient.amount .. " of " .. ingredient.item)
             TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[ingredient.item], 'remove', ingredient.amount)
         else
-            print("[DEBUG] Failed to remove item: " .. ingredient.item .. " - Player may not have enough.")
             return
         end
     end
     local added = Player.Functions.AddItem(data.receive, data.giveamount)
     if added then
-        print("[DEBUG] Successfully added crafted item: " .. data.receive .. " x" .. data.giveamount)
         TriggerClientEvent('rsg-inventory:client:ItemBox', src, RSGCore.Shared.Items[data.receive], 'add', data.giveamount)
-    else
-        print("[DEBUG] Failed to add crafted item: " .. data.receive)
-        print("[DEBUG] Check if the item exists in RSGCore.Shared.Items or inventory configuration.")
     end
 end)
 

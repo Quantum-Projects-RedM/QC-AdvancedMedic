@@ -3,7 +3,10 @@
 --=========================================================
 -- Utility functions for medical system
 -- Replaces client_shared.lua with proper export pattern
+-- Version: 0.4.0 Simplified (global bleeding, no body parts)
 --=========================================================
+
+QCMed = QCMed or {}
 
 local RSGCore = exports['rsg-core']:GetCoreObject()
 
@@ -33,38 +36,17 @@ local function IsPlayerMedic()
 end
 
 --=========================================================
--- BODY PART UTILITIES
+-- BODY PART UTILITIES (For fracture system only)
 --=========================================================
 
--- Get body part label for display
+-- Get body part label for display (uses simplified labels table)
 local function GetBodyPartLabel(bodyPart)
     if not bodyPart then return "Unknown" end
-
-    local bodyPartConfig = Config.BodyParts[bodyPart]
-    if bodyPartConfig and bodyPartConfig.label then
-        return bodyPartConfig.label
-    end
-
-    return bodyPart
-end
-
--- Get all body parts
-local function GetAllBodyParts()
-    local bodyParts = {}
-
-    for bodyPart, config in pairs(Config.BodyParts or {}) do
-        table.insert(bodyParts, {
-            id = bodyPart,
-            label = config.label or bodyPart,
-            maxHealth = config.maxHealth or 100
-        })
-    end
-
-    return bodyParts
+    return Config.BodyPartLabels[bodyPart] or bodyPart
 end
 
 --=========================================================
--- HEALTH CALCULATIONS
+-- HEALTH CALCULATIONS (Simplified - global bleeding)
 --=========================================================
 
 -- Calculate bleeding damage per tick
@@ -75,114 +57,89 @@ local function CalculateBleedingDamage(bleedingLevel)
     return tonumber(bleedingLevel) * bleedTickDamage
 end
 
--- Calculate overall player health status
+-- Calculate overall player health status (simplified)
 local function CalculateHealthStatus()
-    local wounds = exports['QC-AdvancedMedic']:GetMedicalState('wounds')
-    if not wounds then
+    local medicalState = QCMed.GetMedicalState()
+    if not medicalState then
         return {
-            totalPain = 0,
-            totalBleeding = 0,
-            woundCount = 0,
-            criticalWounds = 0,
+            bleedingLevel = 0,
+            bandageChangesNeeded = 0,
+            bandageChangesApplied = 0,
             status = "healthy"
         }
     end
 
-    local totalPain = 0
-    local totalBleeding = 0
-    local woundCount = 0
-    local criticalWounds = 0
-
-    for bodyPart, wound in pairs(wounds) do
-        if not wound.isScar then
-            woundCount = woundCount + 1
-            totalPain = totalPain + (wound.painLevel or 0)
-            totalBleeding = totalBleeding + (wound.bleedingLevel or 0)
-
-            if wound.severity and wound.severity >= 3 then
-                criticalWounds = criticalWounds + 1
-            end
-        end
-    end
+    local bleedingLevel = medicalState.bleedingLevel or 0
+    local bandageChangesNeeded = medicalState.bandageChangesNeeded or 0
 
     local status = "healthy"
-    if woundCount == 0 then
+    if bleedingLevel <= 0 and bandageChangesNeeded <= 0 then
         status = "healthy"
-    elseif criticalWounds > 0 or totalBleeding > 15 then
+    elseif bleedingLevel >= 7 then
         status = "critical"
-    elseif woundCount > 2 or totalBleeding > 8 then
+    elseif bleedingLevel >= 3 then
         status = "injured"
     else
         status = "minor_injuries"
     end
 
     return {
-        totalPain = totalPain,
-        totalBleeding = totalBleeding,
-        woundCount = woundCount,
-        criticalWounds = criticalWounds,
+        bleedingLevel = bleedingLevel,
+        bandageChangesNeeded = bandageChangesNeeded,
+        bandageChangesApplied = medicalState.bandageChangesApplied or 0,
         status = status
     }
 end
 
 --=========================================================
--- TREATMENT UTILITIES
+-- TREATMENT UTILITIES (Simplified)
 --=========================================================
 
--- Check if treatment is valid for body part
-local function IsValidTreatment(bodyPart, treatmentType)
-    if not bodyPart or not treatmentType then return false end
+-- Check if treatment is valid (global - no body parts)
+local function IsValidTreatment(treatmentType)
+    if not treatmentType then return false end
 
-    local wounds = exports['QC-AdvancedMedic']:GetMedicalState('wounds')
-    local wound = wounds and wounds[bodyPart]
-
-    if not wound or wound.isScar then
-        return false, "No active wound on this body part"
-    end
+    local isWounded = QCMed.IsWounded()
 
     if treatmentType == "bandage" then
-        if not wound.bleedingLevel or wound.bleedingLevel <= 0 then
-            return false, "No bleeding to bandage"
+        if not isWounded then
+            return false, "No active wounds to bandage"
         end
 
-        local treatments = exports['QC-AdvancedMedic']:GetMedicalState('treatments')
-        if treatments[bodyPart] and treatments[bodyPart].treatmentType == "bandage" then
+        local medicalState = QCMed.GetMedicalState()
+        if medicalState.activeBandage then
             return false, "Bandage already applied"
         end
     elseif treatmentType == "tourniquet" then
-        if not wound.bleedingLevel or wound.bleedingLevel <= 0 then
+        local medicalState = QCMed.GetMedicalState()
+        if not medicalState.bleedingLevel or medicalState.bleedingLevel <= 0 then
             return false, "No bleeding requiring tourniquet"
         end
 
-        local treatments = exports['QC-AdvancedMedic']:GetMedicalState('treatments')
-        if treatments[bodyPart] and treatments[bodyPart].treatmentType == "tourniquet" then
-            return false, "Tourniquet already applied"
+        if LocalPlayer.state.tourniquet and LocalPlayer.state.tourniquet > GetGameTimer() then
+            return false, "Tourniquet already active"
         end
     end
 
     return true
 end
 
--- Get treatment status for body part
-local function GetTreatmentStatus(bodyPart)
-    if not bodyPart then return nil end
-
-    local treatments = exports['QC-AdvancedMedic']:GetMedicalState('treatments')
-    if not treatments or not treatments[bodyPart] then
+-- Get active bandage status
+local function GetActiveBandageStatus()
+    local medicalState = QCMed.GetMedicalState()
+    if not medicalState or not medicalState.activeBandage then
         return nil
     end
 
-    local treatment = treatments[bodyPart]
+    local bandage = medicalState.activeBandage
     local currentTime = GetGameTimer()
 
     return {
-        type = treatment.treatmentType,
-        itemType = treatment.itemType,
-        appliedTime = treatment.appliedTime,
-        expirationTime = treatment.expirationTime,
-        timeRemaining = treatment.expirationTime and (treatment.expirationTime - currentTime) / 1000 or 0,
-        isActive = treatment.isActive,
-        effectiveness = treatment.effectiveness
+        type = bandage.type,
+        appliedTime = bandage.appliedTime,
+        expirationTime = bandage.expirationTime,
+        timeRemaining = bandage.expirationTime and (bandage.expirationTime - currentTime) / 1000 or 0,
+        label = bandage.config and bandage.config.label or bandage.type,
     }
 end
 
@@ -221,14 +178,11 @@ local Logger = {
 }
 
 --=========================================================
--- STATE MANAGEMENT (pattern - LocalPlayer.state)
+-- STATE MANAGEMENT (Simplified)
 --=========================================================
 
 local StateKeys = {
-    WOUNDS = 'medical_wounds',
-    TREATMENTS = 'medical_treatments',
     BLEEDING = 'medical_bleeding',
-    INFECTIONS = 'medical_infections',
     IS_INJURED = 'medical_is_injured',
     HEALTH_STATUS = 'medical_health_status'
 }
@@ -241,14 +195,6 @@ local StateManager = {
 
     Get = function(key)
         return LocalPlayer.state[key]
-    end,
-
-    SetWounds = function(wounds, replicate)
-        return LocalPlayer.state:set(StateKeys.WOUNDS, wounds, replicate or false)
-    end,
-
-    GetWounds = function()
-        return LocalPlayer.state[StateKeys.WOUNDS] or {}
     end,
 
     SetBleedingLevel = function(level, replicate)
@@ -270,27 +216,16 @@ local StateManager = {
     SaveAllState = function(medicalData)
         if not medicalData then return false end
 
-        StateManager.SetWounds(medicalData.wounds or {}, false)
+        local bleedingLevel = medicalData.bleedingLevel or 0
+        StateManager.SetBleedingLevel(bleedingLevel, true)
 
-        local totalBleeding = 0
-        local woundCount = 0
-        for _, wound in pairs(medicalData.wounds or {}) do
-            if not wound.isScar then
-                woundCount = woundCount + 1
-                totalBleeding = totalBleeding + (wound.bleedingLevel or 0)
-            end
-        end
-
-        StateManager.SetBleedingLevel(totalBleeding, true)
-
-        local status = woundCount == 0 and 'healthy' or (totalBleeding > 15 and 'critical' or 'injured')
+        local status = bleedingLevel <= 0 and 'healthy' or (bleedingLevel > 7 and 'critical' or 'injured')
         StateManager.SetHealthStatus(status, true)
 
         return true
     end,
 
     ClearAllState = function()
-        StateManager.SetWounds({}, false)
         StateManager.SetBleedingLevel(0, true)
         StateManager.SetHealthStatus('healthy', true)
         return true
@@ -302,26 +237,22 @@ local StateManager = {
 --=========================================================
 
 -- Medical helpers
-exports('IsMedicJob', IsMedicJob)
-exports('IsPlayerMedic', IsPlayerMedic)
-exports('GetBodyPartLabel', GetBodyPartLabel)
-exports('GetAllBodyParts', GetAllBodyParts)
-exports('CalculateBleedingDamage', CalculateBleedingDamage)
-exports('CalculateHealthStatus', CalculateHealthStatus)
-exports('IsValidTreatment', IsValidTreatment)
-exports('GetTreatmentStatus', GetTreatmentStatus)
+QCMed.IsMedicJob = IsMedicJob
+exports('IsMedicJob', IsMedicJob) -- Keep export for external resource access
+QCMed.IsPlayerMedic = IsPlayerMedic
+QCMed.GetBodyPartLabel = GetBodyPartLabel
+QCMed.CalculateBleedingDamage = CalculateBleedingDamage
+QCMed.CalculateHealthStatus = CalculateHealthStatus
+QCMed.IsValidTreatment = IsValidTreatment
+QCMed.GetActiveBandageStatus = GetActiveBandageStatus
 
 -- Logger
-exports('GetLogger', function() return Logger end)
-exports('Log', Logger)
+QCMed.GetLogger = function() return Logger end
+QCMed.Log = Logger
 
 -- State manager
-exports('GetStateManager', function() return StateManager end)
-exports('StateKeys', function() return StateKeys end)
-
--- Backwards compatibility
-IsMedicJob = IsMedicJob
-GetBodyPartLabel = GetBodyPartLabel
+QCMed.GetStateManager = function() return StateManager end
+QCMed.StateKeys = function() return StateKeys end
 
 --=========================================================
 -- INITIALIZATION

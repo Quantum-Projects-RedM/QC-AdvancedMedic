@@ -5,6 +5,7 @@
 --=========================================================
 
 local RSGCore = exports['rsg-core']:GetCoreObject()
+QCMedServer = QCMedServer or {}
 
 --=========================================================
 -- WOUND DATA OPERATIONS
@@ -13,13 +14,13 @@ local RSGCore = exports['rsg-core']:GetCoreObject()
 -- Handle wound update with validation
 local function HandleWoundUpdate(source, woundData)
     -- Validate player
-    local Player, err = exports['QC-AdvancedMedic']:ValidatePlayer(source)
+    local Player, err = QCMedServer.ValidatePlayer(source)
     if not Player then
         return false, err
     end
 
     -- Validate wound data structure
-    local valid, validErr = exports['QC-AdvancedMedic']:ValidateWoundData(woundData)
+    local valid, validErr = QCMedServer.ValidateWoundData(woundData)
     if not valid then
         if Config.WoundSystem.debugging.enabled then
             print(string.format("^1[WOUNDS] Invalid wound data from player %d: %s^7", source, validErr))
@@ -29,7 +30,7 @@ local function HandleWoundUpdate(source, woundData)
 
     -- Save to database
     local success = pcall(function()
-        exports['QC-AdvancedMedic']:SaveWoundData(Player.PlayerData.citizenid, woundData)
+        QCMedServer.SaveWoundData(Player.PlayerData.citizenid, woundData)
 
         -- Broadcast to nearby players for medic inspection
         BroadcastWoundUpdate(source, woundData)
@@ -65,7 +66,7 @@ end
 
 -- Handle wound removal
 local function HandleWoundRemoval(source, bodyPart)
-    local Player, err = exports['QC-AdvancedMedic']:ValidatePlayer(source)
+    local Player, err = QCMedServer.ValidatePlayer(source)
     if not Player then
         return false, err
     end
@@ -77,7 +78,7 @@ local function HandleWoundRemoval(source, bodyPart)
 
     -- Remove from database
     local success = pcall(function()
-        exports['QC-AdvancedMedic']:RemoveWound(Player.PlayerData.citizenid, bodyPart)
+        QCMedServer.RemoveWound(Player.PlayerData.citizenid, bodyPart)
     end)
 
     return success, success and nil or "DATABASE_ERROR"
@@ -85,13 +86,13 @@ end
 
 -- Save scar data
 local function HandleScarSave(source, scarData)
-    local Player, err = exports['QC-AdvancedMedic']:ValidatePlayer(source)
+    local Player, err = QCMedServer.ValidatePlayer(source)
     if not Player then
         return false, err
     end
 
     local success = pcall(function()
-        exports['QC-AdvancedMedic']:SaveScarData(Player.PlayerData.citizenid, scarData)
+        QCMedServer.SaveScarData(Player.PlayerData.citizenid, scarData)
     end)
 
     return success, success and nil or "DATABASE_ERROR"
@@ -101,10 +102,10 @@ end
 -- EXPORTS
 --=========================================================
 
-exports('HandleWoundUpdate', HandleWoundUpdate)
-exports('HandleWoundRemoval', HandleWoundRemoval)
-exports('HandleScarSave', HandleScarSave)
-exports('BroadcastWoundUpdate', BroadcastWoundUpdate)
+QCMedServer.HandleWoundUpdate = HandleWoundUpdate
+QCMedServer.HandleWoundRemoval = HandleWoundRemoval
+QCMedServer.HandleScarSave = HandleScarSave
+QCMedServer.BroadcastWoundUpdate = BroadcastWoundUpdate
 
 if Config.WoundSystem and Config.WoundSystem.debugging and Config.WoundSystem.debugging.enabled then
     print("^2[SERVER WOUNDS] Wound system loaded^7")

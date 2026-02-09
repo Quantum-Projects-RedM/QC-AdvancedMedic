@@ -6,6 +6,7 @@
 --=========================================================
 
 local RSGCore = exports['rsg-core']:GetCoreObject()
+QCMed = QCMed or {}
 
 --=========================================================
 -- HELPER FUNCTIONS
@@ -40,7 +41,7 @@ local function IsPlayerMedic()
     local Player = RSGCore.Functions.GetPlayerData()
     if not Player or not Player.job then return false end
 
-    return exports['QC-AdvancedMedic']:IsMedicJob(Player.job.name)
+    return QCMed.IsMedicJob(Player.job.name)
 end
 
 --=========================================================
@@ -277,8 +278,8 @@ end)
 -- EXPORTS
 --=========================================================
 
-exports('GetClosestPlayer', GetClosestPlayer)
-exports('IsPlayerMedic', IsPlayerMedic)
+QCMed.GetClosestPlayer = GetClosestPlayer
+QCMed.IsPlayerMedic = IsPlayerMedic
 
 if Config.WoundSystem and Config.WoundSystem.debugging and Config.WoundSystem.debugging.enabled then
     print("^2[MEDIC JOB] Job mechanics loaded^7")

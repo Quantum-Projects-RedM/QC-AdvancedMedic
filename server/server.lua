@@ -1,21 +1,10 @@
 local RSGCore = exports['rsg-core']:GetCoreObject()
+QCMedServer = QCMedServer or {}
 local playerInjury = {}
 
------------------------
--- Helper Functions
------------------------
--- Check if player has any medic job
-local function IsMedicJob(jobName)
-    if not jobName then return false end
-
-    -- Check against all jobs in MedicJobLocations
-    for _, location in pairs(Config.MedicJobLocations) do
-        if location.job == jobName then
-            return true
-        end
-    end
-
-    return false
+-- IsMedicJob is defined on QCMedServer by server/helpers/validators.lua
+local IsMedicJob = function(jobName)
+    return QCMedServer.IsMedicJob(jobName)
 end
 
 function GetCharsInjuries(source)
@@ -278,16 +267,6 @@ local function Calculate10MinutePay(hourlyRate)
     return math.floor((hourlyRate * 10) / 60) -- 10 minutes / 60 minutes = 16.67%
 end
 
--- Helper function to check if job is a medic job
-local function IsMedicJob(jobName)
-    for _, location in pairs(Config.MedicJobLocations) do
-        if location.job == jobName then
-            return true
-        end
-    end
-    return false
-end
-
 -- Start duty pay timer (every 10 minutes)
 RegisterNetEvent('QC-AdvancedMedic:server:StartDutyPayTimer')
 AddEventHandler('QC-AdvancedMedic:server:StartDutyPayTimer', function()
@@ -392,13 +371,14 @@ AddEventHandler('QC-AdvancedMedic:server:ProcessDutyPay', function(sessionTimeSe
     end
 end)
 
--- Clean up timer when player disconnects
+-- Clean up timer and injury data when player disconnects
 AddEventHandler('playerDropped', function()
     local src = source
     if dutyTimers[src] then
         ClearTimeout(dutyTimers[src])
         dutyTimers[src] = nil
     end
+    playerInjury[src] = nil
 end)
 
 --=========================================================

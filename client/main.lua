@@ -3,33 +3,11 @@
 --=========================================================
 -- Initialization and lifecycle management
 -- Handles dependency loading, character spawn/logout events
+-- Version: 0.4.0 Simplified (global bleeding, no body parts)
 --=========================================================
 
 local RSGCore = exports['rsg-core']:GetCoreObject()
-
--- Core systems (loaded after dependencies)
-local MEDICAL = nil
-local HELPERS = nil
-
---=========================================================
--- DEPENDENCY LOADING
---=========================================================
-
--- Initialize medical system exports (direct initialization - no event needed)
-MEDICAL = {
-    GetState = function(key) return exports['QC-AdvancedMedic']:GetMedicalState(key) end,
-    ApplyBandage = function(...) return exports['QC-AdvancedMedic']:ApplyBandage(...) end,
-    ApplyTourniquet = function(...) return exports['QC-AdvancedMedic']:ApplyTourniquet(...) end,
-    CreateWound = function(...) return exports['QC-AdvancedMedic']:CreateWound(...) end,
-    ProcessHealing = function() return exports['QC-AdvancedMedic']:ProcessHealing() end,
-}
-
--- Load helper utilities
-HELPERS = {
-    IsMedicJob = function(...) return exports['QC-AdvancedMedic']:IsMedicJob(...) end,
-    GetBodyPartLabel = function(...) return exports['QC-AdvancedMedic']:GetBodyPartLabel(...) end,
-    CalculateHealthStatus = function() return exports['QC-AdvancedMedic']:CalculateHealthStatus() end,
-}
+QCMed = QCMed or {}
 
 --=========================================================
 -- CHARACTER LIFECYCLE
@@ -45,35 +23,8 @@ AddEventHandler("RSGCore:Client:OnPlayerLoaded", function()
     -- Request medical data from server
     TriggerServerEvent('QC-AdvancedMedic:server:LoadMedicalData')
 
-    -- Start healing process thread
-    CreateThread(function()
-        while LocalPlayer.state.loggedIn do
-            Wait(60000) -- Every minute
-            if MEDICAL and MEDICAL.ProcessHealing then
-                MEDICAL.ProcessHealing()
-            end
-        end
-    end)
-
-    -- Start treatment expiration checker (timestamp pattern)
-    CreateThread(function()
-        while LocalPlayer.state.loggedIn do
-            local currentTime = GetGameTimer()
-
-            -- Check tourniquet expiration
-            local tourniquets = LocalPlayer.state.tourniquets
-            if tourniquets then
-                for bodyPart, expirationTime in pairs(tourniquets) do
-                    if currentTime >= expirationTime then
-                        exports['QC-AdvancedMedic']:RemoveTourniquet(bodyPart, "expired")
-                    end
-                end
-                Wait(1000) -- Active check every 1 second
-            else
-                Wait(5000) -- Idle check every 5 seconds
-            end
-        end
-    end)
+    -- Tourniquet expiration is handled by core_medical.lua's background thread
+    -- using the global LocalPlayer.state.tourniquet (singular) timestamp pattern
 
     if Config.WoundSystem.debugging.enabled then
         print("^2[MAIN] Medical threads started^7")
@@ -87,69 +38,53 @@ AddEventHandler("RSGCore:Client:OnPlayerUnload", function()
         print("^3[MAIN] Player unloading - saving medical data^7")
     end
 
-    if MEDICAL then
-        local state = MEDICAL.GetState()
-        TriggerServerEvent('QC-AdvancedMedic:server:SaveMedicalDataOnDisconnect',
-            state.wounds or {},
-            state.treatments or {},
-            state.infections or {}
-        )
+    local state = QCMed.GetMedicalState and QCMed.GetMedicalState()
+    if state then
+        TriggerServerEvent('QC-AdvancedMedic:server:SaveMedicalDataOnDisconnect', state)
     end
 end)
 
---=========================================================
--- CHARACTER DEATH/RESPAWN HANDLING
---=========================================================
-
--- Handle player death
-RegisterNetEvent('QC-AdvancedMedic:client:playerDied')
-AddEventHandler('QC-AdvancedMedic:client:playerDied', function()
-    if Config.WoundSystem.debugging.enabled then
-        print("^1[MAIN] Player died^7")
-    end
-
-    -- Death handling logic (preserve existing from client.lua)
-    -- Will be migrated from existing client.lua in next iteration
-end)
-
--- Handle player respawn/revive
-RegisterNetEvent('QC-AdvancedMedic:client:playerRevived')
-AddEventHandler('QC-AdvancedMedic:client:playerRevived', function()
-    if Config.WoundSystem.debugging.enabled then
-        print("^2[MAIN] Player revived^7")
-    end
-
-    -- Revive handling logic
-    -- Will be migrated from existing client.lua in next iteration
-end)
+-- Death/respawn handling is fully managed by client/medical/death_system.lua
 
 --=========================================================
 -- ADMIN COMMANDS
 --=========================================================
 
--- Admin revive command (clear all medical data)
+-- Admin revive command (clear all medical data + revive from death)
 RegisterNetEvent('QC-AdvancedMedic:client:adminRevive')
 AddEventHandler('QC-AdvancedMedic:client:adminRevive', function()
     local playerPed = PlayerPedId()
+    local coords = GetEntityCoords(playerPed)
+    local heading = GetEntityHeading(playerPed)
+
+    -- Actually revive the player (required native to exit death state)
+    NetworkResurrectLocalPlayer(coords.x, coords.y, coords.z, heading, true, false)
 
     -- Restore health
     SetEntityHealth(playerPed, Config.MaxHealth or 400)
+    ClearPedTasksImmediately(playerPed)
 
-    -- Clear wounds, treatments, infections
-    if MEDICAL then
-        local state = MEDICAL.GetState()
-        state.wounds = {}
-        state.treatments = {}
-        state.healingTimers = {}
-        state.infectionData = {}
-
-        -- Update backwards compatibility globals
-        PlayerWounds = {}
-        ActiveTreatments = {}
+    -- Clear all medical state (global bleeding + bandage cycles)
+    if QCMed.ResetMedicalState then
+        QCMed.ResetMedicalState()
     end
 
-    -- Clear tourniquet state
-    LocalPlayer.state:set('tourniquets', {}, false)
+    -- Clear tourniquet state (global singular timestamp pattern)
+    LocalPlayer.state:set('tourniquet', nil, false)
+
+    -- Clear infections
+    QCMed.ClearAllInfections()
+
+    -- Clear movement overrides
+    SetPedMoveRateOverride(playerPed, 1.0)
+    ClearTimecycleModifier()
+
+    -- Reset death state (death cam, NUI, death timer)
+    TriggerEvent('QC-AdvancedMedic:client:ResetDeathState')
+
+    -- Set server-side death metadata
+    TriggerServerEvent('RSGCore:Server:SetMetaData', 'isdead', false)
+    LocalPlayer.state:set('isDead', false, true)
 
     lib.notify({
         title = locale('sv_medical_system'),
@@ -159,25 +94,36 @@ AddEventHandler('QC-AdvancedMedic:client:adminRevive', function()
     })
 
     if Config.WoundSystem.debugging.enabled then
-        print("^2[MAIN] Admin revive complete - all medical data cleared^7")
+        print("^2[MAIN] Admin revive complete - all medical data cleared, death state reset^7")
+    end
+end)
+
+-- Admin kill command
+RegisterNetEvent('QC-AdvancedMedic:client:KillPlayer')
+AddEventHandler('QC-AdvancedMedic:client:KillPlayer', function()
+    local playerPed = PlayerPedId()
+
+    -- Kill the player
+    SetEntityHealth(playerPed, 0)
+
+    -- Set death metadata
+    TriggerServerEvent('RSGCore:Server:SetMetaData', 'isdead', true)
+    LocalPlayer.state:set('isDead', true, true)
+
+    -- Trigger death system (death cam, death timer, NUI)
+    TriggerEvent('QC-AdvancedMedic:client:playerDied')
+
+    if Config.WoundSystem.debugging.enabled then
+        print("^1[MAIN] Player killed by admin command^7")
     end
 end)
 
 -- Clear all wounds (admin command)
 RegisterNetEvent('QC-AdvancedMedic:client:ClearAllWounds')
 AddEventHandler('QC-AdvancedMedic:client:ClearAllWounds', function()
-    if MEDICAL then
-        local state = MEDICAL.GetState()
-        state.wounds = {}
-        state.treatments = {}
-        state.healingTimers = {}
-
-        -- Update backwards compatibility globals
-        PlayerWounds = {}
-        ActiveTreatments = {}
+    if QCMed.ResetMedicalState then
+        QCMed.ResetMedicalState()
     end
-
-    TriggerServerEvent('QC-AdvancedMedic:server:UpdateWoundData', {})
 
     lib.notify({
         title = locale('sv_medical_system'),
@@ -198,5 +144,5 @@ end)
 if Config.WoundSystem.debugging.enabled then
     print("^2[QC-ADVANCEDMEDIC] Main client entry point loaded^7")
     print("^2[QC-ADVANCEDMEDIC] Medical systems initialized^7")
-    print("^2[QC-ADVANCEDMEDIC] Version: 0.3.1 Refactored^7")
+    print("^2[QC-ADVANCEDMEDIC] Version: 0.4.0 Simplified^7")
 end

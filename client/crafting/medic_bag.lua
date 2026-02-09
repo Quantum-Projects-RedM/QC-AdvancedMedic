@@ -85,11 +85,24 @@ end)
 CreateThread(function()
     for _, v in ipairs(Config.MedicBagCrafting) do
         local IngredientsMetadata = {}
-        local setheader = RSGCore.Shared.Items[tostring(v.receive)].label
-        local itemimg = "nui://"..Config.Image..RSGCore.Shared.Items[tostring(v.receive)].image
-        for i, ingredient in ipairs(v.ingredients) do
-            table.insert(IngredientsMetadata, { label = RSGCore.Shared.Items[ingredient.item].label, value = ingredient.amount })
+        local receiveItem = RSGCore.Shared.Items[tostring(v.receive)]
+        if not receiveItem then
+            print('^1[QC-AdvancedMedic] Item "' .. tostring(v.receive) .. '" not found in RSGCore.Shared.Items - you didn\'t install the items.lua for medic^7')
+            goto continue
         end
+        local setheader = receiveItem.label
+        local itemimg = "nui://"..Config.ImagePath..receiveItem.image
+        local skipRecipe = false
+        for i, ingredient in ipairs(v.ingredients) do
+            local ingredientItem = RSGCore.Shared.Items[ingredient.item]
+            if not ingredientItem then
+                print('^1[QC-AdvancedMedic] Ingredient "' .. tostring(ingredient.item) .. '" not found in RSGCore.Shared.Items - you didn\'t install the items.lua for medic^7')
+                skipRecipe = true
+                break
+            end
+            table.insert(IngredientsMetadata, { label = ingredientItem.label, value = ingredient.amount })
+        end
+        if skipRecipe then goto continue end
         local option = {
             title = setheader,
             icon = itemimg,
@@ -116,6 +129,7 @@ CreateThread(function()
         else
             table.insert(MedicMenus[v.category].options, option)
         end
+        ::continue::
     end
 end)
 
@@ -202,7 +216,7 @@ RegisterNetEvent('QC-AdvancedMedic:client:mediccraft', function(data)
                     move = true,
                     mouse = true,
                 },
-                label = locale('cl_bag_medicbag_craft_label').. RSGCore.Shared.Items[data.receive].label,
+                label = locale('cl_bag_medicbag_craft_label').. (RSGCore.Shared.Items[data.receive] and RSGCore.Shared.Items[data.receive].label or data.receive),
             })
             TriggerServerEvent('QC-AdvancedMedic:server:finishcrafting', data)
             ClearPedTasks(ped)
