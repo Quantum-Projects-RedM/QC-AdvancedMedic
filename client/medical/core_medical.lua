@@ -50,6 +50,16 @@ local function IsFullyHealed()
         and MedicalState.bandageChangesNeeded > 0
 end
 
+-- Sync medical state to state bag so server can read live data (for medic inspection)
+local function SyncMedicalStateBag()
+    LocalPlayer.state:set('medicalData', {
+        bleedingLevel = MedicalState.bleedingLevel,
+        bandageChangesNeeded = MedicalState.bandageChangesNeeded,
+        bandageChangesApplied = MedicalState.bandageChangesApplied,
+        lastWoundSource = MedicalState.lastWoundSource,
+    }, true)
+end
+
 -- Reset all wound state (fully healed or admin clear)
 local function ResetMedicalState()
     MedicalState.bleedingLevel = 0
@@ -63,11 +73,34 @@ local function ResetMedicalState()
 
     -- Sync to server
     TriggerServerEvent('QC-AdvancedMedic:server:UpdateWoundData', MedicalState)
+    SyncMedicalStateBag()
 
     if Config.WoundSystem.debugging.enabled then
         print("^2[CORE MEDICAL] Medical state fully reset^7")
     end
 end
+
+--============================================
+-- SECTION 1B: LOAD MEDICAL STATE FROM SERVER (on character spawn)
+--============================================
+
+RegisterNetEvent('QC-AdvancedMedic:client:LoadWounds')
+AddEventHandler('QC-AdvancedMedic:client:LoadWounds', function(woundData)
+    if not woundData then return end
+
+    MedicalState.bleedingLevel = tonumber(woundData.bleedingLevel) or 0
+    MedicalState.bandageChangesNeeded = tonumber(woundData.bandageChangesNeeded) or 0
+    MedicalState.bandageChangesApplied = tonumber(woundData.bandageChangesApplied) or 0
+    MedicalState.lastWoundSource = woundData.lastWoundSource
+    MedicalState.woundTimestamp = tonumber(woundData.woundTimestamp) or 0
+
+    SyncMedicalStateBag()
+
+    if Config.WoundSystem.debugging.enabled then
+        print(string.format("^2[CORE MEDICAL] Loaded wound state from DB - bleeding: %.1f, changes: %d/%d^7",
+            MedicalState.bleedingLevel, MedicalState.bandageChangesApplied, MedicalState.bandageChangesNeeded))
+    end
+end)
 
 --============================================
 -- SECTION 2: WEAPON HASH RESOLUTION
@@ -219,8 +252,9 @@ local function ProcessDamageEvent(data)
         MedicalState.woundTimestamp = currentTime
     end
 
-    -- Sync to server
+    -- Sync to server + state bag
     TriggerServerEvent('QC-AdvancedMedic:server:UpdateWoundData', MedicalState)
+    SyncMedicalStateBag()
 
     -- Notify player
     lib.notify({
@@ -408,6 +442,9 @@ function ApplyBandage(bandageType, appliedBy)
             print("^2[BANDAGE] Fully healed! All bandage changes completed.^7")
         end
     end
+
+    -- Sync state bag after bandage application
+    SyncMedicalStateBag()
 
     -- 6. START HEALTH TICK THREAD
     local tickInterval = (bandageConfig.tickInterval or 10) * 1000
@@ -890,6 +927,7 @@ local function AddFallBleeding(amount)
     end
     MedicalState.lastWoundSource = "Fall"
     TriggerServerEvent('QC-AdvancedMedic:server:UpdateWoundData', MedicalState)
+    SyncMedicalStateBag()
 end
 
 --============================================

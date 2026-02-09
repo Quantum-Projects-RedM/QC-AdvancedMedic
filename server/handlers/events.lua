@@ -94,6 +94,7 @@ AddEventHandler('QC-AdvancedMedic:server:UpdateWoundData', function(medicalState
 end)
 
 -- Request wound data for another player (for medic inspection)
+-- Reads live medical state from target player's state bag (synced in real-time)
 RegisterNetEvent('QC-AdvancedMedic:server:RequestWoundData')
 AddEventHandler('QC-AdvancedMedic:server:RequestWoundData', function(targetPlayerId)
     local src = source
@@ -112,11 +113,18 @@ AddEventHandler('QC-AdvancedMedic:server:RequestWoundData', function(targetPlaye
         return
     end
 
-    -- Load target's medical data
+    -- Read live medical state from target player's state bag
+    local liveState = Player(targetPlayerId).state.medicalData
+
     local woundData = {}
-    pcall(function()
-        woundData = QCMedServer.LoadWoundData(Target.PlayerData.citizenid) or {}
-    end)
+    if liveState then
+        woundData = liveState
+    else
+        -- Fallback to DB if state bag not yet set (e.g. just loaded)
+        pcall(function()
+            woundData = QCMedServer.LoadWoundData(Target.PlayerData.citizenid) or {}
+        end)
+    end
 
     -- Send to requesting medic
     TriggerClientEvent('QC-AdvancedMedic:client:ReceiveWoundData', src, targetPlayerId, woundData)

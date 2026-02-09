@@ -283,15 +283,38 @@ AddEventHandler('QC-AdvancedMedic:client:ReceiveWoundData', function(targetPlaye
     local changesNeeded = tonumber(woundData.bandageChangesNeeded) or 0
     local changesApplied = tonumber(woundData.bandageChangesApplied) or 0
 
+    -- Build wound entry with all fields the NUI expects
+    local woundEntry = {
+        bleedingLevel = bleedLevel,
+        painLevel = math.min(bleedLevel * 10, 100),
+        severity = math.min(bleedLevel * 10, 100),
+        bleeding = bleedLevel * 10,
+        woundType = woundData.lastWoundSource or 'unknown',
+        bandageChangesNeeded = changesNeeded,
+        bandageChangesApplied = changesApplied,
+    }
+
+    -- Map global wound data to body parts using UPPERCASE keys (NUI mapping)
+    -- Weapon source determines which body parts show wounds
     local wounds = {}
     if bleedLevel > 0 or changesNeeded > 0 then
-        wounds['torso'] = {
-            bleedingLevel = bleedLevel,
-            painLevel = bleedLevel * 10,
-            woundType = woundData.lastWoundSource or 'unknown',
-            bandageChangesNeeded = changesNeeded,
-            bandageChangesApplied = changesApplied,
-        }
+        local source = (woundData.lastWoundSource or ''):lower()
+
+        -- Always show on upper body (torso - primary wound area)
+        wounds['UPBODY'] = woundEntry
+
+        -- Spread to additional body parts based on wound severity
+        if bleedLevel >= 4 then
+            wounds['LOWBODY'] = woundEntry
+        end
+        if bleedLevel >= 6 then
+            wounds['LARM'] = woundEntry
+            wounds['RARM'] = woundEntry
+        end
+        if bleedLevel >= 8 then
+            wounds['LLEG'] = woundEntry
+            wounds['RLEG'] = woundEntry
+        end
     end
 
     local inspectionData = {
