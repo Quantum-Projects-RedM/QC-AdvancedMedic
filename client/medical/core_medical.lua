@@ -50,16 +50,6 @@ local function IsFullyHealed()
         and MedicalState.bandageChangesNeeded > 0
 end
 
--- Sync medical state to state bag so server can read live data (for medic inspection)
-local function SyncMedicalStateBag()
-    LocalPlayer.state:set('medicalData', {
-        bleedingLevel = MedicalState.bleedingLevel,
-        bandageChangesNeeded = MedicalState.bandageChangesNeeded,
-        bandageChangesApplied = MedicalState.bandageChangesApplied,
-        lastWoundSource = MedicalState.lastWoundSource,
-    }, true)
-end
-
 -- Reset all wound state (fully healed or admin clear)
 local function ResetMedicalState()
     MedicalState.bleedingLevel = 0
@@ -73,7 +63,7 @@ local function ResetMedicalState()
 
     -- Sync to server
     TriggerServerEvent('QC-AdvancedMedic:server:UpdateWoundData', MedicalState)
-    SyncMedicalStateBag()
+
 
     if Config.WoundSystem.debugging.enabled then
         print("^2[CORE MEDICAL] Medical state fully reset^7")
@@ -94,7 +84,8 @@ AddEventHandler('QC-AdvancedMedic:client:LoadWounds', function(woundData)
     MedicalState.lastWoundSource = woundData.lastWoundSource
     MedicalState.woundTimestamp = tonumber(woundData.woundTimestamp) or 0
 
-    SyncMedicalStateBag()
+    -- Populate server cache so medic inspection works immediately after login
+    TriggerServerEvent('QC-AdvancedMedic:server:UpdateWoundData', MedicalState)
 
     if Config.WoundSystem.debugging.enabled then
         print(string.format("^2[CORE MEDICAL] Loaded wound state from DB - bleeding: %.1f, changes: %d/%d^7",
@@ -254,7 +245,7 @@ local function ProcessDamageEvent(data)
 
     -- Sync to server + state bag
     TriggerServerEvent('QC-AdvancedMedic:server:UpdateWoundData', MedicalState)
-    SyncMedicalStateBag()
+
 
     -- Notify player
     lib.notify({
@@ -444,7 +435,7 @@ function ApplyBandage(bandageType, appliedBy)
     end
 
     -- Sync state bag after bandage application
-    SyncMedicalStateBag()
+
 
     -- 6. START HEALTH TICK THREAD
     local tickInterval = (bandageConfig.tickInterval or 10) * 1000
@@ -835,6 +826,9 @@ CreateThread(function()
             )
         end
 
+        TriggerServerEvent('QC-AdvancedMedic:server:UpdateWoundData', MedicalState)
+    
+
         ::continue_loop::
     end
 end)
@@ -888,6 +882,7 @@ CreateThread(function()
 
                 if math.random() < moveChance then
                     MedicalState.bleedingLevel = math.min(MedicalState.bleedingLevel + moveAmount, 10)
+                    TriggerServerEvent('QC-AdvancedMedic:server:UpdateWoundData', MedicalState)
 
                     if Config.WoundSystem.debugging.enabled then
                         print(string.format("^1[MOVEMENT] Bleeding worsened to %.1f^7", MedicalState.bleedingLevel))
@@ -927,7 +922,7 @@ local function AddFallBleeding(amount)
     end
     MedicalState.lastWoundSource = "Fall"
     TriggerServerEvent('QC-AdvancedMedic:server:UpdateWoundData', MedicalState)
-    SyncMedicalStateBag()
+
 end
 
 --============================================

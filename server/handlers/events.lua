@@ -9,6 +9,12 @@ local RSGCore = exports['rsg-core']:GetCoreObject()
 QCMedServer = QCMedServer or {}
 
 --=========================================================
+-- LIVE MEDICAL STATE CACHE (keyed by citizenid)
+-- Bypasses async DB write delay for real-time inspection
+--=========================================================
+local LiveMedicalCache = {}
+
+--=========================================================
 -- MEDICAL DATA PERSISTENCE
 --=========================================================
 
@@ -32,6 +38,16 @@ AddEventHandler('QC-AdvancedMedic:server:LoadMedicalData', function()
     pcall(function()
         infections = QCMedServer.LoadInfectionData(citizenid) or {}
     end)
+
+    -- Populate live cache from DB data
+    if next(woundData) then
+        LiveMedicalCache[citizenid] = {
+            bleedingLevel = tonumber(woundData.bleedingLevel) or 0,
+            bandageChangesNeeded = tonumber(woundData.bandageChangesNeeded) or 0,
+            bandageChangesApplied = tonumber(woundData.bandageChangesApplied) or 0,
+            lastWoundSource = woundData.lastWoundSource,
+        }
+    end
 
     -- Send wound/medical state to client
     if next(woundData) then
@@ -70,6 +86,9 @@ AddEventHandler('QC-AdvancedMedic:server:SaveMedicalDataOnDisconnect', function(
         end
     end)
 
+    -- Clean up live cache on disconnect
+    LiveMedicalCache[citizenid] = nil
+
     if Config.WoundSystem.debugging.enabled then
         print(string.format("^2[EVENTS] Saved medical data on disconnect for player %s^7", tostring(src)))
     end
@@ -88,13 +107,24 @@ AddEventHandler('QC-AdvancedMedic:server:UpdateWoundData', function(medicalState
 
     local citizenid = Player.PlayerData.citizenid
 
+    -- Update live cache FIRST (instant, no DB delay)
+    LiveMedicalCache[citizenid] = {
+        bleedingLevel = medicalState.bleedingLevel or 0,
+        bandageChangesNeeded = medicalState.bandageChangesNeeded or 0,
+        bandageChangesApplied = medicalState.bandageChangesApplied or 0,
+        lastWoundSource = medicalState.lastWoundSource,
+    }
+
+    print(string.format("^2[CACHE] Updated cache for %s - bleeding: %.1f^7", citizenid, medicalState.bleedingLevel or 0))
+
+    -- Also persist to DB (async, for reconnect/restart)
     pcall(function()
         QCMedServer.SaveWoundData(citizenid, medicalState)
     end)
 end)
 
 -- Request wound data for another player (for medic inspection)
--- Reads live medical state from target player's state bag (synced in real-time)
+-- Reads from LIVE CACHE first (instant), falls back to DB
 RegisterNetEvent('QC-AdvancedMedic:server:RequestWoundData')
 AddEventHandler('QC-AdvancedMedic:server:RequestWoundData', function(targetPlayerId)
     local src = source
@@ -113,21 +143,40 @@ AddEventHandler('QC-AdvancedMedic:server:RequestWoundData', function(targetPlaye
         return
     end
 
-    -- Read live medical state from target player's state bag
-    local liveState = Player(targetPlayerId).state.medicalData
+    local citizenid = Target.PlayerData.citizenid
 
-    local woundData = {}
-    if liveState then
-        woundData = liveState
+    -- Try live cache first (always up-to-date, no DB delay)
+    local result = LiveMedicalCache[citizenid]
+
+    if result then
+        print(string.format("^2[INSPECT] Cache HIT for %s - bleeding: %.1f^7", citizenid, result.bleedingLevel or 0))
     else
-        -- Fallback to DB if state bag not yet set (e.g. just loaded)
-        pcall(function()
-            woundData = QCMedServer.LoadWoundData(Target.PlayerData.citizenid) or {}
-        end)
+        -- Fallback to DB (for players who loaded before cache existed)
+        print(string.format("^3[INSPECT] Cache MISS for %s - reading DB^7", citizenid))
+        local woundData = MySQL.Sync.fetchAll('SELECT * FROM player_wounds WHERE citizenid = ?', {citizenid})
+
+        result = {}
+        if woundData and woundData[1] then
+            local row = woundData[1]
+            result = {
+                bleedingLevel = tonumber(row.bleeding_level) or 0,
+                bandageChangesNeeded = tonumber(row.bandage_changes_needed) or 0,
+                bandageChangesApplied = tonumber(row.bandage_changes_applied) or 0,
+                lastWoundSource = row.last_wound_source,
+            }
+        end
+
+        -- Populate cache for next time
+        if next(result) then
+            LiveMedicalCache[citizenid] = result
+        end
     end
 
+    print(string.format("^3[INSPECT] Medic %d inspecting player %d (cid: %s) - bleeding: %.1f^7",
+        src, targetPlayerId, citizenid, result.bleedingLevel or 0))
+
     -- Send to requesting medic
-    TriggerClientEvent('QC-AdvancedMedic:client:ReceiveWoundData', src, targetPlayerId, woundData)
+    TriggerClientEvent('QC-AdvancedMedic:client:ReceiveWoundData', src, targetPlayerId, result)
 end)
 
 --=========================================================

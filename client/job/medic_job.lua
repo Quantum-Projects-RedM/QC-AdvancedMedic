@@ -294,18 +294,16 @@ AddEventHandler('QC-AdvancedMedic:client:ReceiveWoundData', function(targetPlaye
         bandageChangesApplied = changesApplied,
     }
 
-    -- Map global wound data to body parts using UPPERCASE keys (NUI mapping)
-    -- Weapon source determines which body parts show wounds
+    -- Map global wound data to body parts using keys that match React mapFrontendToBackend()
+    -- React mapping: upbody→UPPER_BODY, lowbody→LOWER_BODY, larm→LARM, rarm→RARM, etc.
     local wounds = {}
     if bleedLevel > 0 or changesNeeded > 0 then
-        local source = (woundData.lastWoundSource or ''):lower()
-
         -- Always show on upper body (torso - primary wound area)
-        wounds['UPBODY'] = woundEntry
+        wounds['UPPER_BODY'] = woundEntry
 
         -- Spread to additional body parts based on wound severity
         if bleedLevel >= 4 then
-            wounds['LOWBODY'] = woundEntry
+            wounds['LOWER_BODY'] = woundEntry
         end
         if bleedLevel >= 6 then
             wounds['LARM'] = woundEntry
@@ -330,6 +328,9 @@ AddEventHandler('QC-AdvancedMedic:client:ReceiveWoundData', function(targetPlaye
         healthData = {},
         description = woundData.lastWoundSource or "No visible injuries",
     }
+
+    print(string.format("^3[INSPECT CLIENT] Bleeding: %.1f, Wounds keys: %s^7",
+        bleedLevel, json.encode(wounds)))
 
     TriggerEvent('QC-AdvancedMedic:client:ShowInspectionPanel', inspectionData)
 end)
