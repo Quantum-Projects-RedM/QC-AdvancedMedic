@@ -236,6 +236,82 @@ RegisterNetEvent('QC-AdvancedMedic:client:HealInjuries', function()
 end)
 
 --=========================================================
+-- INSPECT PLAYER
+--=========================================================
+
+RegisterNetEvent('QC-AdvancedMedic:client:InspectPlayer')
+AddEventHandler('QC-AdvancedMedic:client:InspectPlayer', function(targetServerId)
+    if not IsPlayerMedic() then
+        lib.notify({ title = locale('cl_menu_not_medic'), description = locale('cl_desc_not_medic_job'), type = 'error', duration = 5000 })
+        return
+    end
+
+    local closestPlayer, distance
+    if not targetServerId then
+        closestPlayer, distance = GetClosestPlayer()
+        if closestPlayer == -1 or distance > 3.0 then
+            lib.notify({ title = locale('cl_menu_no_players_nearby'), description = locale('cl_desc_no_player_within_range'), type = 'error', duration = 5000 })
+            return
+        end
+        targetServerId = GetPlayerServerId(closestPlayer)
+    end
+
+    local playerPed = PlayerPedId()
+    TaskStartScenarioInPlace(playerPed, `WORLD_HUMAN_CROUCH_INSPECT`, -1, true, false, false, false)
+
+    if lib.progressBar({
+        duration = 5000,
+        position = 'bottom',
+        useWhileDead = false,
+        canCancel = true,
+        disableControl = true,
+        disable = { move = true, mouse = true },
+        label = "Inspecting patient...",
+    }) then
+        ClearPedTasks(playerPed)
+        TriggerServerEvent('QC-AdvancedMedic:server:RequestWoundData', targetServerId)
+    else
+        ClearPedTasks(playerPed)
+        lib.notify({ title = locale('cl_menu_cancelled'), description = "Inspection cancelled", type = 'error', duration = 3000 })
+    end
+end)
+
+-- Receive wound data from server and open NUI inspection panel
+RegisterNetEvent('QC-AdvancedMedic:client:ReceiveWoundData')
+AddEventHandler('QC-AdvancedMedic:client:ReceiveWoundData', function(targetPlayerId, woundData)
+    local bleedLevel = tonumber(woundData.bleedingLevel) or 0
+    local changesNeeded = tonumber(woundData.bandageChangesNeeded) or 0
+    local changesApplied = tonumber(woundData.bandageChangesApplied) or 0
+
+    local wounds = {}
+    if bleedLevel > 0 or changesNeeded > 0 then
+        wounds['torso'] = {
+            bleedingLevel = bleedLevel,
+            painLevel = bleedLevel * 10,
+            woundType = woundData.lastWoundSource or 'unknown',
+            bandageChangesNeeded = changesNeeded,
+            bandageChangesApplied = changesApplied,
+        }
+    end
+
+    local inspectionData = {
+        playerName = "Patient #" .. targetPlayerId,
+        playerId = tostring(targetPlayerId),
+        playerSource = targetPlayerId,
+        bloodLevel = math.max(0, 100 - (bleedLevel * 10)),
+        isBleeding = bleedLevel > 0,
+        wounds = wounds,
+        treatments = {},
+        infections = {},
+        bandages = {},
+        healthData = {},
+        description = woundData.lastWoundSource or "No visible injuries",
+    }
+
+    TriggerEvent('QC-AdvancedMedic:client:ShowInspectionPanel', inspectionData)
+end)
+
+--=========================================================
 -- MEDIC ALERT
 --=========================================================
 

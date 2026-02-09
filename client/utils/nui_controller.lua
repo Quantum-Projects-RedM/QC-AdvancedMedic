@@ -128,6 +128,11 @@ RegisterNUICallback('closeInspection', function(data, cb)
     cb('ok')
 end)
 
+RegisterNUICallback('closeInspectionPanel', function(data, cb)
+    TriggerEvent('QC-AdvancedMedic:client:HideInspectionPanel')
+    cb('ok')
+end)
+
 RegisterNUICallback('applyTreatment', function(data, cb)
     -- data contains: { targetPlayerId, treatmentType, itemType }
     TriggerServerEvent('QC-AdvancedMedic:server:ApplyTreatment',

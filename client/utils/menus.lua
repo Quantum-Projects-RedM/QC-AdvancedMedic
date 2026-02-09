@@ -491,9 +491,14 @@ end)
 -- JOB UPDATE HANDLER
 --=========================================================
 
+local lastJobName = nil
+
 RegisterNetEvent('RSGCore:Client:OnJobUpdate')
 AddEventHandler('RSGCore:Client:OnJobUpdate', function(JobInfo)
-    -- Reset duty time when job changes
-    dutyStartTime = nil
-    sessionTime = 0
+    -- Only reset duty time when the actual job changes, not on duty toggle
+    if lastJobName and lastJobName ~= JobInfo.name then
+        dutyStartTime = nil
+        sessionTime = 0
+    end
+    lastJobName = JobInfo.name
 end)

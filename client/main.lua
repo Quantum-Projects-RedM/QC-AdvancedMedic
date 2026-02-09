@@ -138,6 +138,94 @@ AddEventHandler('QC-AdvancedMedic:client:ClearAllWounds', function()
 end)
 
 --=========================================================
+-- DOCTOR PED SPAWNING + OX_TARGET
+--=========================================================
+
+local spawnedPeds = {}
+local spawnedBlips = {}
+
+local function SpawnDoctorPeds()
+    for _, ped in pairs(spawnedPeds) do
+        if DoesEntityExist(ped) then DeleteEntity(ped) end
+    end
+    for _, blip in pairs(spawnedBlips) do
+        if DoesBlipExist(blip) then RemoveBlip(blip) end
+    end
+    spawnedPeds = {}
+    spawnedBlips = {}
+
+    local npcmodel = Config.DoctorPedModel or 's_m_m_doctor_01'
+    RequestModel(npcmodel)
+    while not HasModelLoaded(npcmodel) do
+        Wait(50)
+    end
+
+    for i, loc in ipairs(Config.MedicJobLocations) do
+        local ped = CreatePed(npcmodel, loc.coords.x, loc.coords.y, loc.coords.z - 1.0, loc.coords.w, false, false, 0, 0)
+        SetEntityAlpha(ped, 0, false)
+        SetRandomOutfitVariation(ped, true)
+        SetEntityCanBeDamaged(ped, false)
+        SetEntityInvincible(ped, true)
+        FreezeEntityPosition(ped, true)
+        SetBlockingOfNonTemporaryEvents(ped, true)
+        SetPedCanBeTargetted(ped, false)
+
+        for alpha = 0, 255, 51 do
+            Wait(50)
+            SetEntityAlpha(ped, alpha, false)
+        end
+
+        spawnedPeds[i] = ped
+
+        exports.ox_target:addLocalEntity(ped, {
+            {
+                label = loc.name,
+                icon = 'fa-solid fa-kit-medical',
+                distance = 2.5,
+                onSelect = function()
+                    TriggerEvent('QC-AdvancedMedic:client:mainmenu', loc.prompt, loc.name)
+                end,
+                canInteract = function()
+                    local PlayerData = RSGCore.Functions.GetPlayerData()
+                    return PlayerData and PlayerData.job and PlayerData.job.name == loc.job
+                end
+            }
+        })
+
+        if loc.showblip then
+            local blip = BlipAddForCoords(1664425300, loc.coords.x, loc.coords.y, loc.coords.z)
+            SetBlipSprite(blip, GetHashKey(Config.Blip.Sprite), true)
+            SetBlipScale(blip, Config.Blip.Scale)
+            SetBlipName(blip, Config.Blip.Name)
+            spawnedBlips[i] = blip
+        end
+    end
+
+    SetModelAsNoLongerNeeded(npcmodel)
+end
+
+CreateThread(function()
+    repeat Wait(1000) until LocalPlayer.state.isLoggedIn
+    SpawnDoctorPeds()
+end)
+
+RegisterNetEvent('RSGCore:Client:OnPlayerLoaded')
+AddEventHandler('RSGCore:Client:OnPlayerLoaded', function()
+    Wait(2000)
+    SpawnDoctorPeds()
+end)
+
+AddEventHandler('onResourceStop', function(resource)
+    if resource ~= GetCurrentResourceName() then return end
+    for _, ped in pairs(spawnedPeds) do
+        if DoesEntityExist(ped) then DeleteEntity(ped) end
+    end
+    for _, blip in pairs(spawnedBlips) do
+        if DoesBlipExist(blip) then RemoveBlip(blip) end
+    end
+end)
+
+--=========================================================
 -- INITIALIZATION
 --=========================================================
 

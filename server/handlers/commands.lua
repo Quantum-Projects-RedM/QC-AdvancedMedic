@@ -103,6 +103,23 @@ RSGCore.Commands.Add('kill', 'Kill a player', {{name = 'id', help = 'Player ID'}
     end
 end, 'admin')
 
+-- Medic inspect nearest player
+RSGCore.Commands.Add('inspect', 'Inspect a nearby player\'s medical condition (medic only)', {}, false, function(source)
+    local src = source
+    local Medic, err = QCMedServer.ValidateMedic(src)
+    if not Medic then
+        QCMedServer.NotifyValidationError(src, err)
+        return
+    end
+
+    if not Medic.PlayerData.job.onduty then
+        QCMedServer.NotifyError(src, locale('sv_error'), "You must be on duty to inspect patients")
+        return
+    end
+
+    TriggerClientEvent('QC-AdvancedMedic:client:InspectPlayer', src)
+end)
+
 --=========================================================
 -- PLAYER COMMANDS (Accessible to all)
 --=========================================================

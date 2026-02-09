@@ -146,39 +146,41 @@ Config.Blip = {
     Scale  = 0.2
 }
 
+Config.DoctorPedModel = 'cs_sddoctor_01'
+
 Config.MedicJobLocations = {
-    { -- Valentine Physician's Office
+    {
         name = 'Valentine Physician',
         prompt = 'valmedic',
-        coords = vector3(-289.46, 806.82, 119.39 - 0.08),
+        coords = vector4(-289.01, 808.38, 119.39 - 0.08, 288.12),
         showblip = true,
         job = 'valmedic'
     },
-    { -- Saint Denis General Hospital
+    {
         name = 'Saint Denis Hospital',
         prompt = 'sdmedic',
-        coords = vector3(2725.89, -1225.73, 50.47 - 0.08),
+        coords = vector4(2725.89, -1225.73, 50.47 - 0.08, 168.0),
         showblip = true,
         job = 'sdmedic'
     },
-    { -- Blackwater County Infirmary
+    {
         name = 'Blackwater Infirmary',
         prompt = 'bwmedic',
-        coords = vector3(-733.28, -1242.97, 44.73 - 0.08),
+        coords = vector4(-733.28, -1242.97, 44.73 - 0.08, 87.0),
         showblip = true,
         job = 'bwmedic'
     },
-    { -- Rhodes Township Doctor
+    {
         name = 'Rhodes Practitioner',
         prompt = 'rhmedic',
-        coords = vector3(1291.85, -1236.22, 80.93 - 0.08),
+        coords = vector4(1291.85, -1236.22, 80.93 - 0.08, 210.0),
         showblip = true,
         job = 'rhmedic'
     },
-    { -- Strawberry Frontier Doctor
+    {
         name = 'Strawberry Doctor',
         prompt = 'sbmedic',
-        coords = vector3(-1801.98, -366.95, 161.66 - 0.08),
+        coords = vector4(-1801.98, -366.95, 161.66 - 0.08, 236.0),
         showblip = true,
         job = 'sbmedic'
     },

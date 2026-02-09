@@ -776,11 +776,10 @@ CreateThread(function()
             ApplyingMedicalDamage = false
 
             -- Stomach blood effect for heavy bleeding (level 4+)
-            -- _SET_PED_ACTIVATE_WOUND_EFFECT(ped, unk, 2, boneId, moveWoundLR, pressure, yaw, yaw2, fountainPressure, p9, p10)
             if bleedLevel >= 4 then
-                local pressure = 0.1 + (bleedLevel - 4) * 0.05   -- 0.1 at lv4 → 0.4 at lv10
-                local fountain = 3.0 + (bleedLevel - 4) * 1.0    -- 3.0 at lv4 → 9.0 at lv10
-                Citizen.InvokeNative(0xFFD54D9FE71B966A, ped, 0, 2, 14411, 0.0, pressure, 0.0, 0.0, fountain, -1.0, 1.0)
+                local pressure = 0.1 + (bleedLevel - 4) * 0.05
+                local fountain = 3.0 + (bleedLevel - 4) * 1.0
+                SetPedActivateWoundEffect(ped, 0, 2, 14411, 0.0, pressure, 0.0, 0.0, fountain, -1.0, 1.0)
             end
 
             lib.notify({
